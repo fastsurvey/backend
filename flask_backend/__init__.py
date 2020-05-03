@@ -49,9 +49,9 @@ if os.getenv("ENVIRONMENT") != "production":
 # Connect to database and collections
 client = MongoClient(MONGODB_WRITE_CONNECTION_STRING)
 
-survey_1_database = client.get_database('survey_1_database')
-survey_1_verified_entries = survey_1_database['verified_entries']
-survey_1_pending_entries = survey_1_database['pending_entries']
+survey_database = client.get_database('survey_database')
+verified_entries_collection = survey_database['verified_entries']
+pending_entries_collection = survey_database['pending_entries']
 
 
 

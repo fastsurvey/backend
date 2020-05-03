@@ -1,6 +1,6 @@
 
 
-from flask_backend import survey_1_pending_entries, survey_1_verified_entries
+from flask_backend import pending_entries_collection, verified_entries_collection
 from flask_backend.support_functions import formatting, mailing, tokening
 from flask_backend.surveys.survey_1.survey_1_validate import validate
 from flask_backend.surveys.survey_1 import survey_1_format
@@ -23,7 +23,8 @@ def submit(params_dict):
     pending_entry = {
         "email": form_data["email"],
         "election": form_data["election"],
-        "verification_token": verification_token
+        "verification_token": verification_token,
+        "survey": "20200505"
     }
 
     mail_result = mailing.send_email(
@@ -35,10 +36,10 @@ def submit(params_dict):
     if mail_result:
         try:
             operations = [
-                DeleteMany({"email": form_data["email"]}),
+                DeleteMany({"email": form_data["email"], "survey": "20200505"}),
                 InsertOne(pending_entry)
             ]
-            survey_1_pending_entries.bulk_write(operations, ordered=True)
+            pending_entries_collection.bulk_write(operations, ordered=True)
             return formatting.status("ok", status_code=200)
 
         except Exception as e:
@@ -48,11 +49,14 @@ def submit(params_dict):
 
 
 def verify(verification_token):
-    pending_entry = survey_1_pending_entries.find_one_and_delete({"verification_token": verification_token})
+    pending_entry = pending_entries_collection.find_one_and_delete(
+        {"verification_token": verification_token, "survey": "20200505"}
+    )
 
     if pending_entry is not None:
+        del pending_entry["verification_token"]
         operations = [
-            DeleteMany({"email": pending_entry["email"]}),
+            DeleteMany({"email": pending_entry["email"], "survey": "20200505"}),
             InsertOne(pending_entry)
         ]
-        survey_1_verified_entries.bulk_write(operations)
+        verified_entries_collection.bulk_write(operations)
