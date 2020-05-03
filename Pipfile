@@ -13,6 +13,8 @@ certifi = "*"
 sendgrid = "*"
 dnspython = "*"
 gunicorn = "*"
+cerberus = "*"
+google-cloud-datastore = "*"
 
 [requires]
 python_version = "3.8"
