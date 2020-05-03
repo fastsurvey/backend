@@ -1,38 +1,7 @@
 from flask_backend import SENDGRID_API_KEY, BACKEND_URL
 
-import random
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, From, To, Subject, Content, MimeType, ReplyTo
-
-
-def status(text, **kwargs):
-    status_dict = {'status': text}
-    status_dict.update(kwargs)
-    return status_dict
-
-
-def generate_random_key(length=32, numeric=False, existing_tokens=()):
-    possible_characters = []
-
-    # Characters '0' through '9'
-    possible_characters += [chr(x) for x in range(48, 58)]
-
-    if not numeric:
-        # Characters 'A' through 'Z'
-        possible_characters += [chr(x) for x in range(65, 91)]
-
-        # Characters 'a' through 'z'
-        possible_characters += [chr(x) for x in range(97, 123)]
-
-    random_key = ''
-    for i in range(length):
-        random_key += random.choice(possible_characters)
-
-    # Brute force generate random keys as long as key is not unique
-    while random_key in existing_tokens:
-        random_key = random_key[1:] + random.choice(possible_characters)
-
-    return random_key
 
 
 def send_email(entry):
