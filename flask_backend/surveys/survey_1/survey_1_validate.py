@@ -11,11 +11,11 @@ def check_email(field, email_string, error):
         error(field, 'format invalid')
         return
 
-    def invalid_domain():
-        error(field, 'only ...@mytum.de addresses allowed')
-        return
-
     if type(email_string) == str:
+
+        if any(invalid_string in email_string for invalid_string in ["script", "<", ">"]):
+            error(field, 'XSS alert')
+            return
 
         # Chained if statements because the latter depend on the previous
         # ones to be true in order not to throw an interpreter error
@@ -41,7 +41,8 @@ def check_email(field, email_string, error):
         if email_parts[1] != "mytum.de":
             # only mytum.de is allowed to prevent people to submit stuff with
             # both of their @tum.de and @mytum.de addresses
-            invalid_domain()
+            error(field, 'only ...@mytum.de addresses allowed')
+            return
 
 
 def check_election(field, election_dict, error):
@@ -52,10 +53,10 @@ def check_election(field, election_dict, error):
         election_count += 1 if election_dict[name] else 0
 
     if (election_count == 0):
-        error(field, 'please select at least 1 candidate')
+        error(field, 'select at least 1 candidate')
 
     if (election_count == 4):
-        error(field, 'please select at most 3 candidates')
+        error(field, 'select at most 3 candidates')
 
 
 survey_1_schema = {
@@ -80,21 +81,21 @@ survey_1_schema = {
 
 survey_1_validator = Validator(survey_1_schema)
 
-def validate_survey_1(params_dict):
-    if "form-data" not in params_dict:
-        return formatting.status("form-data missing")
+def validate(params_dict):
+    if "form_data" not in params_dict:
+        return formatting.status("form_data missing")
 
-    if survey_1_validator.validate(params_dict["form-data"]):
+    if survey_1_validator.validate(params_dict["form_data"]):
         return formatting.status('ok')
     else:
-        return formatting.status('validation error', errors=survey_1_validator.errors)
+        return formatting.status('validation error', errors=survey_1_validator.errors, status_code=400)
 
 
 if __name__ == "__main__":
 
     example_1 = {
-        'form-data': {
-            'email': 'ge69zeh@mytu.de',
+        'form_data': {
+            'email': 'abcdefg@mytu.de',
             'election': {
                 'albers': True,
                 'deniers': True,
@@ -105,7 +106,7 @@ if __name__ == "__main__":
     }
 
     example_2 = {
-        'form-data': {
+        'form_data': {
             'email': 'dd@mytum.d',
             'election': {
                 'albers': True,
@@ -117,8 +118,8 @@ if __name__ == "__main__":
     }
 
     example_3 = {
-        'form-data': {
-            'email': '@mytum.de',
+        'form_data': {
+            'email': 'f@mytum.de',
             'election': {
                 'albers': True,
                 'deniers': True,
@@ -129,8 +130,8 @@ if __name__ == "__main__":
     }
 
     example_4 = {
-        'form-data': {
-            'email': 'ge69zeh@mytum.de',
+        'form_data': {
+            'email': 'abcdefg@mytum.de',
             'election': {
                 'albers': False,
                 'deniers': False,
@@ -141,4 +142,4 @@ if __name__ == "__main__":
     }
 
     for example in [example_1, example_2, example_3, example_4]:
-        print(validate_survey_1(example))
+        print(validate(example))

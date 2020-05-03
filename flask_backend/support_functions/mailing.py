@@ -1,29 +1,31 @@
-from flask_backend import SENDGRID_API_KEY, BACKEND_URL
+from flask_backend import SENDGRID_API_KEY
 
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, From, To, Subject, Content, MimeType, ReplyTo
 
 
-def send_email(entry):
+def send_email(
+        email=None, form_data=None, change_url=None, verify_url=None,
+        reply_to="noreply-survey@mse.tum.de", reply_to_name="MSE Survey"):
+
+    if any([key is None for key in (email, form_data, change_url, verify_url)]):
+        return False
+
     message = Mail()
 
-    message.from_email = From('tutorium.mint@mse.tum.de', 'MINT Projektmodul')
-    message.reply_to = ReplyTo('tutorium.mint@mse.tum.de', 'MINT Projektmodul')
-    message.to = To(entry["email"], entry["name"], p=1)
+    message.from_email = From('noreply-survey@mse.tum.de', 'MSE Survey')
+    message.reply_to = ReplyTo(reply_to, reply_to_name)
+    message.to = To(email)
 
-    adress_data = f'{entry["name"]} <em>(Ich wohne {"<strong>nicht</strong>" if entry["remote"] else ""} in München)</em>'
-    verification_url = f'{BACKEND_URL}backend/verify/{entry["verification_token"]}'
-    change_url = f'{BACKEND_URL}form?name={entry["name"]}&email={entry["email"]}' \
-                 f'&remote={"true" if entry["remote"] else "false"}'
     message.subject = Subject('Bestätige deine Email Adresse')
     message.content = Content(
         MimeType.html,
-        f'<h2>Willkommen beim MINT Projektmodul</h2>' +
-        f'<p>Wir haben folgende Daten von dir erhalten:</p>' +
-        f'<p>{adress_data}</p><br/>' +
-        f'<p>Diese Daten <strong>bestätigen</strong>: <a href=\'{verification_url}\'>Bestätigungs-Link</a></p>' +
+        f'<h2>Daten erfolgreich übermittelt!</h2>' +
+        f'<p>Wir haben folgende Daten von dir erhalten:</p>' + form_data +
+        f'<br/><p>Dieser Eintrag wird erst gewertet, sobald du ihn bestätigt hast!</p>' +
+        f'<p>Diese Daten <strong>bestätigen</strong>: <a href=\'{verify_url}\'>Bestätigungs-Link</a></p>' +
         f'<p>Diese Daten <strong>ändern</strong>: <a href=\'{change_url}\'>Änderungs-Link</a></p><br/>' +
-        f'<p>Falls du diese Mail nicht erwartet hast, dann kannst du sie einfach ignorieren.</p>' +
+        f'<br/><p>Falls du diese Mail nicht erwartet hast, dann kannst du sie einfach ignorieren.</p>' +
         f'<p>Beste Grüße,<br/>Dein MINT-Team</p>'
     )
 

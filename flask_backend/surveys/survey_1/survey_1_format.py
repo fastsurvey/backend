@@ -32,4 +32,3 @@ if __name__ == "__main__":
     }
     print(generate_change_url(example_3["form-data"]))
     print(generate_verify_url("dgshsbsjs"))
-
