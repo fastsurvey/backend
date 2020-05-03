@@ -1,0 +1,38 @@
+
+<div>
+
+    <input type="checkbox" disabled readonly style="display:inline;"
+            {% if election["albers"] %}
+                checked="checked"
+            {% endif %}
+    />
+    <p style="display:inline;">Steffi Albers</p>
+
+    <br/>
+
+    <input type="checkbox" disabled readonly style="display:inline;"
+            {% if election["deniers"] %}
+                checked="checked"
+            {% endif %}
+    />
+    <p style="display:inline;">Clara Deniers</p>
+
+    <br/>
+
+    <input type="checkbox" disabled readonly style="display:inline;"
+            {% if election["schmidt"] %}
+                checked="checked"
+            {% endif %}
+    />
+    <p style="display:inline;">Tobias Schmidt</p>
+
+    <br/>
+
+    <input type="checkbox" disabled readonly style="display:inline;"
+            {% if election["ballweg"] %}
+                checked="checked"
+            {% endif %}
+    />
+    <p style="display:inline;">Jonas Ballweg</p>
+
+</div>
