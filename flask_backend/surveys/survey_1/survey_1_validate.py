@@ -38,10 +38,10 @@ def check_email(field, email_string, error):
             # '..' after '@'
             return invalid_format()
 
-        if email_parts[1] != "mytum.de":
+        if email_parts[1] != "mytum.de" or len(email_parts[0]) != 7:
             # only mytum.de is allowed to prevent people to submit stuff with
             # both of their @tum.de and @mytum.de addresses
-            error(field, 'only ...@mytum.de addresses allowed')
+            error(field, 'only <lrz-kennung>@mytum.de addresses allowed')
             return
 
 
@@ -83,7 +83,7 @@ survey_1_validator = Validator(survey_1_schema)
 
 def validate(params_dict):
     if "form_data" not in params_dict:
-        return formatting.status("form_data missing")
+        return formatting.status("form_data missing", status_code=500)
 
     if survey_1_validator.validate(params_dict["form_data"]):
         return formatting.status('ok')
