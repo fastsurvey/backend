@@ -1,12 +1,11 @@
 
-## MINT Projektmodul 2020 - Survey
+## MSE Survey Tool - Backend
 
-This project contains a **survey for the Arduino kits** used in our
-Lecture.
+This project contains a **survey tool** for our university department.
 
-Only people who have filled out this form will receive an Arduino
-kit. In addition to that they have to **sign up with a valid tum 
-email** and verify that email address.
-
-This **reduces the number of kits** we have to provide to the ones that
-will actually be used.
+The main advantages over other survey tools are:
+* We have complete control over the data
+* We included an email verification so that actually only people 
+  from out university can take part in a survey
+* We have complete control over the design
+* we can easily run it on any environment with any domain we like
