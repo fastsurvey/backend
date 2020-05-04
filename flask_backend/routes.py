@@ -1,10 +1,21 @@
 
-from flask_backend import app, FRONTEND_URL
+from flask_backend import app, FRONTEND_URL, pending_entries_collection, verified_entries_collection
 from flask_backend.surveys.survey_1 import survey_1_actions
 
 from flask_backend.support_functions import formatting
 
 from flask import request, redirect
+
+
+@app.route("/", methods=["GET"])
+def backend_status():
+    try:
+        pending_entries_collection.count_documents()
+        verified_entries_collection.count_documents()
+    except:
+        return {"status": "all services operational"}, 200
+
+    return {"status": "database error"}, 200
 
 
 @app.route("/<survey_date>/submit", methods=["POST"])

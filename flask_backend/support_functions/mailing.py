@@ -29,7 +29,7 @@ def send_email(
         f'<p>Diese Daten <strong>bestätigen</strong>: <a href=\'{verify_url}\'>Bestätigungs-Link</a></p>' +
         f'<p>Diese Daten <strong>ändern</strong>: <a href=\'{change_url}\'>Änderungs-Link</a></p><br/>' +
         f'<p>Falls du diese Mail nicht erwartet hast, dann kannst du sie einfach ignorieren.</p>' +
-        f'<p>Beste Grüße,<br/>Dein MINT-Team</p>'
+        f'<p>Beste Grüße,<br/>Dein MSE-Team</p>'
     )
 
     try:
