@@ -33,7 +33,9 @@ def submit(params_dict):
         form_data=survey_1_format.generate_form_data(form_data),
         change_url=survey_1_format.generate_change_url(form_data),
         verify_url=survey_1_format.generate_verify_url(verification_token),
-        survey_name="Semestersprecher Wahl SS20 6. FS"
+        survey_name="Semestersprecher Wahl SS20 6. FS",
+        reply_to_email="engineering.2017@fs.mse.tum.de",
+        reply_to_name="Semestersprecher JG17",
     )
     if mail_result:
         try:

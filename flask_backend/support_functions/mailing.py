@@ -6,7 +6,7 @@ from sendgrid.helpers.mail import Mail, From, To, Subject, Content, MimeType, Re
 
 def send_email(
         email=None, form_data=None, change_url=None, verify_url=None,
-        reply_to="noreply-survey@mse.tum.de", reply_to_name="MSE Survey",
+        reply_to_email="noreply-survey@mse.tum.de", reply_to_name="MSE Survey",
         survey_name=None
 ):
 
@@ -16,7 +16,7 @@ def send_email(
     message = Mail()
 
     message.from_email = From('noreply-survey@mse.tum.de', 'MSE Survey')
-    message.reply_to = ReplyTo(reply_to, reply_to_name)
+    message.reply_to = ReplyTo(reply_to_email, reply_to_name)
     message.to = To(email)
 
     message.subject = Subject('Bestätige deine Email Adresse')
