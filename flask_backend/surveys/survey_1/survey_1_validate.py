@@ -29,15 +29,6 @@ def check_email(field, email_string, error):
             # nothing before '@'
             return invalid_format()
 
-        if '.' not in email_parts[1]:
-            # no '.' after '@'
-            return invalid_format()
-
-        email_domain_parts = email_parts[1].split('.')
-        if any([(len(part) == 0) for part in email_domain_parts]):
-            # '..' after '@'
-            return invalid_format()
-
         if email_parts[1] != "mytum.de" or len(email_parts[0]) != 7:
             # only mytum.de is allowed to prevent people to submit stuff with
             # both of their @tum.de and @mytum.de addresses

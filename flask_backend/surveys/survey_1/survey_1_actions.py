@@ -63,4 +63,4 @@ def verify(verification_token):
             DeleteMany({"email": pending_entry["email"], "survey": "20200504"}),
             InsertOne(pending_entry)
         ]
-        verified_entries_collection.bulk_write(operations)
+        verified_entries_collection.bulk_write(operations, ordered=True)
