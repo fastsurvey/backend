@@ -1,7 +1,7 @@
 
 
 from flask_backend import pending_entries_collection, verified_entries_collection
-from flask_backend.support_functions import formatting, mailing, tokening
+from flask_backend.support_functions import formatting, mailing, tokening, timing
 from flask_backend.surveys.survey_1.survey_1_validate import validate
 from flask_backend.surveys.survey_1 import survey_1_format
 
@@ -24,7 +24,8 @@ def submit(params_dict):
         "email": form_data["email"],
         "election": form_data["election"],
         "verification_token": verification_token,
-        "survey": "20200505"
+        "survey": "20200505",
+        "timestamp": timing.get_current_time()
     }
 
     mail_result = mailing.send_email(
