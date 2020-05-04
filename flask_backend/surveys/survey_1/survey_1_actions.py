@@ -24,7 +24,7 @@ def submit(params_dict):
         "email": form_data["email"],
         "election": form_data["election"],
         "verification_token": verification_token,
-        "survey": "20200505",
+        "survey": "20200504",
         "timestamp": timing.get_current_time()
     }
 
@@ -40,7 +40,7 @@ def submit(params_dict):
     if mail_result:
         try:
             operations = [
-                DeleteMany({"email": form_data["email"], "survey": "20200505"}),
+                DeleteMany({"email": form_data["email"], "survey": "20200504"}),
                 InsertOne(pending_entry)
             ]
             pending_entries_collection.bulk_write(operations, ordered=True)
@@ -54,13 +54,13 @@ def submit(params_dict):
 
 def verify(verification_token):
     pending_entry = pending_entries_collection.find_one_and_delete(
-        {"verification_token": verification_token, "survey": "20200505"}
+        {"verification_token": verification_token, "survey": "20200504"}
     )
 
     if pending_entry is not None:
         del pending_entry["verification_token"]
         operations = [
-            DeleteMany({"email": pending_entry["email"], "survey": "20200505"}),
+            DeleteMany({"email": pending_entry["email"], "survey": "20200504"}),
             InsertOne(pending_entry)
         ]
         verified_entries_collection.bulk_write(operations)

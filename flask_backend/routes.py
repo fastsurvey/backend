@@ -10,7 +10,7 @@ from flask import request, redirect
 @app.route("/<survey_date>/submit", methods=["POST"])
 def backend_submit_form_data(survey_date):
 
-    if survey_date == "20200505":
+    if survey_date == "20200504":
         submit = survey_1_actions.submit
     else:
         return formatting.status("invalid survey"), 400
@@ -26,7 +26,7 @@ def backend_submit_form_data(survey_date):
 @app.route("/<survey_date>/verify/<verification_token>", methods=["GET"])
 def backend_verify_form_data(survey_date, verification_token):
 
-    if survey_date == "20200505":
+    if survey_date == "20200504":
         verify = survey_1_actions.verify
     else:
         return formatting.status("invalid survey")
