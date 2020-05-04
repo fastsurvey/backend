@@ -31,7 +31,8 @@ def submit(params_dict):
         email=form_data["email"],
         form_data=survey_1_format.generate_form_data(form_data),
         change_url=survey_1_format.generate_change_url(form_data),
-        verify_url=survey_1_format.generate_verify_url(verification_token)
+        verify_url=survey_1_format.generate_verify_url(verification_token),
+        survey_name="Semestersprecher Wahl SS20 6. FS"
     )
     if mail_result:
         try:

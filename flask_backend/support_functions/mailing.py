@@ -6,7 +6,9 @@ from sendgrid.helpers.mail import Mail, From, To, Subject, Content, MimeType, Re
 
 def send_email(
         email=None, form_data=None, change_url=None, verify_url=None,
-        reply_to="noreply-survey@mse.tum.de", reply_to_name="MSE Survey"):
+        reply_to="noreply-survey@mse.tum.de", reply_to_name="MSE Survey",
+        survey_name=None
+):
 
     if any([key is None for key in (email, form_data, change_url, verify_url)]):
         return False
@@ -21,6 +23,7 @@ def send_email(
     message.content = Content(
         MimeType.html,
         f'<h2>Daten erfolgreich übermittelt!</h2>' +
+        (f'<em>Umfrage: {survey_name}</em><br/>' if (survey_name is not None) else '') +
         f'<p>Wir haben folgende Daten von dir erhalten:</p>' + form_data + '<br/>' +
         f'<p>Dieser Eintrag wird erst gewertet, sobald du ihn bestätigt hast!</p>' +
         f'<p>Diese Daten <strong>bestätigen</strong>: <a href=\'{verify_url}\'>Bestätigungs-Link</a></p>' +
