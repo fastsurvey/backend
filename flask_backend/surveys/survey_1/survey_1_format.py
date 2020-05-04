@@ -15,7 +15,7 @@ def generate_change_url(form_data):
     return change_url
 
 def generate_verify_url(verification_token):
-    return f"{BACKEND_URL}verify/20200505/{verification_token}"
+    return f"{BACKEND_URL}20200505/verify/{verification_token}"
 
 
 if __name__ == "__main__":
