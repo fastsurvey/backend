@@ -11,6 +11,15 @@
     <br/>
 
     <input type="checkbox" disabled readonly style="display:inline;"
+            {% if election["ballweg"] %}
+                checked="checked"
+            {% endif %}
+    />
+    <p style="display:inline;">Jonas Ballweg</p>
+
+    <br/>
+
+    <input type="checkbox" disabled readonly style="display:inline;"
             {% if election["deniers"] %}
                 checked="checked"
             {% endif %}
@@ -25,14 +34,5 @@
             {% endif %}
     />
     <p style="display:inline;">Tobias Schmidt</p>
-
-    <br/>
-
-    <input type="checkbox" disabled readonly style="display:inline;"
-            {% if election["ballweg"] %}
-                checked="checked"
-            {% endif %}
-    />
-    <p style="display:inline;">Jonas Ballweg</p>
 
 </div>

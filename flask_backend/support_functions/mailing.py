@@ -21,11 +21,11 @@ def send_email(
     message.content = Content(
         MimeType.html,
         f'<h2>Daten erfolgreich übermittelt!</h2>' +
-        f'<p>Wir haben folgende Daten von dir erhalten:</p>' + form_data +
-        f'<br/><p>Dieser Eintrag wird erst gewertet, sobald du ihn bestätigt hast!</p>' +
+        f'<p>Wir haben folgende Daten von dir erhalten:</p>' + form_data + '<br/>' +
+        f'<p>Dieser Eintrag wird erst gewertet, sobald du ihn bestätigt hast!</p>' +
         f'<p>Diese Daten <strong>bestätigen</strong>: <a href=\'{verify_url}\'>Bestätigungs-Link</a></p>' +
         f'<p>Diese Daten <strong>ändern</strong>: <a href=\'{change_url}\'>Änderungs-Link</a></p><br/>' +
-        f'<br/><p>Falls du diese Mail nicht erwartet hast, dann kannst du sie einfach ignorieren.</p>' +
+        f'<p>Falls du diese Mail nicht erwartet hast, dann kannst du sie einfach ignorieren.</p>' +
         f'<p>Beste Grüße,<br/>Dein MINT-Team</p>'
     )
 
