@@ -13,20 +13,6 @@ from google.cloud import datastore
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
 
-
-if None in [os.getenv("MONGODB_WRITE_CONNECTION_STRING"), os.getenv("SENDGRID_API_KEY"), os.getenv("BACKEND_URL")]:
-    # If any of the required environment variables has not been set the we take them from secrets.py
-    print("LOCAL SECRETS")
-    from flask_backend.secrets import MONGODB_WRITE_CONNECTION_STRING, SENDGRID_API_KEY, BACKEND_URL
-else:
-    print("DATASTORE SECRETS")
-    MONGODB_WRITE_CONNECTION_STRING = os.getenv('MONGODB_WRITE_CONNECTION_STRING')
-    SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
-    BACKEND_URL = os.getenv('BACKEND_URL')
-
-
-# haven't configured datastore yet
-"""
 # We need this to access our environment variables in the gcloud datastore
 if os.getenv("ENVIRONMENT") != "production":
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "service-account.json"
@@ -40,11 +26,13 @@ MONGODB_WRITE_CONNECTION_STRING = os.getenv('MONGODB_WRITE_CONNECTION_STRING')
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
 BACKEND_URL = os.getenv('BACKEND_URL')
 FRONTEND_URL = os.getenv('FRONTEND_URL')
-"""
 
+"""
 if os.getenv("ENVIRONMENT") != "production":
     from flask_backend.secrets import MONGODB_WRITE_CONNECTION_STRING, SENDGRID_API_KEY, BACKEND_URL, FRONTEND_URL
+"""
 
+print(os.environ)
 
 # Connect to database and collections
 client = MongoClient(MONGODB_WRITE_CONNECTION_STRING)
