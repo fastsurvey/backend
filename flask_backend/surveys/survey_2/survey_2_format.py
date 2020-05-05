@@ -24,7 +24,7 @@ def generate_change_url(form_data):
         referat = electee.split('.')[0]
         name = electee.split('.')[1]
 
-        if name.split('.')[1] == "andere":
+        if name == "andere":
             # form_data['election'][referat]["andere"] is a string
             change_url += f"&{name}={form_data['election'][referat][name]}"
         else:
