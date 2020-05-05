@@ -40,7 +40,6 @@ def submit(params_dict):
     if mail_result:
         try:
             operations = [
-                DeleteMany({"email": form_data["email"].lower(), "survey": "20200504"}),
                 InsertOne(pending_entry)
             ]
             pending_entries_collection.bulk_write(operations, ordered=True)
@@ -53,7 +52,7 @@ def submit(params_dict):
 
 
 def verify(verification_token):
-    pending_entry = pending_entries_collection.find_one_and_delete(
+    pending_entry = pending_entries_collection.find(
         {"verification_token": verification_token, "survey": "20200504"}
     )
 
