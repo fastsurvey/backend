@@ -29,7 +29,7 @@ FRONTEND_URL = os.getenv('FRONTEND_URL')
 
 """
 if os.getenv("ENVIRONMENT") != "production":
-    from flask_backend.secrets import MONGODB_WRITE_CONNECTION_STRING, SENDGRID_API_KEY, BACKEND_URL, FRONTEND_URL
+    from admin.secrets import MONGODB_WRITE_CONNECTION_STRING, SENDGRID_API_KEY, BACKEND_URL, FRONTEND_URL
 """
 
 # print(os.environ)

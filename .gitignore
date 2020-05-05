@@ -1,7 +1,6 @@
 
 # Project stuff
 /venv
-/flask_backend/secrets.py
 /react_frontend
 
 service-account.json
@@ -10,7 +9,7 @@ service-account.json
 __pycache__
 
 .idea
-/flask_backend/admin_scripts
+/admin
 
 
 

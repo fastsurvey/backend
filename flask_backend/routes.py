@@ -12,10 +12,12 @@ def backend_status():
     try:
         pending_entries_collection.count_documents()
         verified_entries_collection.count_documents()
-    except:
-        return {"status": "all services operational"}, 200
 
-    return {"status": "database error"}, 200
+        # TODO: Add test for sending mails
+
+        return {"status": "all services operational"}, 200
+    except:
+        return {"status": "database error"}, 200
 
 
 @app.route("/<survey_date>/submit", methods=["POST"])
@@ -24,7 +26,7 @@ def backend_submit(survey_date):
     if survey_date == "20200504":
         submit = survey_1_actions.submit
     else:
-        return formatting.status("invalid survey"), 400
+        return formatting.status("survey invalid"), 400
 
     # Checking whether the survey is currently open
     time_limit_record = time_limits_collection.find_one({"survey_name": survey_date})
@@ -32,7 +34,7 @@ def backend_submit(survey_date):
         if not time_limit_record["is_active"]:
             # Only when one has specifically set the survey
             # offline it does not accept a submisisson
-            return formatting.status("survey is closed"), 400
+            return formatting.status("survey closed"), 400
 
     request_dict = request.get_json(force=True)
     print(request_dict)
@@ -48,7 +50,7 @@ def backend_verify(survey_date, verification_token):
     if survey_date == "20200504":
         verify = survey_1_actions.verify
     else:
-        return formatting.status("invalid survey")
+        return formatting.status("survey invalid")
 
     verify(verification_token)
     return redirect(f"{FRONTEND_URL}{survey_date}/success")
@@ -60,4 +62,4 @@ def backend_results(survey_date):
     if survey_date == "20200504":
         return survey_1_results.fetch()
     else:
-        return formatting.status("invalid survey")
+        return formatting.status("survey invalid"), 400
