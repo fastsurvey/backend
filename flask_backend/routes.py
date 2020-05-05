@@ -1,5 +1,5 @@
 
-from flask_backend import app, FRONTEND_URL, pending_entries_collection, verified_entries_collection
+from flask_backend import app, FRONTEND_URL, pending_entries_collection, verified_entries_collection, time_limits_collection
 from flask_backend.surveys.survey_1 import survey_1_actions, survey_1_results
 
 from flask_backend.support_functions import formatting
@@ -25,6 +25,14 @@ def backend_submit(survey_date):
         submit = survey_1_actions.submit
     else:
         return formatting.status("invalid survey"), 400
+
+    # Checking whether the survey is currently open
+    time_limit_record = time_limits_collection.find_one({"survey_name": survey_date})
+    if time_limit_record is not None:
+        if not time_limit_record["is_active"]:
+            # Only when one has specifically set the survey
+            # offline it does not accept a submisisson
+            return formatting.status("survey is closed"), 400
 
     request_dict = request.get_json(force=True)
     print(request_dict)

@@ -40,7 +40,7 @@ client = MongoClient(MONGODB_WRITE_CONNECTION_STRING)
 survey_database = client.get_database('survey_database')
 verified_entries_collection = survey_database['verified_entries']
 pending_entries_collection = survey_database['pending_entries']
-
+time_limits_collection = survey_database['time_limits']
 
 
 app = Flask(__name__)
