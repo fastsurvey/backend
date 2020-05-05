@@ -21,7 +21,7 @@ def submit(params_dict):
     form_data = params_dict["form_data"]
     verification_token = tokening.generate_random_key()
     pending_entry = {
-        "email": form_data["email"],
+        "email": form_data["email"].lower(),
         "election": form_data["election"],
         "verification_token": verification_token,
         "survey": "20200504",
@@ -29,7 +29,7 @@ def submit(params_dict):
     }
 
     mail_result = mailing.send_email(
-        email=form_data["email"],
+        email=form_data["email"].lower(),
         form_data=survey_1_format.generate_form_data(form_data),
         change_url=survey_1_format.generate_change_url(form_data),
         verify_url=survey_1_format.generate_verify_url(verification_token),
@@ -40,7 +40,7 @@ def submit(params_dict):
     if mail_result:
         try:
             operations = [
-                DeleteMany({"email": form_data["email"], "survey": "20200504"}),
+                DeleteMany({"email": form_data["email"].lower(), "survey": "20200504"}),
                 InsertOne(pending_entry)
             ]
             pending_entries_collection.bulk_write(operations, ordered=True)
