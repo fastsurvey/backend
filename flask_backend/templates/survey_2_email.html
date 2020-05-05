@@ -1,0 +1,78 @@
+
+<div>
+
+    <p>Erstsemester-Referat</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["erstsemester.koenigbaur"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Marie Königbaur</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["erstsemester.wernsdorfer"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Ruben Wernsdorfer</p><br/>
+    <p>Andere: "{{election["erstsemester.andere"]}}"</p>
+    <br/><br/>
+
+    <p>Veranstaltungs-Referat</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["veranstaltungen"]["ritter"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Alvaro Ritter</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["veranstaltungen"]["pro"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Daniel San José Pro</p><br/>
+    <p>Andere: "{{election["veranstaltungen"]["andere"]}}"</p>
+    <br/><br/>
+
+    <p>Skripten-Referat</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["skripte"]["lukasch"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Carolin Lukasch</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["skripte"]["limant"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Semyon Limant</p><br/>
+    <p>Andere: "{{election["skripte"]["andere"]}}"</p>
+    <br/><br/>
+
+    <p>Quantum-Referat</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["quantum"]["albrecht"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Lena Albrecht</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["quantum"]["roithmaier"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Tobias Roithmaier</p><br/>
+    <p>Andere: "{{election["quantum"]["andere"]}}"</p>
+    <br/><br/>
+
+    <p>Kooperationen-Referat</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["kooperationen"]["winckler"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Klara Winckler</p><br/>
+    <p>Andere: "{{election["kooperationen"]["andere"]}}"</p>
+    <br/><br/>
+
+    <p>IT-Referat</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["it"]["kalk"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Maximilian Kalk</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["it"]["sittig"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Malte Sittig</p><br/>
+    <p>Andere: "{{election["it"]["andere"]}}"</p>
+    <br/><br/>
+
+    <p>Evaluationen-Referat</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["evaluationen"]["reichelt"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Charlotte Reichelt</p><br/>
+    <p>Andere: "{{election["evaluationen"]["andere"]}}"</p>
+    <br/><br/>
+
+    <p>Hochschulpolitik-Referat</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["hochschulpolitik"]["armbruster"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Luis Armbruster</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["hochschulpolitik"]["paulus"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Jona Paulus</p><br/>
+    <p>Andere: "{{election["hochschulpolitik"]["andere"]}}"</p>
+    <br/><br/>
+
+    <p>Finanzen-Referat</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["finanzen"]["spicker"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Daniel Spicker</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["finanzen"]["schuh"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Anna Schuh</p><br/>
+    <p>Andere: "{{election["finanzen"]["andere"]}}"</p>
+    <br/><br/>
+
+    <p>PR-Referat</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["pr"]["werle"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Lara Werle</p><br/>
+    <p>Andere: "{{election["pr"]["andere"]}}"</p>
+    <br/><br/>
+
+</div>
