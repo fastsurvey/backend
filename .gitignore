@@ -10,7 +10,7 @@ service-account.json
 __pycache__
 
 .idea
-
+/flask_backend/admin_scripts
 
 
 

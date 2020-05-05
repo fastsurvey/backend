@@ -30,7 +30,7 @@ __pycache__/
 /flask_backend/secrets.py
 
 service-account.json
-
+/flask_backend/admin_scripts
 
 
 

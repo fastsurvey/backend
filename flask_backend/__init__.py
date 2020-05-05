@@ -32,7 +32,7 @@ if os.getenv("ENVIRONMENT") != "production":
     from flask_backend.secrets import MONGODB_WRITE_CONNECTION_STRING, SENDGRID_API_KEY, BACKEND_URL, FRONTEND_URL
 """
 
-print(os.environ)
+# print(os.environ)
 
 # Connect to database and collections
 client = MongoClient(MONGODB_WRITE_CONNECTION_STRING)
