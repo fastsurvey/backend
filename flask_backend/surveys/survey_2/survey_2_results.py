@@ -3,7 +3,7 @@ from flask_backend import verified_entries_collection
 from flask_backend.support_functions import formatting
 
 def fetch():
-    verified_records = list(verified_entries_collection.find({"survey": "fss-ss20-referate"}))
+    verified_records = list(verified_entries_collection.find({"survey": "fvv-ss20-referate"}))
 
     electees = ["albers", "ballweg", "deniers", "schmidt"]
     results = {}
@@ -51,7 +51,8 @@ def fetch():
             referat = electee.split('.')[0]
             name = electee.split('.')[1]
 
-            if name.split('.')[1] != "andere":
+            if name != "andere":
+                print(record)
                 results[referat][name] += 1 if record['election'][referat][name] else 0
 
             # TODO: Also count "andere" values

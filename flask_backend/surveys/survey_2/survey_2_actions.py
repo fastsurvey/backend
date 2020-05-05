@@ -50,7 +50,7 @@ def submit(params_dict):
 
 
 def verify(verification_token):
-    pending_entry = pending_entries_collection.find(
+    pending_entry = pending_entries_collection.find_one(
         {"verification_token": verification_token, "survey": "fvv-ss20-referate"}
     )
 
