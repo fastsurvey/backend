@@ -5,6 +5,7 @@ from flask_backend.support_functions import formatting
 def fetch():
     verified_records = list(verified_entries_collection.find({"survey": "fvv-ss20-leitung"}))
 
+    print(verified_records)
     results = {}
 
     for electee in [
