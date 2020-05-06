@@ -33,7 +33,7 @@ def submit(params_dict):
         form_data=survey_3_format.generate_form_data(form_data),
         change_url=survey_3_format.generate_change_url(form_data),
         verify_url=survey_3_format.generate_verify_url(verification_token),
-        survey_name="Abstimmung zur neuen Geschäftsordnung, FVV SS20, 06.05.2020",
+        survey_name="Abstimmung zur Geschäftsordnung der Fachschaft, FVV SS20, 06.05.2020",
     )
     if mail_result:
         try:
@@ -50,7 +50,7 @@ def submit(params_dict):
 
 
 def verify(verification_token):
-    pending_entry = pending_entries_collection.find(
+    pending_entry = pending_entries_collection.find_one(
         {"verification_token": verification_token, "survey": "fvv-ss20-go"}
     )
 
