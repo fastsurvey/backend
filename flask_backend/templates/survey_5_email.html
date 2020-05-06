@@ -1,0 +1,14 @@
+
+<div>
+
+    <br/>
+
+    <h4 style="display:inline;">Fachschaftleitung</h4><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["leitung"]["haver"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Pauline Haver</p><br/>
+    <input type="checkbox" disabled readonly style="display:inline;" {% if election["leitung"]["anhalt"] %}checked="checked"{% endif %}/>
+    <p style="display:inline;">Aaron Anhalt</p><br/>
+    <p style="display:inline;">Andere: {{election["erstsemester"]["andere"]}}</p>
+    <br/><br/>
+
+</div>
