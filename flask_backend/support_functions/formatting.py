@@ -68,3 +68,10 @@ def comma_text_to_list(text):
     text = strip_comma_text(text)
     names_list = [strip_comma_text(entry) for entry in text.split(",")]
     return list(filter(lambda x: x != "", names_list))
+
+def uniquelify_list(old_list):
+    new_list = []
+    for element in old_list:
+        if element not in new_list:
+            new_list.append(element)
+    return new_list

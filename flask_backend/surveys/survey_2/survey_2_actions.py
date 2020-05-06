@@ -26,6 +26,7 @@ def submit(params_dict):
     for key in election_data:
         names_string = election_data[key]["andere"]
         names_list = formatting.comma_text_to_list(names_string)
+        names_list = formatting.uniquelify_list(names_list)
         election_data[key]["andere"] = names_list
 
     pending_entry = {

@@ -27,7 +27,7 @@ def fetch():
             results[referat] = {}
 
         if name == "andere":
-            results[referat][name] = []
+            results[referat][name] = {}
         else:
             results[referat][name] = 0
 
@@ -51,9 +51,14 @@ def fetch():
             referat = electee.split('.')[0]
             name = electee.split('.')[1]
 
-            if name != "andere":
+            if name == "andere":
+                # List already made unique
+                andere_list = record['election'][referat]["andere"]
+                for andere in andere_list:
+                    if andere not in results[referat]["andere"]:
+                        results[referat]["andere"][andere] = 0
+                    results[referat]["andere"][andere] += 1
+            else:
                 results[referat][name] += 1 if record['election'][referat][name] else 0
-
-            # TODO: Also count "andere" values
 
     return formatting.status("ok", results=results)
