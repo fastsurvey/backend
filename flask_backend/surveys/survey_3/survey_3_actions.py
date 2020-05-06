@@ -2,8 +2,8 @@
 
 from flask_backend import pending_entries_collection, verified_entries_collection
 from flask_backend.support_functions import formatting, mailing, tokening, timing
-from flask_backend.surveys.survey_1.survey_1_validate import validate
-from flask_backend.surveys.survey_1 import survey_1_format
+from flask_backend.surveys.survey_3.survey_3_validate import validate
+from flask_backend.surveys.survey_3 import survey_3_format
 
 from pymongo import DeleteMany, InsertOne
 
@@ -30,9 +30,9 @@ def submit(params_dict):
 
     mail_result = mailing.send_email(
         email=form_data["email"].lower(),
-        form_data=survey_1_format.generate_form_data(form_data),
-        change_url=survey_1_format.generate_change_url(form_data),
-        verify_url=survey_1_format.generate_verify_url(verification_token),
+        form_data=survey_3_format.generate_form_data(form_data),
+        change_url=survey_3_format.generate_change_url(form_data),
+        verify_url=survey_3_format.generate_verify_url(verification_token),
         survey_name="Abstimmung zur neuen Geschäftsordnung, FVV SS20, 06.05.2020",
     )
     if mail_result:

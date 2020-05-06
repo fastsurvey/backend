@@ -39,10 +39,10 @@ def check_email(field, email_string, error):
 def check_election(field, election_dict, error):
     election_count = 0
 
-    for key in ['ja', 'nein', 'enhaltung']:
+    for key in ['ja', 'nein', 'enthaltung']:
         election_count += 1 if election_dict[key] else 0
 
-    if (election_count == 1):
+    if (election_count != 1):
         error(field, 'select at exactly 1 option')
 
 
