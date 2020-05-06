@@ -20,9 +20,17 @@ def submit(params_dict):
 
     form_data = params_dict["form_data"]
     verification_token = tokening.generate_random_key()
+
+    election_data = form_data["election"]
+
+    for key in election_data:
+        names_string = election_data[key]["andere"]
+        names_list = formatting.comma_text_to_list(names_string)
+        election_data[key]["andere"] = names_list
+
     pending_entry = {
         "email": form_data["email"].lower(),
-        "election": form_data["election"],
+        "election": election_data,
         "verification_token": verification_token,
         "survey": "fvv-ss20-referate",
         "timestamp": timing.get_current_time()
