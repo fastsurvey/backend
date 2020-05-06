@@ -37,20 +37,16 @@ def check_email(field, email_string, error):
 
 
 def check_election(field, election_dict, error):
-
     election_count = 0
 
-    for name in ['albers', 'deniers', 'schmidt', 'ballweg']:
-        election_count += 1 if election_dict[name] else 0
+    for key in ['ja', 'nein', 'enhaltung']:
+        election_count += 1 if election_dict[key] else 0
 
-    if (election_count == 0):
-        error(field, 'select at least 1 candidate')
-
-    if (election_count == 4):
-        error(field, 'select at most 3 candidates')
+    if (election_count == 1):
+        error(field, 'select at exactly 1 option')
 
 
-survey_1_schema = {
+survey_3_schema = {
     'email': {
         'type': 'string',
         'required': True,
@@ -60,77 +56,22 @@ survey_1_schema = {
         'type': 'dict',
         'required': True,
         'schema': {
-            'albers': {'type': 'boolean', 'required': True},
-            'deniers': {'type': 'boolean', 'required': True},
-            'schmidt': {'type': 'boolean', 'required': True},
-            'ballweg': {'type': 'boolean', 'required': True},
+            'ja': {'type': 'boolean', 'required': True},
+            'nein': {'type': 'boolean', 'required': True},
+            'enthaltung': {'type': 'boolean', 'required': True},
         },
         'check_with': check_election,
     },
 }
 
 
-survey_1_validator = Validator(survey_1_schema)
+survey_3_validator = Validator(survey_3_schema)
 
 def validate(params_dict):
     if "form_data" not in params_dict:
         return formatting.status("form_data missing", status_code=500)
 
-    if survey_1_validator.validate(params_dict["form_data"]):
+    if survey_3_validator.validate(params_dict["form_data"]):
         return formatting.status('ok')
     else:
-        return formatting.status('validation error', errors=survey_1_validator.errors, status_code=400)
-
-
-if __name__ == "__main__":
-
-    example_1 = {
-        'form_data': {
-            'email': 'abcdefg@mytu.de',
-            'election': {
-                'albers': True,
-                'deniers': True,
-                'schmidt': True,
-                'ballweg': True,
-            }
-        }
-    }
-
-    example_2 = {
-        'form_data': {
-            'email': 'dd@mytum.d',
-            'election': {
-                'albers': True,
-                'deniers': True,
-                'schmidt': True,
-                'ballweg': False,
-            }
-        }
-    }
-
-    example_3 = {
-        'form_data': {
-            'email': 'f@mytum.de',
-            'election': {
-                'albers': True,
-                'deniers': True,
-                'schmidt': False,
-                'ballweg': False,
-            }
-        }
-    }
-
-    example_4 = {
-        'form_data': {
-            'email': 'abcdefg@mytum.de',
-            'election': {
-                'albers': False,
-                'deniers': False,
-                'schmidt': False,
-                'ballweg': False,
-            }
-        }
-    }
-
-    for example in [example_1, example_2, example_3, example_4]:
-        print(validate(example))
+        return formatting.status('validation error', errors=survey_3_validator.errors, status_code=400)
