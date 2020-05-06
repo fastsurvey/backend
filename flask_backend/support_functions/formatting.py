@@ -52,3 +52,19 @@ def postprocess_json_encoding(struct):
 
 
 server_error_helper_record = status('server error', details='helper record not found after successful authentication')
+
+
+def strip_comma_text(text):
+    if len(text) == 0:
+        return text
+    elif text[0] in (" ", ","):
+        return strip_comma_text(text[1:])
+    elif text[-1] in (" ", ","):
+        return strip_comma_text(text[:-1])
+    else:
+        return text
+
+def comma_text_to_list(text):
+    text = strip_comma_text(text)
+    names_list = [strip_comma_text(entry) for entry in text.split(",")]
+    return list(filter(lambda x: x != "", names_list))

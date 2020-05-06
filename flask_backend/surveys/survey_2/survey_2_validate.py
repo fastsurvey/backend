@@ -38,6 +38,9 @@ def check_election(field, election_dict, error, max_votes):
     for key in election_dict:
         if key != "andere":
             election_count += 1 if election_dict[key] else 0
+        else:
+            names_list = formatting.comma_text_to_list(election_dict["andere"])
+            election_count += len(names_list)
 
     if (election_count > max_votes):
         error(field, f'select at most {max_votes} candidates')
