@@ -52,7 +52,6 @@ def fetch():
             name = electee.split('.')[1]
 
             if name != "andere":
-                print(record)
                 results[referat][name] += 1 if record['election'][referat][name] else 0
 
             # TODO: Also count "andere" values
