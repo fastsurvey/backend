@@ -3,6 +3,7 @@ from flask_backend import app, FRONTEND_URL, pending_entries_collection, verifie
 from flask_backend.surveys.survey_1 import survey_1_actions, survey_1_results
 from flask_backend.surveys.survey_2 import survey_2_actions, survey_2_results
 from flask_backend.surveys.survey_3 import survey_3_actions, survey_3_results
+from flask_backend.surveys.survey_4 import survey_4_actions, survey_4_results
 
 from flask_backend.support_functions import formatting
 
@@ -29,6 +30,8 @@ def backend_submit(survey_name):
         submit = survey_2_actions.submit
     elif survey_name == "fvv-ss20-go":
         submit = survey_3_actions.submit
+    elif survey_name == "fvv-ss20-leitung":
+        submit = survey_4_actions.submit
     else:
         return formatting.status("survey invalid"), 400
 
@@ -57,6 +60,8 @@ def backend_verify(survey_name, verification_token):
         verify = survey_2_actions.verify
     elif survey_name == "fvv-ss20-go":
         verify = survey_3_actions.verify
+    elif survey_name == "fvv-ss20-leitung":
+        verify = survey_4_actions.verify
     else:
         return formatting.status("survey invalid"), 400
 
@@ -72,6 +77,8 @@ def backend_results(survey_name):
     elif survey_name == "fvv-ss20-referate":
         fetch = survey_2_results.fetch
     elif survey_name == "fvv-ss20-go":
+        fetch = survey_3_results.fetch
+    elif survey_name == "fvv-ss20-leitung":
         fetch = survey_3_results.fetch
     else:
         return formatting.status("survey invalid"), 400
