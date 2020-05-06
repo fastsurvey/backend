@@ -24,7 +24,7 @@ def submit(params_dict):
         "email": form_data["email"].lower(),
         "election": form_data["election"],
         "verification_token": verification_token,
-        "survey": "20200504",
+        "survey": "fvv-ss20-go",
         "timestamp": timing.get_current_time()
     }
 
@@ -33,9 +33,7 @@ def submit(params_dict):
         form_data=survey_1_format.generate_form_data(form_data),
         change_url=survey_1_format.generate_change_url(form_data),
         verify_url=survey_1_format.generate_verify_url(verification_token),
-        survey_name="Semestersprecher-Wahl, 6. Fachsemester, 04.05.2020",
-        reply_to_email="engineering.2017@fs.mse.tum.de",
-        reply_to_name="Semestersprecher JG17",
+        survey_name="Abstimmung zur neuen Geschäftsordnung, FVV SS20, 06.05.2020",
     )
     if mail_result:
         try:
@@ -53,13 +51,13 @@ def submit(params_dict):
 
 def verify(verification_token):
     pending_entry = pending_entries_collection.find(
-        {"verification_token": verification_token, "survey": "20200504"}
+        {"verification_token": verification_token, "survey": "fvv-ss20-go"}
     )
 
     if pending_entry is not None:
         del pending_entry["verification_token"]
         operations = [
-            DeleteMany({"email": pending_entry["email"], "survey": "20200504"}),
+            DeleteMany({"email": pending_entry["email"], "survey": "fvv-ss20-go"}),
             InsertOne(pending_entry)
         ]
         verified_entries_collection.bulk_write(operations, ordered=True)
