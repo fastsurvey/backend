@@ -4,9 +4,12 @@ from fastapi import FastAPI, Path
 from enum import Enum 
 from starlette.responses import RedirectResponse
 
+from . import credentials
 
-FURL = os.getenv('FRONTEND_URL')  # frontend url
-BURL = os.getenv('BACKEND_URL')  # backend url
+
+MDBCSTR = credentials.MDB_CONNECTION_STRING
+FURL = credentials.FRONTEND_URL
+BURL = credentials.BACKEND_URL
 
 
 # create fastapi app
