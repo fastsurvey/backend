@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI, Path
 from enum import Enum 
 from starlette.responses import RedirectResponse
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from . import credentials
 
@@ -14,6 +15,10 @@ BURL = credentials.BACKEND_URL
 
 # create fastapi app
 app = FastAPI()
+
+# connect to mongodb via motor
+client = AsyncIOMotorClient(MDBCSTR)
+db = client['survey_database']
 
 
 class SurveyName(str, Enum):
@@ -27,10 +32,12 @@ class SurveyName(str, Enum):
 async def status():
     """Verify if database and mailing service are operational"""
     try:
-        # TODO test if services are operational
-        return {'status': 'all services operational'}
+        await client.server_info()
+        # TODO add test for sending emails
     except:
         return {'status': 'database error'}
+    else:
+        return {'status': 'all services operational'}
 
 
 @app.post('/{survey}/submit')
