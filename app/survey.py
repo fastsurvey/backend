@@ -7,11 +7,11 @@ class Survey(ABC):
     def __init__(
             self,
             identifier,
-            description,
+            title,
             database,
     ):
         self.id = identifier
-        self.description = description
+        self.title = title
         self.db = database
 
     @abstractmethod
@@ -48,27 +48,32 @@ class Survey(ABC):
             await self.db['verified_entries'].bulk_write(requests, ordered=True)
 
     @abstractmethod
-    async def results(self):
+    async def fetch(self):
+        """Fetch and process the survey results"""
         pass
 
 
-class SingleChoiceSurvey(Survey):
+class ChoiceSurvey(Survey):
     
     def __init__(
             self,
             identifier,
-            description,
+            title,
             database,
-            choices,
     ):
-        Survey.__init__(self, identifier, description, database)
-        self.choices = choices
-    
+        Survey.__init__(self, identifier, title, database)
+        # TODO add attributes as needed
+
     async def validate(self):
         print('Submission validated!')
 
     async def submit(self):
         print('Submission received successfully!')
 
-    async def results(self):
-        print(f'Results: {self.choices[0]}: 60% vs. {self.choices[1]}: 40%!')
+    async def fetch(self):
+        submissions = self.db['verified_entries'].find({'survey': self.id})
+        results = {}
+        async for sm in submissions:
+            for choice, answer in sm['election'].items():
+                results[choice] = results.get(choice, 0) + answer
+        return results

@@ -23,14 +23,18 @@ db = client['survey_database']
 
 # list all the surveys here
 surveys = [
-    survey.SingleChoiceSurvey(
+    survey.ChoiceSurvey(
         identifier='test-survey',
-        description='This survey tests the functionality of the backend',
+        title='This is a survey to test the functionality of the backend',
         database=db,
-        choices=['A', 'B', 'C'],
-    )
+    ),
+    survey.ChoiceSurvey(
+        identifier='fvv-ss20-go',
+        title='Abstimmung zur Geschäftsordnung der Fachschaft',
+        database=db,
+    ),
 ]
-surveys = {s.id: s for s in surveys}
+surveys = {sv.id: sv for sv in surveys}
 SurveyName = Enum('SurveyName', {k: k for k in surveys.keys()}, type=str)
 
 
@@ -55,7 +59,7 @@ async def submit(
     ):
     """Validate submission and store it under unverified submissions"""
     # TODO
-    # return surveys[survey].submit()
+    # return await surveys[survey].submit()
     pass
 
 
@@ -71,8 +75,8 @@ async def verify(
         ),
     ):
     """Verify user token and either fail or redirect to success page"""
-    # TODO check if verfication was successful or not and page accordingly?
-    surveys[survey].verify(token)
+    # TODO check if verfication was successful or not and redirect accordingly?
+    await surveys[survey].verify(token)
     return RedirectResponse(f'{FURL}/{survey}/success')
 
 
@@ -84,4 +88,4 @@ async def results(
         ),
     ):
     """Fetch the results of the given survey"""
-    return surveys[survey].results()
+    return await surveys[survey].fetch()
