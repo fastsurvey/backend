@@ -6,6 +6,7 @@ from starlette.responses import RedirectResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from . import credentials
+from . import survey
 
 
 MDBCSTR = credentials.MDB_CONNECTION_STRING
@@ -20,17 +21,22 @@ app = FastAPI()
 client = AsyncIOMotorClient(MDBCSTR)
 db = client['survey_database']
 
-
-class SurveyName(str, Enum):
-    s1 = '20200504'
-    s2 = 'fvv-ss20-referate'
-    s3 = 'fvv-ss20-go'
-    s4 = 'fvv-ss20-leitung'
+# list all the surveys here
+surveys = [
+    survey.SingleChoiceSurvey(
+        identifier='test-survey',
+        description='This survey tests the functionality of the backend',
+        database=db,
+        choices=['A', 'B', 'C'],
+    )
+]
+surveys = {s.id: s for s in surveys}
+SurveyName = Enum('SurveyName', {k: k for k in surveys.keys()}, type=str)
 
 
 @app.get('/')
 async def status():
-    """Verify if database and mailing service are operational"""
+    """Verify if database and mailing services are operational"""
     try:
         await client.server_info()
         # TODO add test for sending emails
@@ -47,8 +53,9 @@ async def submit(
             description='The identification tag of the survey',
         ),
     ):
-    """Check if requested survey is open and submit choice for verification"""
-    # TODO check if survey is open and submit or fail
+    """Validate submission and store it under unverified submissions"""
+    # TODO
+    # return surveys[survey].submit()
     pass
 
 
@@ -64,12 +71,17 @@ async def verify(
         ),
     ):
     """Verify user token and either fail or redirect to success page"""
-    # TODO verify token and redirect or fail
+    # TODO check if verfication was successful or not and page accordingly?
+    surveys[survey].verify(token)
     return RedirectResponse(f'{FURL}/{survey}/success')
 
 
 @app.get('/{survey}/results')
-async def results():
-    """Fetch and return the survey results from database"""
-    # TODO fetch results
-    pass
+async def results(
+        survey: SurveyName = Path(
+            ...,
+            description='The identification tag of the survey',
+        ),
+    ):
+    """Fetch the results of the given survey"""
+    return surveys[survey].results()
