@@ -1,43 +1,53 @@
-from abc import ABC, abstractmethod
 from pymongo import DeleteMany, InsertOne
 
 
-class Survey(ABC):
-    
+class Survey:
+    """The survey class that all surveys instantiate."""
+
     def __init__(
             self,
             identifier,
-            title,
             database,
+            schema,
     ):
         self.id = identifier
-        self.title = title
         self.db = database
+        self.start = schema['start']
+        self.end = schema['end']
+        self.properties = schema['properties']
 
-    @abstractmethod
-    async def validate(self, submission):
+    @staticmethod
+    def _validate_email(submission):
+        """Validate the correct format of the mytum email."""
+        if 'email' in submission and isinstance(submission['email'], str):
+            parts = submission['email'].split('@')
+            if len(parts) == 2:
+                name, domain = parts
+                if len(name) == 7 and domain == 'mytum.de':
+                    return True
+        return False
+
+    def _validate_properties(self, submission):
+        """Validate the property choices of the submission."""
+        return False
+
+    def validate(self, submission):
         """Validate the correct format of a user submission."""
-        pass
+        print('Submission validated successfully!')
 
-    @abstractmethod
     async def submit(self, submission):
-        """Receive a user submission and save it in the pending entries
-        collection to be verified.
-
-        """
-        pass
+        """Save a user submission in pending entries for verification."""
+        self.validate(submission)
+        print('Submission received successfully!')
 
     async def verify(self, token):
-        """Verify user submission by searching the corresponding user entry in 
-        the pending entries collection and moving it to verified entries.
-
-        """
-        pending = await self.db['pending_entries'].find_one({
-            'verification_token': token,
+        """Verify user submission and move from it from pending to verified."""
+        pending = await self.db['entries'].find_one({
+            'token': token,
             'survey': self.id,
         })
         if pending is not None:
-            del pending['verification_token']
+            del pending['token']
             requests = [
                 DeleteMany({
                     'email': pending['email'], 
@@ -45,35 +55,39 @@ class Survey(ABC):
                 }),
                 InsertOne(pending),
             ]
-            await self.db['verified_entries'].bulk_write(requests, ordered=True)
-
-    @abstractmethod
-    async def fetch(self):
-        """Fetch and process the survey results"""
-        pass
-
-
-class ChoiceSurvey(Survey):
-    
-    def __init__(
-            self,
-            identifier,
-            title,
-            database,
-    ):
-        Survey.__init__(self, identifier, title, database)
-        # TODO add attributes as needed
-
-    async def validate(self):
-        print('Submission validated!')
-
-    async def submit(self):
-        print('Submission received successfully!')
+            await self.db['verified'].bulk_write(requests, ordered=True)
 
     async def fetch(self):
-        submissions = self.db['verified_entries'].find({'survey': self.id})
+        """Fetch and process the survey results."""
+        submissions = self.db['verified'].find({'survey': self.id})
         results = {}
-        async for sm in submissions:
-            for choice, answer in sm['election'].items():
-                results[choice] = results.get(choice, 0) + answer
+        async for sub in submissions:
+            for pro in sub['properties'].keys():
+                for option, choice in sub['properties'][pro]:
+                    # TODO works only for boolean values
+                    results[option] = results.get(option, 0) + choice
         return results
+
+
+if __name__ == "__main__":
+
+    st = [
+        {'email': '123adsb@mytum.de'},
+        {'email': '8383939@mytum.de'},
+        {'email': 'FFFFFFF@mytum.de'},
+    ]
+    sf = [
+        {},
+        {'email': 'sadfj'},
+        {'email': 12},
+        {'email': 'a123ad@mytum.de'},
+        {'email': 'a123ads@gmail.com'},
+        {'email': '123@mytum.de@mytum.de'},
+        {'email': None},
+        {'emeeeeeel': '123adsb@mytum.de'},
+    ]
+
+    for s in st: 
+        assert Survey._validate_email(s)
+    for s in sf: 
+        assert not Survey._validate_email(s)
