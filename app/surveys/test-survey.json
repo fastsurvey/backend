@@ -1,0 +1,16 @@
+{   
+    "title": "Survey to test backend functionality",
+    "description": "...",
+    "start": "some date and time",
+    "end": "some date and time",
+    "properties": {
+        "erstsemester": {
+            "options": {
+                "yes": {"type": "boolean"},
+                "no": {"type": "boolean"},
+            }
+        },
+        "min_select": 1,
+        "max_select": 1
+    }
+}

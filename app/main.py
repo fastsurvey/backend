@@ -1,12 +1,13 @@
 import os
+import json
 
 from fastapi import FastAPI, Path
 from enum import Enum 
 from starlette.responses import RedirectResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from . import credentials
-from . import survey
+import credentials
+import survey
 
 
 MDBCSTR = credentials.MDB_CONNECTION_STRING
@@ -21,19 +22,17 @@ app = FastAPI()
 client = AsyncIOMotorClient(MDBCSTR)
 db = client['survey_database']
 
-# list all the surveys here
-surveys = [
-    survey.ChoiceSurvey(
-        identifier='test-survey',
-        title='This is a survey to test the functionality of the backend',
-        database=db,
-    ),
-    survey.ChoiceSurvey(
-        identifier='fvv-ss20-go',
-        title='Abstimmung zur Geschäftsordnung der Fachschaft',
-        database=db,
-    ),
-]
+# read in survey files
+surveys = []
+for path in os.listdir('surveys'):
+    with open(os.path.join('surveys', path), 'r') as schema:
+        surveys.append(
+            survey.Survey(
+                identifier=path[:-5],
+                database=db,
+                schema=json.load(schema),
+            )
+        )
 surveys = {sv.id: sv for sv in surveys}
 SurveyName = Enum('SurveyName', {k: k for k in surveys.keys()}, type=str)
 

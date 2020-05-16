@@ -1,0 +1,17 @@
+{   
+    "title": "Abstimmung zur Geschäftsordnung der Fachschaft",
+    "description": "...",
+    "start": "some date and time",
+    "end": "some date and time",
+    "properties": {
+        "erstsemester": {
+            "options": {
+                "ja": {"type": "boolean"},
+                "nein": {"type": "boolean"},
+                "enthaltung": {"type": "boolean"}
+            },
+            "min_select": 1,
+            "max_select": 1
+        }
+    }
+}
