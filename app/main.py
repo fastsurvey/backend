@@ -6,8 +6,8 @@ from enum import Enum
 from starlette.responses import RedirectResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 
-import credentials
-import survey
+from . import credentials
+from . import survey
 
 
 MDBCSTR = credentials.MDB_CONNECTION_STRING
@@ -20,20 +20,24 @@ app = FastAPI()
 
 # connect to mongodb via motor
 client = AsyncIOMotorClient(MDBCSTR)
-db = client['survey_database']
+db = client['async_survey_database']
 
 # read in survey files
-surveys = []
-for path in os.listdir('surveys'):
-    with open(os.path.join('surveys', path), 'r') as schema:
-        surveys.append(
-            survey.Survey(
-                identifier=path[:-5],
-                database=db,
-                schema=json.load(schema),
+def create_surveys(db):
+    surveys = []
+    folder = os.path.join(os.path.dirname(__file__), 'surveys')
+    for path in os.listdir(folder):
+        with open(os.path.join(folder, path), 'r') as schema:
+            surveys.append(
+                survey.Survey(
+                    identifier=path[:-5],
+                    database=db,
+                    schema=json.load(schema),
+                )
             )
-        )
-surveys = {sv.id: sv for sv in surveys}
+    return {sv.id: sv for sv in surveys}
+
+surveys = create_surveys(db)
 SurveyName = Enum('SurveyName', {k: k for k in surveys.keys()}, type=str)
 
 
