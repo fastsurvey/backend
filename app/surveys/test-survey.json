@@ -7,7 +7,7 @@
         "erstsemester": {
             "options": {
                 "yes": {"type": "boolean"},
-                "no": {"type": "boolean"},
+                "no": {"type": "boolean"}
             }
         },
         "min_select": 1,
