@@ -1,16 +1,61 @@
-{   
+{
+    "survey": "test-survey",
+    "email": "wr56edk@mytum.de",
+    "token": "89375ljhdf982375sadjkfhpq329857dalkfjh2q3875",
+    "timestamp": 1589805220,
+    "properties": {
+        "election": {
+            "felix": true,
+            "moritz": true,
+            "andere": ""
+        },
+        "reason": "This is my very good reason"
+    }
+}
+
+{
     "title": "Survey to test backend functionality",
     "description": "...",
-    "start": "some date and time",
-    "end": "some date and time",
-    "properties": {
-        "erstsemester": {
-            "options": {
-                "yes": {"type": "boolean"},
-                "no": {"type": "boolean"}
+    "start": 1589805200,
+    "end": 1989805200,
+    "properties": [
+        {
+            "identifier": "election",
+            "description": "Who will be the next president?",
+            "type": "Selection",
+            "properties": {
+                "min": 0,
+                "max": 2,
+                "options": [
+                    {
+                        "identifier": "felix",
+                        "description": "Felix Böhm",
+                        "type": "YesNo"
+                    },
+                    {
+                        "identifier": "moritz",
+                        "description": "Moritz Makowski",
+                        "type": "YesNo"
+                    },
+                    {
+                        "identifier": "andere",
+                        "description": "Andere",
+                        "type": "DelimiterList",
+                        "parameters": {
+                            "delimiter": [","]
+                        }
+                    }
+                ]
             }
         },
-        "min_select": 1,
-        "max_select": 1
-    }
+        {
+            "identifier": "reason",
+            "label": "The reason for your choice",
+            "type": "Text",
+            "properties": {
+                "min_chars": 10,
+                "max_chars": 100
+            }
+        }
+    ]
 }
