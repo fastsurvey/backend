@@ -17,8 +17,8 @@ MDBCSTR = credentials.MDB_CONNECTION_STRING
 app = FastAPI()
 
 # connect to mongodb via motor
-client = AsyncIOMotorClient(MDBCSTR)
-db = client['async_survey_database']
+motor_client = AsyncIOMotorClient(MDBCSTR)
+db = motor_client['async_survey_database']
 
 
 def create_surveys(db):
@@ -46,7 +46,7 @@ SurveyName = Enum('SurveyName', {k: k for k in surveys.keys()}, type=str)
 async def status():
     """Verify if database and mailing services are operational"""
     try:
-        await client.server_info()
+        await motor_client.server_info()
         # TODO add test for sending emails
     except:
         return {'status': 'database error'}
