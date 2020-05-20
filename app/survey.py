@@ -1,8 +1,11 @@
+import secrets
+import time
+
 from pymongo import DeleteMany, InsertOne
 from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 
-from . import credentials
+import credentials
 
 
 FURL = credentials.FRONTEND_URL
@@ -23,7 +26,7 @@ class Survey:
         self.end = schema['end']
         self.properties = schema['properties']
     
-    async def _validate_email(self, email):
+    def _validate_email(self, email):
         """Validate the correct format of the mytum email."""
         parts = email.split('@')
         if len(parts) != 2:
@@ -32,15 +35,22 @@ class Survey:
         if len(name) != 7 or not name.isalnum() or domain != 'mytum.de':
             raise HTTPException(400, 'not a valid mytum email address')
 
-    async def _validate_properties(self, properties):
+    def _validate_properties(self, properties):
         """Validate the property form and choice of the submission."""
         pass
     
     async def submit(self, submission):
         """Save a user submission in pending entries for verification."""
-        self._validate_email(submission['email'])
-        self._validate_properties(submission['properties'])
-        print('Submission received successfully!')
+        self._validate_email(submission.email)
+        self._validate_properties(submission.properties)
+        # TODO send verification email
+        await self.db['pending'].insert_one({
+            'survey': self.id,
+            'email': submission.email,
+            'timestamp': int(time.time()),
+            'token': secrets.token_hex(32),
+            'properties': submission.properties,
+        })
 
     async def verify(self, token):
         """Verify user submission and move from it from pending to verified."""

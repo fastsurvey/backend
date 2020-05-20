@@ -6,8 +6,8 @@ from enum import Enum
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field
 
-from . import credentials
-from . import survey
+import credentials
+import survey
 
 
 MDBCSTR = credentials.MDB_CONNECTION_STRING

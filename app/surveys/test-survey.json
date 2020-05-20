@@ -1,19 +1,4 @@
 {
-    "survey": "test-survey",
-    "email": "wr56edk@mytum.de",
-    "token": "89375ljhdf982375sadjkfhpq329857dalkfjh2q3875",
-    "timestamp": 1589805220,
-    "properties": {
-        "election": {
-            "felix": true,
-            "moritz": true,
-            "andere": ""
-        },
-        "reason": "This is my very good reason"
-    }
-}
-
-{
     "title": "Survey to test backend functionality",
     "description": "...",
     "start": 1589805200,
