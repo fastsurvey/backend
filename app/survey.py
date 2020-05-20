@@ -1,4 +1,11 @@
 from pymongo import DeleteMany, InsertOne
+from fastapi import HTTPException
+from starlette.responses import RedirectResponse
+
+from . import credentials
+
+
+FURL = credentials.FRONTEND_URL
 
 
 class Survey:
@@ -15,47 +22,44 @@ class Survey:
         self.start = schema['start']
         self.end = schema['end']
         self.properties = schema['properties']
-
-    @staticmethod
-    def _validate_email(submission):
+    
+    async def _validate_email(self, email):
         """Validate the correct format of the mytum email."""
-        if 'email' in submission and isinstance(submission['email'], str):
-            parts = submission['email'].split('@')
-            if len(parts) == 2:
-                name, domain = parts
-                if len(name) == 7 and domain == 'mytum.de':
-                    return True
-        return False
+        parts = email.split('@')
+        if len(parts) != 2:
+            raise HTTPException(400, 'not an email address')
+        name, domain = parts
+        if len(name) != 7 or not name.isalnum() or domain != 'mytum.de':
+            raise HTTPException(400, 'not a valid mytum email address')
 
-    def _validate_properties(self, submission):
-        """Validate the property choices of the submission."""
-        return False
-
-    def validate(self, submission):
-        """Validate the correct format of a user submission."""
-        print('Submission validated successfully!')
-
+    async def _validate_properties(self, properties):
+        """Validate the property form and choice of the submission."""
+        pass
+    
     async def submit(self, submission):
         """Save a user submission in pending entries for verification."""
-        self.validate(submission)
+        self._validate_email(submission['email'])
+        self._validate_properties(submission['properties'])
         print('Submission received successfully!')
 
     async def verify(self, token):
         """Verify user submission and move from it from pending to verified."""
-        pending = await self.db['entries'].find_one({
-            'token': token,
+        pending = await self.db['pending'].find_one({
             'survey': self.id,
+            'token': token,
         })
-        if pending is not None:
-            del pending['token']
-            requests = [
-                DeleteMany({
-                    'email': pending['email'], 
-                    'survey': self.id,
-                }),
-                InsertOne(pending),
-            ]
-            await self.db['verified'].bulk_write(requests, ordered=True)
+        if pending is None:
+            raise HTTPException(401, 'invalid token')
+        del pending['token']
+        requests = [
+            DeleteMany({
+                'email': pending['email'], 
+                'survey': self.id,
+            }),
+            InsertOne(pending),
+        ]
+        await self.db['verified'].bulk_write(requests, ordered=True)
+        return RedirectResponse(f'{FURL}/{self.id}/success')
 
     async def fetch(self):
         """Fetch and process the survey results."""
@@ -67,27 +71,3 @@ class Survey:
                     # TODO works only for boolean values
                     results[option] = results.get(option, 0) + choice
         return results
-
-
-if __name__ == "__main__":
-
-    st = [
-        {'email': '123adsb@mytum.de'},
-        {'email': '8383939@mytum.de'},
-        {'email': 'FFFFFFF@mytum.de'},
-    ]
-    sf = [
-        {},
-        {'email': 'sadfj'},
-        {'email': 12},
-        {'email': 'a123ad@mytum.de'},
-        {'email': 'a123ads@gmail.com'},
-        {'email': '123@mytum.de@mytum.de'},
-        {'email': None},
-        {'emeeeeeel': '123adsb@mytum.de'},
-    ]
-
-    for s in st: 
-        assert Survey._validate_email(s)
-    for s in sf: 
-        assert not Survey._validate_email(s)

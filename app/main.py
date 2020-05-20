@@ -1,18 +1,16 @@
 import os
 import json
 
-from fastapi import FastAPI, Path
+from fastapi import FastAPI, Path, Body
 from enum import Enum 
-from starlette.responses import RedirectResponse
 from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel, Field
 
 from . import credentials
 from . import survey
 
 
 MDBCSTR = credentials.MDB_CONNECTION_STRING
-FURL = credentials.FRONTEND_URL
-BURL = credentials.BACKEND_URL
 
 
 # create fastapi app
@@ -22,8 +20,9 @@ app = FastAPI()
 client = AsyncIOMotorClient(MDBCSTR)
 db = client['async_survey_database']
 
-# read in survey files
+
 def create_surveys(db):
+    """Read survey configuration files and translate them to survey objects."""
     surveys = []
     folder = os.path.join(os.path.dirname(__file__), 'surveys')
     for path in os.listdir(folder):
@@ -37,11 +36,13 @@ def create_surveys(db):
             )
     return {sv.id: sv for sv in surveys}
 
+
+# create survey objects from configuration files
 surveys = create_surveys(db)
 SurveyName = Enum('SurveyName', {k: k for k in surveys.keys()}, type=str)
 
 
-@app.get('/')
+@app.get('/', tags=['status'])
 async def status():
     """Verify if database and mailing services are operational"""
     try:
@@ -53,20 +54,27 @@ async def status():
         return {'status': 'all services operational'}
 
 
-@app.post('/{survey}/submit')
+class Submission(BaseModel):
+    email: str = Field(..., description='The mytum email of the survey user')
+    properties: dict = Field(..., description='The actual submission data')
+
+
+@app.post('/{survey}/submit', tags=['survey'])
 async def submit(
         survey: SurveyName = Path(
             ...,
             description='The identification tag of the survey',
         ),
+        submission: Submission = Body(
+            ...,
+            description='The user submission for the survey',
+        )
     ):
     """Validate submission and store it under unverified submissions"""
-    # TODO
-    # return await surveys[survey].submit()
-    pass
+    return await surveys[survey].submit(submission)
 
 
-@app.get('/{survey}/verify/{token}')
+@app.get('/{survey}/verify/{token}', tags=['survey'])
 async def verify(
         survey: SurveyName = Path(
             ...,
@@ -78,12 +86,10 @@ async def verify(
         ),
     ):
     """Verify user token and either fail or redirect to success page"""
-    # TODO check if verfication was successful or not and redirect accordingly?
-    await surveys[survey].verify(token)
-    return RedirectResponse(f'{FURL}/{survey}/success')
+    return await surveys[survey].verify(token)
 
 
-@app.get('/{survey}/results')
+@app.get('/{survey}/results', tags=['survey'])
 async def results(
         survey: SurveyName = Path(
             ...,
