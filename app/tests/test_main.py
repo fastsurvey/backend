@@ -9,7 +9,7 @@ from .. import main
 # create test client
 test_client = TestClient(main.app)
 # rebind database to testing database
-main.db = main.client['async_survey_database_testing']
+main.db = main.motor_client['async_survey_database_testing']
 # rebind surveys with new testing database
 main.surveys = main.create_surveys(main.db)
 
@@ -33,14 +33,21 @@ def exsync(code):
 
 @pytest.fixture
 def cleanup():
+    """Delete all pending and verified entries in the testing collections.
+
+    To avoid deleting real survey entries due to some fault in the database
+    remapping, we restrict deletion to the testing email.
+    
+    """
     yield
-    exsync(main.db['pending'].delete_one({'email': '1234567@mytum.de'}))
+    exsync(main.db['pending'].delete_many({'email': 'test123@mytum.de'}))
+    exsync(main.db['verified'].delete_many({'email': 'test123@mytum.de'}))
 
 
 def test_submit_valid_submission(cleanup):
     """Test that submit works with a valid submission for the test survey."""
     submission = {
-        'email': '1234567@mytum.de',
+        'email': 'test123@mytum.de',
         'properties': {
             'election': {
                 'felix': True,
@@ -58,3 +65,37 @@ def test_submit_valid_submission(cleanup):
     assert entry['email'] == submission['email']
     assert entry['properties'] == submission['properties']
     assert entry['survey'] == 'test-survey'
+
+
+@pytest.fixture
+def setup():
+    exsync(main.db['pending'].insert_many([
+        {
+            'survey': 'test-survey',
+            'email': 'test123@mytum.de',
+            'properties': {},
+            'timestamp': 1590228251,
+            'token': 'tomato',
+        },
+        {
+            'survey': 'test-survey',
+            'email': 'test123@mytum.de',
+            'properties': {},
+            'timestamp': 1590228461,
+            'token': 'carrot',
+        },
+    ]))
+
+
+def test_verify_valid_token(setup, cleanup):
+    token = 'tomato'
+    response = test_client.get(
+        url=f'/test-survey/verify/{token}',
+        allow_redirects=False,
+    )
+    assert response.status_code == 307
+    # test if in verified entries
+    # test that not in pending entries
+
+
+# test that verify replaces previously verified entries
