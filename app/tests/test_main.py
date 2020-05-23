@@ -1,38 +1,25 @@
 import asyncio
 import pytest
 
-from fastapi.testclient import TestClient
+from motor.motor_asyncio import AsyncIOMotorClient
+from httpx import AsyncClient
 
 from .. import main
 
 
-# create test client
-test_client = TestClient(main.app)
-# rebind database to testing database
-main.db = main.motor_client['async_survey_database_testing']
-# rebind surveys with new testing database
-main.surveys = main.create_surveys(main.db)
-
-
-def test_db_rebinding():
-    """Test if the database is correctly remapped to the testing database."""
-    assert main.db.name == 'async_survey_database_testing'
-
-
-def test_status_passing():
-    """Test that status function returns that all services are operational."""
-    response = test_client.get('/')
-    assert response.status_code == 200
-    assert response.json() == {'status': 'all services operational'}
-
-
-def exsync(code):
-    """Helper function for executing async code synchronously in sync code."""
-    return asyncio.get_event_loop().run_until_complete(code)
+@pytest.fixture(autouse=True)
+def config(event_loop):
+    """Reconfigure motor client's event loop and database before every test."""
+    # rebingd event loop of the motor client
+    main.motor_client = AsyncIOMotorClient(main.MDBCSTR, io_loop=event_loop)
+    # rebind database to testing database
+    main.db = main.motor_client['async_survey_database_testing']
+    # rebind surveys with new testing database
+    main.surveys = main.create_surveys(main.db)
 
 
 @pytest.fixture
-def cleanup():
+async def cleanup(config):
     """Delete all pending and verified entries in the testing collections.
 
     To avoid deleting real survey entries due to some fault in the database
@@ -40,11 +27,21 @@ def cleanup():
     
     """
     yield
-    exsync(main.db['pending'].delete_many({'email': 'test123@mytum.de'}))
-    exsync(main.db['verified'].delete_many({'email': 'test123@mytum.de'}))
+    await main.db['pending'].delete_many({'email': 'test123@mytum.de'})
+    await main.db['verified'].delete_many({'email': 'test123@mytum.de'})
 
 
-def test_submit_valid_submission(cleanup):
+@pytest.mark.asyncio
+async def test_status_passing():
+    """Test that status function returns that all services are operational."""
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.get('/')
+    assert response.status_code == 200
+    assert response.json() == {'status': 'all services operational'}
+
+
+@pytest.mark.asyncio
+async def test_submit_valid_submission(cleanup):
     """Test that submit works with a valid submission for the test survey."""
     submission = {
         'email': 'test123@mytum.de',
@@ -57,10 +54,11 @@ def test_submit_valid_submission(cleanup):
             'reason': '',
         },
     }
-    response = test_client.post(url='/test-survey/submit', json=submission)
-    assert response.status_code == 200
-    entry = exsync(main.db['pending'].find_one(projection={'_id': False}))
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.post(url='/test-survey/submit', json=submission)
+        entry = await main.db['pending'].find_one(projection={'_id': False})
     keys = {'survey', 'email', 'properties', 'timestamp', 'token'}
+    assert response.status_code == 200
     assert set(entry.keys()) == keys
     assert entry['email'] == submission['email']
     assert entry['properties'] == submission['properties']
@@ -68,8 +66,8 @@ def test_submit_valid_submission(cleanup):
 
 
 @pytest.fixture
-def setup():
-    exsync(main.db['pending'].insert_many([
+async def setup():
+    await main.db['pending'].insert_many([
         {
             'survey': 'test-survey',
             'email': 'test123@mytum.de',
@@ -84,15 +82,17 @@ def setup():
             'timestamp': 1590228461,
             'token': 'carrot',
         },
-    ]))
+    ])
 
 
-def test_verify_valid_token(setup, cleanup):
+@pytest.mark.asyncio
+async def test_verify_valid_token(setup, cleanup):
     token = 'tomato'
-    response = test_client.get(
-        url=f'/test-survey/verify/{token}',
-        allow_redirects=False,
-    )
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.get(
+            url=f'/test-survey/verify/{token}',
+            allow_redirects=False,
+        )
     assert response.status_code == 307
     # test if in verified entries
     # test that not in pending entries
