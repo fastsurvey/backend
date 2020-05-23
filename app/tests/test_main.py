@@ -19,7 +19,7 @@ def config(event_loop):
 
 
 @pytest.fixture
-async def cleanup(config):
+async def cleanup():
     """Delete all pending and verified entries in the testing collections.
 
     To avoid deleting real survey entries due to some fault in the database
@@ -85,6 +85,7 @@ async def setup():
     ])
 
 
+@pytest.mark.xfail
 @pytest.mark.asyncio
 async def test_verify_valid_token(setup, cleanup):
     token = 'tomato'
@@ -93,9 +94,13 @@ async def test_verify_valid_token(setup, cleanup):
             url=f'/test-survey/verify/{token}',
             allow_redirects=False,
         )
+        p = await main.db['pending'].find({'token': 'tomato'}).to_list(2)
+        v = await main.db['verified'].find().to_list(2)
+    keys = {'survey', 'email', 'properties', 'timestamp'}
     assert response.status_code == 307
-    # test if in verified entries
-    # test that not in pending entries
-
+    assert len(p) == 0  # test that entry is no more in pending entries
+    assert len(v) == 1  # test that entry is in verified entries
+    assert set(v[0].keys()) == keys
+    
 
 # test that verify replaces previously verified entries
