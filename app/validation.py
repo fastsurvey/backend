@@ -1,12 +1,40 @@
 from cerberus import Validator, TypeDefinition
 
 
-mapping = Validator.types_mapping
+class SubmissionValidator(Validator):
 
-mapping['Selection'] = TypeDefinition('Selection', (dict,), ())
-mapping['Option'] = TypeDefinition('Option', (bool,), ())
-mapping['DelimiterList'] = TypeDefinition('DelimiterList', (str,), ())
-mapping['Text'] = TypeDefinition('Text', (str,), ())
+    types_mapping = Validator.types_mapping.copy()
+    
+    types_mapping['Selection'] = TypeDefinition('Selection', (dict,), ())
+    types_mapping['List'] = TypeDefinition('List', (str,), ())
+    types_mapping['Option'] = TypeDefinition('Option', (bool,), ())
+    types_mapping['Text'] = TypeDefinition('Text', (str,), ())
+
+    def _validate_min_chars(self, min_chars, field, value):
+        """Validate the minimum length of the given input string
+
+        The rule's arguments are validated against this schema:
+        {'type': 'integer'}
+        """
+        if len(value) < min_chars:
+            self._error(field, f'Must be longer than {min_chars} characters') 
+
+    def _validate_min_select(self, min_select, field, value):
+        """Validate the minimum number of selected items in a selection field
+
+        The rule's arguments are validated against this schema:
+        {'type': 'integer'}
+        """
+        pass
+
+    def _validate_max_select(self, min_select, field, value):
+        """Validate the minimum number of selected items in a selection field
+
+        The rule's arguments are validated against this schema:
+        {'type': 'integer'}
+        """
+        pass
+
 
 schema = {
     'email': {
@@ -26,18 +54,19 @@ schema = {
                         'type': 'Option',
                     },
                     'andere': {
-                        'type': 'DelimiterList',
+                        'type': 'List',
                     },
                 },
             },
             'reason': {
                 'type': 'Text',
+                'min_chars': 10,
             }
         },
     },
 }
 
-validator = Validator(schema, require_all=True)
+validator = SubmissionValidator(schema, require_all=True)
 
 dicto = {
     'email': 'gz43zuh@mytum.de',
@@ -52,37 +81,3 @@ dicto = {
 }
 
 print(validator.validate(dicto))
-
-
-
-
-
-
-
-
-'''
-
-class Option(BaseModel):
-    value bool = Field(...) 
-
-
-class Radio(Field):
-
-    def __init__(self, options):
-        self.options = options
-
-    def check(self):
-        raise NotImplementedError
-
-
-class Selection(Field):
-
-    def __init__(self, min_selections, max_selections, options):
-        self.min = min_selections
-        self.max = max_selections
-        self.options = options
-
-    def check(self):
-        raise NotImplementedError
-
-'''
