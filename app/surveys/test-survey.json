@@ -3,31 +3,31 @@
     "description": "...",
     "start": 1589805200,
     "end": 1989805200,
-    "properties": [
+    "fields": [
         {
             "identifier": "election",
             "description": "Who will be the next president?",
             "type": "Selection",
             "properties": {
-                "min": 0,
-                "max": 2,
-                "options": [
+                "min_select": 0,
+                "max_select": 2,
+                "fields": [
                     {
                         "identifier": "felix",
                         "description": "Felix Böhm",
-                        "type": "YesNo"
+                        "type": "Option"
                     },
                     {
                         "identifier": "moritz",
                         "description": "Moritz Makowski",
-                        "type": "YesNo"
+                        "type": "Option"
                     },
                     {
                         "identifier": "andere",
                         "description": "Andere",
                         "type": "DelimiterList",
-                        "parameters": {
-                            "delimiter": [","]
+                        "properties": {
+                            "delimiters": [","]
                         }
                     }
                 ]
@@ -35,7 +35,7 @@
         },
         {
             "identifier": "reason",
-            "label": "The reason for your choice",
+            "description": "The reason for your choice",
             "type": "Text",
             "properties": {
                 "min_chars": 10,
