@@ -26,12 +26,12 @@ def create_surveys(db):
     surveys = []
     folder = os.path.join(os.path.dirname(__file__), 'surveys')
     for path in os.listdir(folder):
-        with open(os.path.join(folder, path), 'r') as schema:
+        with open(os.path.join(folder, path), 'r') as template:
             surveys.append(
                 survey.Survey(
                     identifier=path[:-5],
                     database=db,
-                    schema=json.load(schema),
+                    template=json.load(template),
                 )
             )
     return {sv.id: sv for sv in surveys}

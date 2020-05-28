@@ -25,10 +25,7 @@
                     {
                         "identifier": "andere",
                         "description": "Andere",
-                        "type": "DelimiterList",
-                        "properties": {
-                            "delimiters": [","]
-                        }
+                        "type": "List"
                     }
                 ]
             }

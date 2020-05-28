@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 
 import credentials
+import validation
 
 
 FURL = credentials.FRONTEND_URL
@@ -18,13 +19,13 @@ class Survey:
             self,
             identifier,
             database,
-            schema,
+            template,
     ):
         self.id = identifier
         self.db = database
-        self.start = schema['start']
-        self.end = schema['end']
-        self.properties = schema['properties']
+        self.start = template['start']
+        self.end = template['end']
+        self.validator = validation.SubmissionValidator(template)
     
     def _validate_email(self, email):
         """Validate the correct format of the mytum email."""
