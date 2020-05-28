@@ -10,7 +10,7 @@ from .. import main
 @pytest.fixture(autouse=True)
 def config(event_loop):
     """Reconfigure motor client's event loop and database before every test."""
-    # rebingd event loop of the motor client
+    # rebind event loop of the motor client
     main.motor_client = AsyncIOMotorClient(main.MDBCSTR, io_loop=event_loop)
     # rebind database to testing database
     main.db = main.motor_client['async_survey_database_testing']
@@ -56,7 +56,7 @@ async def test_submit_valid_submission(cleanup):
     }
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(url='/test-survey/submit', json=submission)
-        entry = await main.db['pending'].find_one(projection={'_id': False})
+    entry = await main.db['pending'].find_one(projection={'_id': False})
     keys = {'survey', 'email', 'properties', 'timestamp', 'token'}
     assert response.status_code == 200
     assert set(entry.keys()) == keys
@@ -94,13 +94,13 @@ async def test_verify_valid_token(setup, cleanup):
             url=f'/test-survey/verify/{token}',
             allow_redirects=False,
         )
-        p = await main.db['pending'].find({'token': 'tomato'}).to_list(2)
-        v = await main.db['verified'].find().to_list(2)
+    pending = await main.db['pending'].find({'token': 'tomato'}).to_list(2)
+    verified = await main.db['verified'].find().to_list(2)
     keys = {'survey', 'email', 'properties', 'timestamp'}
     assert response.status_code == 307
-    assert len(p) == 0  # test that entry is no more in pending entries
-    assert len(v) == 1  # test that entry is in verified entries
-    assert set(v[0].keys()) == keys
+    assert len(pending) == 0  # test that entry is no more in pending entries
+    assert len(verified) == 1  # test that entry is in verified entries
+    assert set(verified[0].keys()) == keys
     
 
 # test that verify replaces previously verified entries
