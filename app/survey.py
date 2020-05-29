@@ -25,7 +25,7 @@ class Survey:
         self.db = database
         self.start = template['start']
         self.end = template['end']
-        self.validator = validation.SubmissionValidator(template)
+        self.validator = validation.create_validator(template)
     
     def _validate_email(self, email):
         """Validate the correct format of the mytum email."""
