@@ -12,13 +12,18 @@ def template(scope='module'):
         return json.load(template)
 
 
+@pytest.fixture
+def validator(template, scope='module'):
+    return validation.create_validator(template)
+
+
 def test_generate_schema(template):
     """Test that the schema generation function returns the correct result."""
     schema = validation._generate_schema(template)
     assert schema ==  {
         'email': {
             'type': 'string',
-            'regex': '^[a-z]{2}[0-9]{2}[a-z]{3}@mytum\.de$',
+            'regex': r'^[a-z]{2}[0-9]{2}[a-z]{3}@mytum\.de$',
         },
         'properties': {
             'type': 'dict',
@@ -49,7 +54,7 @@ def test_generate_schema(template):
     }
 
 
-valid = [
+pass_submissions = [
     {
         'email': 'tt00est@mytum.de',
         'properties': {
@@ -75,8 +80,42 @@ valid = [
 ]
 
 
-def test_validator_passing(template):
-    """Check that the generated schema lets some valid submissions pass."""
-    validator = validation.create_validator(template)
-    for submission in valid:
+def test_validator_passing(validator):
+    """Check that the generated validator lets some valid submissions pass."""
+    for submission in pass_submissions:
         assert validator.validate(submission)
+
+
+pass_emails = [
+    'tt00est@mytum.de',
+    'ia72ihd@mytum.de',
+]
+
+fail_emails = [
+    '',
+    'sadfj',
+    'FFFFFFF@mytum.de',
+    'tt00est@mytum.de ',  # we don't strip whitespace
+    'a123adf@mytum.de',
+    'ab82eee@mytum8de',
+    'a12 93ad@mytum.de',
+    'a123   @mytum.de',
+    'a444+00@mytum.de',
+    'tt00est@gmail.com',
+    '123@mytum.de@mytum.de',
+]
+
+def test_email_passing(validator):
+    """Check that the validator lets some valid email addresses pass."""
+    for email in pass_emails:
+        submission = pass_submissions[0]
+        submission['email'] = email
+        assert validator.validate(submission)
+
+
+def test_email_failing(validator):
+    """Check that the validator rejects some invalid email addresses."""
+    for email in fail_emails:
+        submission = pass_submissions[0]
+        submission['email'] = email
+        assert not validator.validate(submission)
