@@ -92,10 +92,14 @@ pass_emails = [
 ]
 
 fail_emails = [
+    8,
+    None,
+    {},
+    True,
     '',
     'sadfj',
     'FFFFFFF@mytum.de',
-    'tt00est@mytum.de ',  # we don't strip whitespace
+    'tt00est@mytum.de ',
     'a123adf@mytum.de',
     'ab82eee@mytum8de',
     'a12 93ad@mytum.de',
@@ -103,6 +107,9 @@ fail_emails = [
     'a444+00@mytum.de',
     'tt00est@gmail.com',
     '123@mytum.de@mytum.de',
+    'tt00est@mytum:de',
+    'tT00est@mytum.de',
+    'tt00eSt@mytum.de',
 ]
 
 def test_email_passing(validator):
