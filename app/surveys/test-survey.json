@@ -1,39 +1,42 @@
 {
     "title": "Survey to test backend functionality",
+    "logo": "google.com",
     "description": "...",
-    "start": 1589805200,
-    "end": 1989805200,
+    "start": 1589810000,
+    "end": 1589820000,
+    "archive": 1589830000,
     "fields": [
         {
             "identifier": "election",
-            "description": "Who will be the next president?",
             "type": "Selection",
+            "description": "Who will be the next president?",
+            "public": true,
             "properties": {
                 "min_select": 0,
                 "max_select": 2,
                 "fields": [
                     {
-                        "identifier": "felix",
-                        "description": "Felix Böhm",
-                        "type": "Option"
+                        "identifier": "moritz",
+                        "type": "Option",
+                        "description": "Moritz Makowski"
                     },
                     {
-                        "identifier": "moritz",
-                        "description": "Moritz Makowski",
-                        "type": "Option"
+                        "identifier": "felix",
+                        "type": "Option",
+                        "description": "Felix Böhm"
                     },
                     {
                         "identifier": "andere",
-                        "description": "Andere",
-                        "type": "List"
+                        "type": "List",
+                        "description": "Andere"
                     }
                 ]
             }
         },
         {
             "identifier": "reason",
-            "description": "The reason for your choice",
             "type": "Text",
+            "description": "The reason for your choice",
             "properties": {
                 "min_chars": 10,
                 "max_chars": 100
