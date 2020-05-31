@@ -36,15 +36,15 @@ class Survey:
             raise HTTPException(400, 'survey is closed')
         if not self.validator.validate(submission):
             raise HTTPException(400, 'invalid submission')
-        
+
         # TODO send verification email
         
         await self.db['pending'].insert_one({
             'survey': self.id,
-            'email': submission.email,
+            'email': submission['email'],
             'timestamp': timestamp,
             'token': secrets.token_hex(32),
-            'properties': submission.properties,
+            'properties': submission['properties'],
         })
 
     async def verify(self, token):
