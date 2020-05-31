@@ -140,3 +140,51 @@ def test_validate_max_chars_failing(validator):
         validator._validate_max_chars(0, 'test', ' ')
     with pytest.raises(AttributeError):
         validator._validate_max_chars(9999, 'test', 'aaaaaaaaaa' * 1000)
+
+
+def test_validate_min_select_passing(validator):
+    """Test that min_select rule works correctly for some valid values."""
+    value = {
+        'B': False,
+        'other': 'C,D',
+        'A': True,
+    }
+    assert validator._validate_min_select(3, 'test', value) is None
+    assert validator._validate_min_select(0, 'test', value) is None
+
+
+def test_validate_min_select_failing(validator):
+    """Test that min_select rule works correctly for some invalid values."""
+    value = {
+        'B': False,
+        'other': 'C,D',
+        'A': True,
+    }
+    with pytest.raises(AttributeError):
+        validator._validate_min_select(4, 'test', value)
+    with pytest.raises(AttributeError):
+        validator._validate_min_select(99999, 'test', value)
+
+
+def test_validate_max_select_passing(validator):
+    """Test that max_select rule works correctly for some valid values."""
+    value = {
+        'B': False,
+        'other': 'C,D',
+        'A': True,
+    }
+    assert validator._validate_max_select(3, 'test', value) is None
+    assert validator._validate_max_select(999, 'test', value) is None
+
+
+def test_validate_max_select_failing(validator):
+    """Test that max_select rule works correctly for some invalid values."""
+    value = {
+        'B': False,
+        'other': 'C,D',
+        'A': True,
+    }
+    with pytest.raises(AttributeError):
+        validator._validate_max_select(2, 'test', value)
+    with pytest.raises(AttributeError):
+        validator._validate_max_select(0, 'test', value)
