@@ -110,3 +110,33 @@ def test_email_failing(validator):
     for email in emails:
         sub['email'] = email
         assert not validator.validate(sub)
+
+
+def test_validate_min_chars_passing(validator):
+    """Test that min_chars rule works correctly for some valid values."""
+    assert validator._validate_min_chars(2, 'test', 'aa') is None
+    assert validator._validate_min_chars(5, 'test', '             ') is None
+    assert validator._validate_min_chars(0, 'test', '') is None
+
+
+def test_validate_min_chars_failing(validator):
+    """Test that min_chars rule works correctly for some invalid values."""
+    with pytest.raises(AttributeError):
+        validator._validate_min_chars(1, 'test', '')
+    with pytest.raises(AttributeError):
+        validator._validate_min_chars(1000000, 'test', 'hello!')
+
+
+def test_validate_max_chars_passing(validator):
+    """Test that max_chars rule works correctly for some valid values."""
+    assert validator._validate_max_chars(2, 'test', 'aa') is None
+    assert validator._validate_max_chars(100000, 'test', '          ') is None
+    assert validator._validate_max_chars(0, 'test', '') is None
+
+
+def test_validate_max_chars_failing(validator):
+    """Test that max_chars rule works correctly for some invalid values."""
+    with pytest.raises(AttributeError):
+        validator._validate_max_chars(0, 'test', ' ')
+    with pytest.raises(AttributeError):
+        validator._validate_max_chars(9999, 'test', 'aaaaaaaaaa' * 1000)
