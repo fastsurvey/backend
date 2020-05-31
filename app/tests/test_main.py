@@ -23,12 +23,12 @@ async def cleanup():
     """Delete all pending and verified entries in the testing collections.
 
     To avoid deleting real survey entries due to some fault in the database
-    remapping, we restrict deletion to the testing email.
+    remapping, we restrict deletion to the test-survey entries
     
     """
     yield
-    await main.db['pending'].delete_many({'email': 'tt00est@mytum.de'})
-    await main.db['verified'].delete_many({'email': 'tt00est@mytum.de'})
+    await main.db['pending'].delete_many({'survey': 'test-survey'})
+    await main.db['verified'].delete_many({'survey': 'test-survey'})
 
 
 @pytest.mark.asyncio
@@ -88,20 +88,35 @@ async def test_submit_invalid_submission(cleanup):
 
 @pytest.fixture
 async def setup():
+    """Load some predefined entries into the database to test verification."""
     await main.db['pending'].insert_many([
         {
             'survey': 'test-survey',
             'email': 'tt00est@mytum.de',
-            'properties': {},
+            'properties': {'data': 'cucumber'},
             'timestamp': 1590228251,
             'token': 'tomato',
         },
         {
             'survey': 'test-survey',
-            'email': 'tt00est@mytum.de',
-            'properties': {},
+            'email': 'tt01est@mytum.de',
+            'properties': {'data': 'salad'},
             'timestamp': 1590228461,
             'token': 'carrot',
+        },
+    ])
+    await main.db['verified'].insert_many([
+        {
+            'survey': 'test-survey',
+            'email': 'tt02est@mytum.de',
+            'properties': {'data': 'radish'},
+            'timestamp': 1590228043,
+        },
+        {
+            'survey': 'test-survey',
+            'email': 'tt00est@mytum.de',
+            'properties': {'data': 'cabbage'},
+            'timestamp': 1590228136,
         },
     ])
 
@@ -109,19 +124,47 @@ async def setup():
 @pytest.mark.xfail
 @pytest.mark.asyncio
 async def test_verify_valid_token(setup, cleanup):
+    """Test correct verification given a valid submission token."""
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get(
             url=f'/test-survey/verify/{token}',
             allow_redirects=False,
         )
-    pending = await main.db['pending'].find({'token': 'tomato'}).to_list(2)
-    verified = await main.db['verified'].find().to_list(2)
+    pending = await main.db['pending'].find(
+        filter={'email': 'tt00est@mytum.de'},
+        projection={'_id': False}
+    ).to_list(5)
+    verified = await main.db['verified'].find(
+        filter={'email': 'tt00est@mytum.de'},
+        projection={'_id': False}
+    ).to_list(5)
     keys = {'survey', 'email', 'properties', 'timestamp'}
     assert response.status_code == 307
-    assert len(pending) == 0  # test that entry is no more in pending entries
-    assert len(verified) == 1  # test that entry is in verified entries
+    assert len(pending) == 0  # entry is no more in pending entries
+    assert len(verified) == 1  # entry replaces previously verified entry
     assert set(verified[0].keys()) == keys
+    assert verified[0]['properties']['data'] == 'cucumber'
     
 
-# test that verify replaces previously verified entries
+@pytest.mark.asyncio
+async def test_verify_invalid_token(setup, cleanup):
+    """Test correct verification rejection given an invalid token."""
+    token = 'peach'
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.get(
+            url=f'/test-survey/verify/{token}',
+            allow_redirects=False,
+        )
+    pending = await main.db['pending'].find(
+        filter={'email': 'tt00est@mytum.de'},
+        projection={'_id': False}
+    ).to_list(5)
+    verified = await main.db['verified'].find(
+        filter={'email': 'tt00est@mytum.de'},
+        projection={'_id': False}
+    ).to_list(5)
+    assert response.status_code == 401
+    assert len(pending) == 1  # entry is still in pending entries
+    assert len(verified) == 1  # old entry is still present
+    assert verified[0]['properties']['data'] == 'cabbage'
