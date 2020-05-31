@@ -27,8 +27,8 @@ async def cleanup():
     
     """
     yield
-    await main.db['pending'].delete_many({'email': 'test123@mytum.de'})
-    await main.db['verified'].delete_many({'email': 'test123@mytum.de'})
+    await main.db['pending'].delete_many({'email': 'tt00est@mytum.de'})
+    await main.db['verified'].delete_many({'email': 'tt00est@mytum.de'})
 
 
 @pytest.mark.asyncio
@@ -44,14 +44,14 @@ async def test_status_passing():
 async def test_submit_valid_submission(cleanup):
     """Test that submit works with a valid submission for the test survey."""
     submission = {
-        'email': 'test123@mytum.de',
+        'email': 'tt00est@mytum.de',
         'properties': {
             'election': {
                 'felix': True,
                 'moritz': True,
                 'andere': '',
             },
-            'reason': '',
+            'reason': 'insert very good reason here',
         },
     }
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -70,14 +70,14 @@ async def setup():
     await main.db['pending'].insert_many([
         {
             'survey': 'test-survey',
-            'email': 'test123@mytum.de',
+            'email': 'tt00est@mytum.de',
             'properties': {},
             'timestamp': 1590228251,
             'token': 'tomato',
         },
         {
             'survey': 'test-survey',
-            'email': 'test123@mytum.de',
+            'email': 'tt00est@mytum.de',
             'properties': {},
             'timestamp': 1590228461,
             'token': 'carrot',
