@@ -65,6 +65,27 @@ async def test_submit_valid_submission(cleanup):
     assert entry['survey'] == 'test-survey'
 
 
+@pytest.mark.asyncio
+async def test_submit_invalid_submission(cleanup):
+    """Test that submit correctly rejects an invalid test survey submission."""
+    submission = {
+        'email': 'tt00est@mytum.de',
+        'properties': {
+            'election': {
+                'felix': 5,  # should be a boolean instead of an integer
+                'moritz': True,
+                'andere': '',
+            },
+            'reason': 'insert very good reason here',
+        },
+    }
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.post(url='/test-survey/submit', json=submission)
+    entry = await main.db['pending'].find_one(projection={'_id': False})
+    assert response.status_code == 400
+    assert entry is None
+
+
 @pytest.fixture
 async def setup():
     await main.db['pending'].insert_many([
