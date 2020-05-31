@@ -27,8 +27,19 @@ class SubmissionValidator(Validator):
         {'type': 'integer'}
 
         """
-        if len(value) >= max_chars:
+        if len(value) > max_chars:
             self._error(field, f'Must be at most {max_chars} characters long') 
+
+    def _count_selections(self, value):
+        """Count the number of selected options in a selection field."""
+        count = 0
+        for v in value.values():
+            if isinstance(v, bool) and v:  # for option children
+                count += 1
+            if isinstance(v, str):  # for list children
+                split = set([e.strip() for e in v.split(',') if e.strip()])
+                count += len(split)
+        return count
 
     def _validate_min_select(self, min_select, field, value):
         """Validate the minimum number of selected items in a selection field
@@ -37,16 +48,18 @@ class SubmissionValidator(Validator):
         {'type': 'integer'}
 
         """
-        pass
+        if self._count_selections(value) < min_select:
+            self._error(field, f'Must select at least {min_select} options')
 
-    def _validate_max_select(self, min_select, field, value):
-        """Validate the minimum number of selected items in a selection field
+    def _validate_max_select(self, max_select, field, value):
+        """Validate the maximum number of selected items in a selection field
 
         The rule's arguments are validated against this schema:
         {'type': 'integer'}
 
         """
-        pass
+        if self._count_selections(value) > max_select:
+            self._error(field, f'Must select at most {max_select} options')
 
 
 def _generate_schema(template):
