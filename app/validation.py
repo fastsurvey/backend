@@ -69,7 +69,7 @@ def _generate_schema(template):
     schema = {
         'email': {
             'type': 'string',
-            'regex': '^[a-z]{2}[0-9]{2}[a-z]{3}@mytum\.de$',
+            'regex': r'^[a-z]{2}[0-9]{2}[a-z]{3}@mytum\.de$',
         },
         'properties': {
             'type': 'dict',

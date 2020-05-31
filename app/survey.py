@@ -27,28 +27,22 @@ class Survey:
         self.end = template['end']
         self.validator = validation.create_validator(template)
     
-    def _validate_email(self, email):
-        """Validate the correct format of the mytum email."""
-        parts = email.split('@')
-        if len(parts) != 2:
-            raise HTTPException(400, 'not an email address')
-        name, domain = parts
-        if len(name) != 7 or not name.isalnum() or domain != 'mytum.de':
-            raise HTTPException(400, 'not a valid mytum email address')
-
-    def _validate_properties(self, properties):
-        """Validate the property form and choice of the submission."""
-        pass
-    
     async def submit(self, submission):
         """Save a user submission in pending entries for verification."""
-        self._validate_email(submission.email)
-        self._validate_properties(submission.properties)
+        timestamp = int(time.time())
+        if timestamp < self.start:
+            raise HTTPException(400, 'survey is not open yet')
+        if timestamp >= self.end:
+            raise HTTPException(400, 'survey is closed')
+        if not self.validator.validate(submission):
+            raise HTTPException(400, 'invalid submission')
+        
         # TODO send verification email
+        
         await self.db['pending'].insert_one({
             'survey': self.id,
             'email': submission.email,
-            'timestamp': int(time.time()),
+            'timestamp': timestamp,
             'token': secrets.token_hex(32),
             'properties': submission.properties,
         })

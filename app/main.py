@@ -54,23 +54,18 @@ async def status():
         return {'status': 'all services operational'}
 
 
-class Submission(BaseModel):
-    email: str = Field(..., description='The mytum email of the survey user')
-    properties: dict = Field(..., description='The actual submission data')
-
-
 @app.post('/{survey}/submit', tags=['survey'])
 async def submit(
         survey: SurveyName = Path(
             ...,
             description='The identification tag of the survey',
         ),
-        submission: Submission = Body(
+        submission: dict = Body(
             ...,
             description='The user submission for the survey',
         )
     ):
-    """Validate submission and store it under unverified submissions"""
+    """Validate submission and store it under pending submissions"""
     return await surveys[survey].submit(submission)
 
 
