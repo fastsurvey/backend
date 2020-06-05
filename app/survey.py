@@ -27,7 +27,7 @@ class Survey:
         self.db = database
         self.start = configuration['start']
         self.end = configuration['end']
-        self.postman = mailing.Postman(configuration)
+        self.postman = mailing.Postman(self.id, configuration)
         self.validator = validation.create_validator(configuration)
     
     async def submit(self, submission):
