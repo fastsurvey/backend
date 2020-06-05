@@ -71,9 +71,9 @@ def _generate_schema(template):
         if 'properties' in field.keys():
             if 'fields' in field['properties'].keys():
                 fs['schema'] = {
-                    child['identifier']: _generate_field_schema(child)
-                    for child
-                    in field['properties'].pop('fields')
+                    str(i+1): _generate_field_schema(child)
+                    for i, child
+                    in enumerate(field['properties'].pop('fields'))
                 }
             for k, v in field['properties'].items():
                 fs[k] = v
@@ -87,9 +87,9 @@ def _generate_schema(template):
         'properties': {
             'type': 'dict',
             'schema': {
-                field['identifier']: _generate_field_schema(field)
-                for field
-                in template['fields']
+                str(i+1): _generate_field_schema(field)
+                for i, field
+                in enumerate(template['fields'])
             },
         },
     }

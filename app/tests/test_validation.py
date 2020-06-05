@@ -28,23 +28,23 @@ def test_generate_schema(template):
         'properties': {
             'type': 'dict',
             'schema': {
-                'election': {
+                '1': {
                     'type': 'Selection',
                     'min_select': 0,
                     'max_select': 2,
                     'schema': {
-                        'felix': {
+                        '1': {
                             'type': 'Option',
                         },
-                        'moritz': {
+                        '2': {
                             'type': 'Option',
                         },
-                        'andere': {
+                        '3': {
                             'type': 'List',
                         },
                     },
                 },
-                'reason': {
+                '2': {
                     'type': 'Text',
                     'min_chars': 10,
                     'max_chars': 100,
@@ -57,12 +57,12 @@ def test_generate_schema(template):
 submission = {
     'email': 'tt00est@mytum.de',
     'properties': {
-        'election': {
-            'felix': True,
-            'moritz': True,
-            'andere': '',
+        '1': {
+            '1': True,
+            '2': True,
+            '3': '',
         },
-        'reason': 'hello world!',
+        '2': 'hello world!',
     }
 }
 

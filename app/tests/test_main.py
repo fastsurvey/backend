@@ -46,12 +46,12 @@ async def test_submit_valid_submission(cleanup):
     submission = {
         'email': 'tt00est@mytum.de',
         'properties': {
-            'election': {
-                'felix': True,
-                'moritz': True,
-                'andere': '',
+            '1': {
+                '1': True,
+                '2': True,
+                '3': '',
             },
-            'reason': 'insert very good reason here',
+            '2': 'insert very good reason here',
         },
     }
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -71,12 +71,12 @@ async def test_submit_invalid_submission(cleanup):
     submission = {
         'email': 'tt00est@mytum.de',
         'properties': {
-            'election': {
-                'felix': 5,  # should be a boolean instead of an integer
-                'moritz': True,
-                'andere': '',
+            '1': {
+                '1': 5,  # should be a boolean instead of an integer
+                '2': True,
+                '3': '',
             },
-            'reason': 'insert very good reason here',
+            '2': 'insert very good reason here',
         },
     }
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
