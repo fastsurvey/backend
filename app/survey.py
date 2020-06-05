@@ -7,6 +7,7 @@ from starlette.responses import RedirectResponse
 
 import credentials
 import validation
+import mailing
 
 
 FURL = credentials.FRONTEND_URL
@@ -19,13 +20,15 @@ class Survey:
             self,
             identifier,
             database,
-            template,
+            configuration,
     ):
+        """Create a survey from the given json configuration file."""
         self.id = identifier
         self.db = database
-        self.start = template['start']
-        self.end = template['end']
-        self.validator = validation.create_validator(template)
+        self.start = configuration['start']
+        self.end = configuration['end']
+        self.postman = mailing.Postman(configuration)
+        self.validator = validation.create_validator(configuration)
     
     async def submit(self, submission):
         """Save a user submission in pending entries for verification."""
@@ -36,16 +39,17 @@ class Survey:
             raise HTTPException(400, 'survey is closed')
         if not self.validator.validate(submission):
             raise HTTPException(400, 'invalid submission')
-
-        # TODO send verification email
-        
-        await self.db['pending'].insert_one({
+        submission = {
             'survey': self.id,
             'email': submission['email'],
             'timestamp': timestamp,
             'token': secrets.token_hex(32),
             'properties': submission['properties'],
-        })
+        }
+        await self.db['pending'].insert_one(submission)
+
+        # TODO send verification email
+        # email sending needs to be somehow mocked (and tested) in the tests
 
     async def verify(self, token):
         """Verify user submission and move from it from pending to verified."""

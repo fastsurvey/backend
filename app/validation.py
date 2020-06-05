@@ -62,8 +62,8 @@ class SubmissionValidator(Validator):
             self._error(field, f'Must select at most {max_select} options')
 
 
-def _generate_schema(template):
-    """Generate a cerberus validation schema from our custom survey schema."""
+def _generate_schema(configuration):
+    """Generate a cerberus validation schema from survey configuration."""
 
     def _generate_field_schema(field):
         """Recursively generate the cerberus schemas for a survey field."""
@@ -89,15 +89,15 @@ def _generate_schema(template):
             'schema': {
                 str(i+1): _generate_field_schema(field)
                 for i, field
-                in enumerate(template['fields'])
+                in enumerate(configuration['fields'])
             },
         },
     }
     return schema
 
 
-def create_validator(template):
-    """Create and return a submission validator based on a survey template.
+def create_validator(configuration):
+    """Create and return submission validator based on a survey configuration.
 
     This is not the most elegant way, but I cannot easily override the init 
     method of SubmissionValidator due to it being called several times. We use 
@@ -106,6 +106,6 @@ def create_validator(template):
 
     """
     return SubmissionValidator(
-        _generate_schema(template), 
+        _generate_schema(configuration), 
         require_all=True,
     )

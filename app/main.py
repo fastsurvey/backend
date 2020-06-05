@@ -4,7 +4,6 @@ import json
 from fastapi import FastAPI, Path, Body
 from enum import Enum 
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, Field
 
 import credentials
 import survey
@@ -26,12 +25,12 @@ def create_surveys(db):
     surveys = []
     folder = os.path.join(os.path.dirname(__file__), 'surveys')
     for path in os.listdir(folder):
-        with open(os.path.join(folder, path), 'r') as template:
+        with open(os.path.join(folder, path), 'r') as configuration:
             surveys.append(
                 survey.Survey(
                     identifier=path[:-5],
                     database=db,
-                    template=json.load(template),
+                    configuration=json.load(configuration),
                 )
             )
     return {sv.id: sv for sv in surveys}
