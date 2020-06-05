@@ -1,14 +1,16 @@
 {
-    "title": "Survey to test backend functionality",
-    "logo": "google.com",
-    "description": "...",
-    "start": 1589810000,
-    "end": 1589820000,
-    "archive": 1589830000,
+    "title": "Test Survey",
+    "description": "This is a sample survey used to test backend functionality.",
+    "logo": "url-to-logo.com",
+    "contact": "Max Mustermann",
+    "email": "muster@mytum.de",
+    "start": 1000000000,
+    "end": 2000000000,
+    "archive": 3000000000,
     "fields": [
         {
-            "identifier": "election",
             "type": "Selection",
+            "title": "President",
             "description": "Who will be the next president?",
             "public": true,
             "properties": {
@@ -16,27 +18,24 @@
                 "max_select": 2,
                 "fields": [
                     {
-                        "identifier": "moritz",
                         "type": "Option",
-                        "description": "Moritz Makowski"
+                        "title": "Moritz Makowski"
                     },
                     {
-                        "identifier": "felix",
                         "type": "Option",
-                        "description": "Felix Böhm"
+                        "title": "Felix Böhm"
                     },
                     {
-                        "identifier": "andere",
                         "type": "List",
-                        "description": "Andere"
+                        "title": "Andere"
                     }
                 ]
             }
         },
         {
-            "identifier": "reason",
             "type": "Text",
-            "description": "The reason for your choice",
+            "title": "Reason",
+            "description": "Describe the reason for your choice",
             "properties": {
                 "min_chars": 10,
                 "max_chars": 100
