@@ -19,6 +19,21 @@ class SubmissionValidator(Validator):
         'Option': TypeDefinition('Option', (bool,), ()),
         'Text': TypeDefinition('Text', (str,), ()),
     }
+
+    @classmethod
+    def create(cls, configuration):
+        """Factory method providing a simple interface to create a validator.
+
+        A more elegant way to achieve this would be to override the __init__
+        method of the Validator class. The __init__ method is somehow called 
+        multiple times, though, that's why using a factory method is the 
+        easier way.
+
+        """
+        return cls(
+            _generate_schema(configuration), 
+            require_all=True,
+        )
     
     def _validate_min_chars(self, min_chars, field, value):
         """{'type': 'integer'}"""
@@ -53,7 +68,7 @@ class SubmissionValidator(Validator):
 
 
 def _generate_schema(configuration):
-    """Generate a cerberus validation schema from survey configuration."""
+    """Generate the cerberus validation schema from a survey configuration."""
 
     def _generate_field_schema(field):
         """Recursively generate the cerberus schemas for a survey field."""
@@ -84,18 +99,3 @@ def _generate_schema(configuration):
         },
     }
     return schema
-
-
-def create_validator(configuration):
-    """Create and return submission validator based on a survey configuration.
-
-    This is not the most elegant way, but I cannot easily override the init 
-    method of SubmissionValidator due to it being called several times. We use 
-    this method in order to nonetheless provide abstraction when creating a 
-    validator object.
-
-    """
-    return SubmissionValidator(
-        _generate_schema(configuration), 
-        require_all=True,
-    )

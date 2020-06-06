@@ -6,20 +6,20 @@ from .. import validation
 
 
 @pytest.fixture
-def template(scope='module'):
+def configuration(scope='module'):
     folder = os.path.join(os.path.dirname(__file__), '../surveys')
-    with open(os.path.join(folder, 'test-survey.json'), 'r') as template:
-        return json.load(template)
+    with open(os.path.join(folder, 'test-survey.json'), 'r') as configuration:
+        return json.load(configuration)
 
 
 @pytest.fixture
-def validator(template, scope='module'):
-    return validation.create_validator(template)
+def validator(configuration, scope='module'):
+    return validation.SubmissionValidator.create(configuration)
 
 
-def test_generate_schema(template):
+def test_generate_schema(configuration):
     """Test that the schema generation function returns the correct result."""
-    schema = validation._generate_schema(template)
+    schema = validation._generate_schema(configuration)
     assert schema ==  {
         'email': {
             'type': 'Email',

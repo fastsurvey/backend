@@ -27,9 +27,9 @@ class Survey:
         self.db = database
         self.start = configuration['start']
         self.end = configuration['end']
+        self.validator = validation.SubmissionValidator.create(configuration)
         self.postman = mailing.Postman(self.id, configuration)
-        self.validator = validation.create_validator(configuration)
-    
+
     async def submit(self, submission):
         """Save a user submission in pending entries for verification."""
         timestamp = int(time.time())
