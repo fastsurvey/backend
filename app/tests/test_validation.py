@@ -22,11 +22,11 @@ def test_generate_schema(template):
     schema = validation._generate_schema(template)
     assert schema ==  {
         'email': {
-            'type': 'string',
+            'type': 'Email',
             'regex': r'^[a-z]{2}[0-9]{2}[a-z]{3}@mytum\.de$',
         },
         'properties': {
-            'type': 'dict',
+            'type': 'Properties',
             'schema': {
                 '1': {
                     'type': 'Selection',

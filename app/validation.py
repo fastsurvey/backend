@@ -11,12 +11,14 @@ class SubmissionValidator(Validator):
     
     """
 
-    types_mapping = Validator.types_mapping.copy()
-    
-    types_mapping['Selection'] = TypeDefinition('Selection', (dict,), ())
-    types_mapping['List'] = TypeDefinition('List', (str,), ())
-    types_mapping['Option'] = TypeDefinition('Option', (bool,), ())
-    types_mapping['Text'] = TypeDefinition('Text', (str,), ())
+    types_mapping = {
+        'Email': TypeDefinition('Email', (str,), ()),
+        'Properties': TypeDefinition('Properties', (dict,), ()),
+        'Selection': TypeDefinition('Selection', (dict,), ()),
+        'List': TypeDefinition('List', (str,), ()),
+        'Option': TypeDefinition('Option', (bool,), ()),
+        'Text': TypeDefinition('Text', (str,), ()),
+    }
     
     def _validate_min_chars(self, min_chars, field, value):
         """{'type': 'integer'}"""
@@ -69,11 +71,11 @@ def _generate_schema(configuration):
 
     schema = {
         'email': {
-            'type': 'string',
+            'type': 'Email',
             'regex': r'^[a-z]{2}[0-9]{2}[a-z]{3}@mytum\.de$',
         },
         'properties': {
-            'type': 'dict',
+            'type': 'Properties',
             'schema': {
                 str(i+1): _generate_field_schema(field)
                 for i, field
