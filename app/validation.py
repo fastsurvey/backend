@@ -2,6 +2,14 @@ from cerberus import Validator, TypeDefinition
 
 
 class SubmissionValidator(Validator):
+    """The cerberus submission validator with added custom validation rules.
+
+    For an explanation of the validation rules we kindly refer the curious
+    reader to the FastSurvey and the cerberus documentations. They are omitted 
+    here to avoid documentation duplication and to keep the methods as 
+    overseeable as possible.
+    
+    """
 
     types_mapping = Validator.types_mapping.copy()
     
@@ -11,22 +19,12 @@ class SubmissionValidator(Validator):
     types_mapping['Text'] = TypeDefinition('Text', (str,), ())
     
     def _validate_min_chars(self, min_chars, field, value):
-        """Validate the minimum length (inclusive) of the given input string
-
-        The rule's arguments are validated against this schema:
-        {'type': 'integer'}
-
-        """
+        """{'type': 'integer'}"""
         if len(value) < min_chars:
             self._error(field, f'Must be at least {min_chars} characters long') 
   
     def _validate_max_chars(self, max_chars, field, value):
-        """Validate the maximum length (inclusive) of the given input string
-
-        The rule's arguments are validated against this schema:
-        {'type': 'integer'}
-
-        """
+        """{'type': 'integer'}"""
         if len(value) > max_chars:
             self._error(field, f'Must be at most {max_chars} characters long') 
 
@@ -42,22 +40,12 @@ class SubmissionValidator(Validator):
         return count
 
     def _validate_min_select(self, min_select, field, value):
-        """Validate the minimum number of selected items in a selection field
-
-        The rule's arguments are validated against this schema:
-        {'type': 'integer'}
-
-        """
+        """{'type': 'integer'}"""
         if self._count_selections(value) < min_select:
             self._error(field, f'Must select at least {min_select} options')
 
     def _validate_max_select(self, max_select, field, value):
-        """Validate the maximum number of selected items in a selection field
-
-        The rule's arguments are validated against this schema:
-        {'type': 'integer'}
-
-        """
+        """{'type': 'integer'}"""
         if self._count_selections(value) > max_select:
             self._error(field, f'Must select at most {max_select} options')
 
