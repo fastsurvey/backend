@@ -7,8 +7,13 @@ from .. import validation
 
 @pytest.fixture
 def configuration(scope='module'):
-    folder = os.path.join(os.path.dirname(__file__), '../surveys')
-    with open(os.path.join(folder, 'test-survey.json'), 'r') as configuration:
+    path = os.path.join(
+        os.path.dirname(__file__), 
+        '..', 
+        'surveys',
+        'test-survey.json',
+    )
+    with open(path, 'r') as configuration:
         return json.load(configuration)
 
 
