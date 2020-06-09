@@ -4,6 +4,7 @@ import json
 from fastapi import FastAPI, Path, Body
 from enum import Enum 
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import MongoClient
 
 import credentials
 import survey
@@ -15,29 +16,27 @@ MDBCSTR = credentials.MDB_CONNECTION_STRING
 # create fastapi app
 app = FastAPI()
 
-# connect to mongodb via motor
+# connect to mongodb via pymongo and motor
+mongo_client = MongoClient(MDBCSTR)
 motor_client = AsyncIOMotorClient(MDBCSTR)
-db = motor_client['async_survey_database']
 
 
-def create_surveys(db):
+def create_surveys():
     """Read survey configuration files and translate them to survey objects."""
     surveys = []
-    folder = os.path.join(os.path.dirname(__file__), 'surveys')
-    for path in os.listdir(folder):
-        with open(os.path.join(folder, path), 'r') as configuration:
-            surveys.append(
-                survey.Survey(
-                    identifier=path[:-5],
-                    database=db,
-                    configuration=json.load(configuration),
-                )
+    cfs = mongo_client['main']['configurations']
+    for cf in cfs.find({}):
+        surveys.append(
+            survey.Survey(
+                configuration=cf,
+                collection=motor_client['main'][f"{cf['user']}.{cf['id']}"],
             )
+        )
     return {sv.id: sv for sv in surveys}
 
 
 # create survey objects from configuration files
-surveys = create_surveys(db)
+surveys = create_surveys()
 SurveyName = Enum('SurveyName', {k: k for k in surveys.keys()}, type=str)
 
 
