@@ -1,0 +1,45 @@
+{
+    "title": "Test Survey",
+    "description": "This is a sample survey used to test backend functionality.",
+    "logo": "url-to-logo.com",
+    "contact": "Max Mustermann",
+    "email": "muster@mytum.de",
+    "start": 1000000000,
+    "end": 2000000000,
+    "archive": 3000000000,
+    "fields": [
+        {
+            "type": "Selection",
+            "title": "President",
+            "description": "Who will be the next president?",
+            "public": true,
+            "properties": {
+                "min_select": 0,
+                "max_select": 2,
+                "fields": [
+                    {
+                        "type": "Option",
+                        "title": "Moritz Makowski"
+                    },
+                    {
+                        "type": "Option",
+                        "title": "Felix Böhm"
+                    },
+                    {
+                        "type": "List",
+                        "title": "Andere"
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Text",
+            "title": "Reason",
+            "description": "Describe the reason for your choice",
+            "properties": {
+                "min_chars": 10,
+                "max_chars": 100
+            }
+        }
+    ]
+}
