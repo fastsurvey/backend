@@ -27,22 +27,29 @@ def backend_status():
 
     try:
         message = Mail()
-        message.from_email = From('noreply-survey@mse.tum.de', 'MSE Survey')
-        message.to = To("moritz@dostuffthatmatters.dev")
+        message.from_email = From('noreply@fastsurvey.io', 'MSE Survey')
+        message.to = To("spam@fastsurvey.io")
         message.subject = Subject('Test Email')
         message.content = Content(MimeType.html, f'<em>This is just a test email.</em>')
-
         sg = SendGridAPIClient(SENDGRID_API_KEY)
         response = sg.send(message)
-
+        # TODO: Figure out how to check whether email sending is possible without
+        #       actually sending a mail
         status_dict["email"] = "operational"
     except:
         status_dict["email"] = "not working"
 
-    # TODO: Add test for sending mails
+    survey_names = ["20200504", "fvv-ss20-referate", "fvv-ss20-go", "fvv-ss20-entlastung", "fvv-ss20-leitung"]
+    survey_status = {}
+    for survey_name in survey_names:
+        survey_status[survey_name] = {
+            "active": time_limits_collection.find_one({"survey_name": survey_name})["is_active"],
+            "pending": pending_entries_collection.count_documents({"survey": survey_name}),
+            "verified": verified_entries_collection.count_documents({"survey": survey_name}),
+        }
+    status_dict["surveys"] = survey_status
 
     return status_dict
-
 
 
 @app.route("/<survey_name>/submit", methods=["POST"])
