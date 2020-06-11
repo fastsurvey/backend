@@ -65,8 +65,10 @@ def verify(verification_token):
 
     if pending_entry is not None:
         del pending_entry["verification_token"]
+        filter_dict = {"email": pending_entry["email"], "survey": "fvv-ss20-leitung"}
+        pending_entries_collection.delete_many(filter_dict)
         operations = [
-            DeleteMany({"email": pending_entry["email"], "survey": "fvv-ss20-leitung"}),
+            DeleteMany(filter_dict),
             InsertOne(pending_entry)
         ]
         verified_entries_collection.bulk_write(operations, ordered=True)

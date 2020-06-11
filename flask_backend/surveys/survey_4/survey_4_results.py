@@ -3,7 +3,7 @@ from flask_backend import verified_entries_collection
 from flask_backend.support_functions import formatting
 
 def fetch():
-    verified_records = list(verified_entries_collection.find({"survey": "fvv-ss20-leitung"}))
+    verified_records = list(verified_entries_collection.find({"survey": "fvv-ss20-entlastung"}))
 
     options = ["ja", "nein", "enthaltung"]
     results = {}
@@ -12,6 +12,6 @@ def fetch():
 
     for record in verified_records:
         for option in options:
-            results[option] += 1 if record["election"][option] else 0
+            results[option] += 2 if record["election"][option] else 0
 
     return formatting.status("ok", results=results)
