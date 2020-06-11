@@ -1,25 +1,48 @@
 
-from flask_backend import app, FRONTEND_URL, pending_entries_collection, verified_entries_collection, time_limits_collection
+from flask_backend import app, FRONTEND_URL, SENDGRID_API_KEY, pending_entries_collection, verified_entries_collection, time_limits_collection
 from flask_backend.surveys.survey_1 import survey_1_actions, survey_1_results
 from flask_backend.surveys.survey_2 import survey_2_actions, survey_2_results
 from flask_backend.surveys.survey_3 import survey_3_actions, survey_3_results
 from flask_backend.surveys.survey_4 import survey_4_actions, survey_4_results
 from flask_backend.surveys.survey_5 import survey_5_actions, survey_5_results
-
 from flask_backend.support_functions import formatting
 
 from flask import request, redirect
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, From, To, Subject, Content, MimeType, ReplyTo
 
 
 @app.route("/", methods=["GET"])
 def backend_status():
+
+    status_dict = {}
+
     try:
-        pending_entries_collection.count_documents()
-        verified_entries_collection.count_documents()
-        # TODO: Add test for sending mails
-        return {"status": "all services operational"}, 200
+        result_1 = pending_entries_collection.count_documents({"someKey": 0})
+        result_2 = verified_entries_collection.count_documents({"someKey": 0})
+        assert result_1 == result_2 == 0
+        status_dict["database"] = "operational"
     except:
-        return {"status": "database error"}, 500
+        status_dict["database"] = "not working"
+
+    try:
+        message = Mail()
+        message.from_email = From('noreply-survey@mse.tum.de', 'MSE Survey')
+        message.to = To("moritz@dostuffthatmatters.dev")
+        message.subject = Subject('Test Email')
+        message.content = Content(MimeType.html, f'<em>This is just a test email.</em>')
+
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+
+        status_dict["email"] = "operational"
+    except:
+        status_dict["email"] = "not working"
+
+    # TODO: Add test for sending mails
+
+    return status_dict
+
 
 
 @app.route("/<survey_name>/submit", methods=["POST"])
