@@ -41,6 +41,7 @@ survey_database = client.get_database('survey_database')
 verified_entries_collection = survey_database['verified_entries']
 pending_entries_collection = survey_database['pending_entries']
 time_limits_collection = survey_database['time_limits']
+archived_results_collection = survey_database['archived_results']
 
 
 app = Flask(__name__)

@@ -1,5 +1,5 @@
 
-from flask_backend import app, FRONTEND_URL, SENDGRID_API_KEY, pending_entries_collection, verified_entries_collection, time_limits_collection
+from flask_backend import app, FRONTEND_URL, SENDGRID_API_KEY, pending_entries_collection, verified_entries_collection, time_limits_collection, archived_results_collection
 from flask_backend.surveys.survey_1 import survey_1_actions, survey_1_results
 from flask_backend.surveys.survey_2 import survey_2_actions, survey_2_results
 from flask_backend.surveys.survey_3 import survey_3_actions, survey_3_results
@@ -39,15 +39,18 @@ def backend_status():
     except:
         status_dict["email"] = "not working"
 
-    survey_names = ["20200504", "fvv-ss20-referate", "fvv-ss20-go", "fvv-ss20-entlastung", "fvv-ss20-leitung"]
-    survey_status = {}
-    for survey_name in survey_names:
-        survey_status[survey_name] = {
-            "active": time_limits_collection.find_one({"survey_name": survey_name})["is_active"],
-            "pending": pending_entries_collection.count_documents({"survey": survey_name}),
-            "verified": verified_entries_collection.count_documents({"survey": survey_name}),
-        }
-    status_dict["surveys"] = survey_status
+    try:
+        survey_names = ["20200504", "fvv-ss20-referate", "fvv-ss20-go", "fvv-ss20-entlastung", "fvv-ss20-leitung"]
+        survey_status = {}
+        for survey_name in survey_names:
+            survey_status[survey_name] = {
+                "active": time_limits_collection.find_one({"survey": survey_name})["is_active"],
+                "pending": pending_entries_collection.count_documents({"survey": survey_name}),
+                "verified": verified_entries_collection.count_documents({"survey": survey_name}),
+            }
+        status_dict["surveys"] = survey_status
+    except:
+        status_dict["surveys"] = "not accessible"
 
     return status_dict
 
@@ -69,7 +72,7 @@ def backend_submit(survey_name):
         return formatting.status("survey invalid"), 400
 
     # Checking whether the survey is currently open
-    time_limit_record = time_limits_collection.find_one({"survey_name": survey_name})
+    time_limit_record = time_limits_collection.find_one({"survey": survey_name})
     if time_limit_record is not None:
         if not time_limit_record["is_active"]:
             # Only when one has specifically set the survey
@@ -106,6 +109,16 @@ def backend_verify(survey_name, verification_token):
 
 @app.route("/<survey_name>/results", methods=["GET"])
 def backend_results(survey_name):
+
+    # Checking whether the survey has already been
+    archive_status_record = time_limits_collection.find_one({"survey": survey_name})
+    if archive_status_record is not None:
+        if archive_status_record["is_archived"]:
+            archived_result = archived_results_collection.find_one({"survey": survey_name})
+            if archived_result is None:
+                return formatting.status("survey is archived but no aggregated results were found"), 500
+            else:
+                return {"results": archived_result["results"]}
 
     if survey_name == "20200504":
         fetch = survey_1_results.fetch

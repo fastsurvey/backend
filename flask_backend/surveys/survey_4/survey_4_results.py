@@ -12,6 +12,6 @@ def fetch():
 
     for record in verified_records:
         for option in options:
-            results[option] += 2 if record["election"][option] else 0
+            results[option] += 1 if record["election"][option] else 0
 
     return formatting.status("ok", results=results)

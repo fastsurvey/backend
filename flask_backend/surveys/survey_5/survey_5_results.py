@@ -41,6 +41,6 @@ def fetch():
                         results[referat]["andere"][andere] = 0
                     results[referat]["andere"][andere] += 1
             else:
-                results[referat][name] += 2 if record['election'][referat][name] else 0
+                results[referat][name] += 1 if record['election'][referat][name] else 0
 
     return formatting.status("ok", results=results)
