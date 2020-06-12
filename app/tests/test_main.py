@@ -52,12 +52,12 @@ async def test_submit_valid_submission(cleanup):
             url='/test-survey/submit', 
             json=submission,
         )
-    entry = await main.surveys['test-survey'].pending.find_one()
+    pe = await main.surveys['test-survey'].pending.find_one()
     keys = {'_id', 'email', 'timestamp', 'properties'}
     assert response.status_code == 200
-    assert set(entry.keys()) == keys
-    assert entry['email'] == submission['email']
-    assert entry['properties'] == submission['properties']
+    assert set(pe.keys()) == keys
+    assert pe['email'] == submission['email']
+    assert pe['properties'] == submission['properties']
 
 
 @pytest.mark.asyncio
@@ -76,9 +76,9 @@ async def test_submit_invalid_submission(cleanup):
     }
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(url='/test-survey/submit', json=submission)
-    entry = await main.surveys['test-survey'].pending.find_one()
+    pe = await main.surveys['test-survey'].pending.find_one()
     assert response.status_code == 400
-    assert entry is None
+    assert pe is None
 
 
 @pytest.fixture
@@ -122,18 +122,18 @@ async def test_verify_valid_token(setup, cleanup):
             url=f'/test-survey/verify/{token}',
             allow_redirects=False,
         )
-    pes = await main.surveys['test-survey'].pending.find(
+    pe = await main.surveys['test-survey'].pending.find_one(
         filter={'_id': 'tomato'},
-    ).to_list(5)
-    ves = await main.surveys['test-survey'].verified.find(
+    )
+    ve = await main.surveys['test-survey'].verified.find_one(
         filter={'_id': 'aa00aaa@mytum.de'},
-    ).to_list(5)
+    )
     keys = {'_id', 'timestamp', 'properties'}
     assert response.status_code == 307
-    assert len(pes) == 0  # entry is no more in pending entries
-    assert len(ves) == 1  # entry replaces previously verified entry
-    assert set(ves[0].keys()) == keys
-    assert ves[0]['properties']['data'] == 'cucumber'
+    assert pe is None  # entry is no more in pending entries
+    assert ve is not None  # entry replaces previously verified entry
+    assert set(ve.keys()) == keys
+    assert ve['properties']['data'] == 'cucumber'
     
 
 @pytest.mark.asyncio
@@ -146,10 +146,10 @@ async def test_verify_invalid_token(setup, cleanup):
             allow_redirects=False,
         )
     pes = await main.surveys['test-survey'].pending.find().to_list(5)
-    ves = await main.surveys['test-survey'].verified.find(
+    ve = await main.surveys['test-survey'].verified.find_one(
         filter={'_id': 'aa00aaa@mytum.de'},
-    ).to_list(5)
+    )
     assert response.status_code == 401
     assert len(pes) == 2  # entries are unchanged in pending entries
-    assert len(ves) == 1  # old entry is still present
-    assert ves[0]['properties']['data'] == 'radish'
+    assert ve is not None  # old entry is still present
+    assert ve['properties']['data'] == 'radish'
