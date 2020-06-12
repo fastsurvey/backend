@@ -12,23 +12,16 @@ def config(event_loop):
     """Reconfigure motor client's event loop and database before every test."""
     # rebind event loop of the motor client
     main.motor_client = AsyncIOMotorClient(main.MDBCSTR, io_loop=event_loop)
-    # rebind database to testing database
-    main.db = main.motor_client['async_survey_database_testing']
     # rebind surveys with new testing database
-    main.surveys = main.create_surveys(main.db)
+    main.surveys = main.create_surveys()
 
 
 @pytest.fixture
 async def cleanup():
-    """Delete all pending and verified entries in the testing collections.
-
-    To avoid deleting real survey entries due to some fault in the database
-    remapping, we restrict deletion to the test-survey entries
-    
-    """
+    """Delete all pending and verified entries in the testing collections."""
     yield
-    await main.db['pending'].delete_many({'survey': 'test-survey'})
-    await main.db['verified'].delete_many({'survey': 'test-survey'})
+    await main.surveys['test-survey'].pending.delete_many({})
+    await main.surveys['test-survey'].verified.delete_many({})
 
 
 @pytest.mark.asyncio
@@ -44,7 +37,7 @@ async def test_status_passing():
 async def test_submit_valid_submission(cleanup):
     """Test that submit works with a valid submission for the test survey."""
     submission = {
-        'email': 'tt00est@mytum.de',
+        'email': 'aa00aaa@mytum.de',
         'properties': {
             '1': {
                 '1': True,
@@ -55,21 +48,23 @@ async def test_submit_valid_submission(cleanup):
         },
     }
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.post(url='/test-survey/submit', json=submission)
-    entry = await main.db['pending'].find_one(projection={'_id': False})
-    keys = {'survey', 'email', 'properties', 'timestamp', 'token'}
+        response = await ac.post(
+            url='/test-survey/submit', 
+            json=submission,
+        )
+    entry = await main.surveys['test-survey'].pending.find_one()
+    keys = {'_id', 'email', 'timestamp', 'properties'}
     assert response.status_code == 200
     assert set(entry.keys()) == keys
     assert entry['email'] == submission['email']
     assert entry['properties'] == submission['properties']
-    assert entry['survey'] == 'test-survey'
 
 
 @pytest.mark.asyncio
 async def test_submit_invalid_submission(cleanup):
     """Test that submit correctly rejects an invalid test survey submission."""
     submission = {
-        'email': 'tt00est@mytum.de',
+        'email': 'aa00aaa@mytum.de',
         'properties': {
             '1': {
                 '1': 5,  # should be a boolean instead of an integer
@@ -81,7 +76,7 @@ async def test_submit_invalid_submission(cleanup):
     }
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(url='/test-survey/submit', json=submission)
-    entry = await main.db['pending'].find_one(projection={'_id': False})
+    entry = await main.surveys['test-survey'].pending.find_one()
     assert response.status_code == 400
     assert entry is None
 
@@ -89,34 +84,30 @@ async def test_submit_invalid_submission(cleanup):
 @pytest.fixture
 async def setup():
     """Load some predefined entries into the database to test verification."""
-    await main.db['pending'].insert_many([
+    await main.surveys['test-survey'].pending.insert_many([
         {
-            'survey': 'test-survey',
-            'email': 'tt00est@mytum.de',
-            'properties': {'data': 'cucumber'},
+            '_id': 'tomato',
+            'email': 'aa00aaa@mytum.de',
             'timestamp': 1590228251,
-            'token': 'tomato',
+            'properties': {'data': 'cucumber'},
         },
         {
-            'survey': 'test-survey',
-            'email': 'tt01est@mytum.de',
-            'properties': {'data': 'salad'},
+            '_id': 'carrot',
+            'email': 'aa00aaa@mytum.de',
             'timestamp': 1590228461,
-            'token': 'carrot',
+            'properties': {'data': 'salad'},
         },
     ])
-    await main.db['verified'].insert_many([
+    await main.surveys['test-survey'].verified.insert_many([
         {
-            'survey': 'test-survey',
-            'email': 'tt02est@mytum.de',
-            'properties': {'data': 'radish'},
+            '_id': 'aa00aaa@mytum.de',
             'timestamp': 1590228043,
+            'properties': {'data': 'radish'},
         },
         {
-            'survey': 'test-survey',
-            'email': 'tt00est@mytum.de',
-            'properties': {'data': 'cabbage'},
+            '_id': 'aa02aaa@mytum.de',
             'timestamp': 1590228136,
+            'properties': {'data': 'cabbage'},
         },
     ])
 
@@ -131,20 +122,18 @@ async def test_verify_valid_token(setup, cleanup):
             url=f'/test-survey/verify/{token}',
             allow_redirects=False,
         )
-    pending = await main.db['pending'].find(
-        filter={'email': 'tt00est@mytum.de'},
-        projection={'_id': False}
+    pes = await main.surveys['test-survey'].pending.find(
+        filter={'_id': 'tomato'},
     ).to_list(5)
-    verified = await main.db['verified'].find(
-        filter={'email': 'tt00est@mytum.de'},
-        projection={'_id': False}
+    ves = await main.surveys['test-survey'].verified.find(
+        filter={'_id': 'aa00aaa@mytum.de'},
     ).to_list(5)
-    keys = {'survey', 'email', 'properties', 'timestamp'}
+    keys = {'_id', 'timestamp', 'properties'}
     assert response.status_code == 307
-    assert len(pending) == 0  # entry is no more in pending entries
-    assert len(verified) == 1  # entry replaces previously verified entry
-    assert set(verified[0].keys()) == keys
-    assert verified[0]['properties']['data'] == 'cucumber'
+    assert len(pes) == 0  # entry is no more in pending entries
+    assert len(ves) == 1  # entry replaces previously verified entry
+    assert set(ves[0].keys()) == keys
+    assert ves[0]['properties']['data'] == 'cucumber'
     
 
 @pytest.mark.asyncio
@@ -156,15 +145,11 @@ async def test_verify_invalid_token(setup, cleanup):
             url=f'/test-survey/verify/{token}',
             allow_redirects=False,
         )
-    pending = await main.db['pending'].find(
-        filter={'email': 'tt00est@mytum.de'},
-        projection={'_id': False}
-    ).to_list(5)
-    verified = await main.db['verified'].find(
-        filter={'email': 'tt00est@mytum.de'},
-        projection={'_id': False}
+    pes = await main.surveys['test-survey'].pending.find().to_list(5)
+    ves = await main.surveys['test-survey'].verified.find(
+        filter={'_id': 'aa00aaa@mytum.de'},
     ).to_list(5)
     assert response.status_code == 401
-    assert len(pending) == 1  # entry is still in pending entries
-    assert len(verified) == 1  # old entry is still present
-    assert verified[0]['properties']['data'] == 'cabbage'
+    assert len(pes) == 2  # entries are unchanged in pending entries
+    assert len(ves) == 1  # old entry is still present
+    assert ves[0]['properties']['data'] == 'radish'
