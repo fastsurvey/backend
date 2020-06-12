@@ -55,7 +55,7 @@ class Survey:
 
     async def verify(self, token):
         """Verify user submission and move from it from pending to verified."""
-        pe = await self.pending.find_one({'_id': token})
+        pe = await self.pending.find_one_and_delete({'_id': token})
         if pe is None:
             raise HTTPException(401, 'invalid token')
         ve = {
@@ -63,13 +63,11 @@ class Survey:
             'timestamp': pe['timestamp'],
             'properties': pe['properties'],
         }
-        requests = [
-            DeleteMany({
-                '_id': pe['email'], 
-            }),
-            InsertOne(ve),
-        ]
-        await self.verified.bulk_write(requests, ordered=True)
+        await self.verified.find_one_and_replace(
+            filter={'_id': pe['email']},
+            replacement=ve, 
+            upsert=True,
+        )
         return RedirectResponse(f'{FURL}/{self.name}/success')
 
     async def fetch(self):
