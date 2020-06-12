@@ -82,8 +82,57 @@ async def test_submit_invalid_submission(cleanup):
 
 
 @pytest.fixture
-async def setup():
-    """Load some predefined entries into the database to test verification."""
+async def setup_01():
+    """Load some predefined entries into the database for testing."""
+    await main.surveys['test-survey'].pending.insert_many([
+        {
+            '_id': 'tomato',
+            'email': 'aa00aaa@mytum.de',
+            'timestamp': 1590228251,
+            'properties': {'data': 'cucumber'},
+        },
+        {
+            '_id': 'carrot',
+            'email': 'aa00aaa@mytum.de',
+            'timestamp': 1590228461,
+            'properties': {'data': 'salad'},
+        },
+    ])
+    await main.surveys['test-survey'].verified.insert_many([
+        {
+            '_id': 'aa02aaa@mytum.de',
+            'timestamp': 1590228136,
+            'properties': {'data': 'cabbage'},
+        },
+    ])
+
+
+@pytest.mark.asyncio
+async def test_verify_valid_token(setup_01, cleanup):
+    """Test correct verification given a valid submission token."""
+    token = 'tomato'
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.get(
+            url=f'/test-survey/verify/{token}',
+            allow_redirects=False,
+        )
+    pe = await main.surveys['test-survey'].pending.find_one(
+        filter={'_id': 'tomato'},
+    )
+    ve = await main.surveys['test-survey'].verified.find_one(
+        filter={'_id': 'aa00aaa@mytum.de'},
+    )
+    keys = {'_id', 'timestamp', 'properties'}
+    assert response.status_code == 307
+    assert pe is None  # entry is no more in pending entries
+    assert ve is not None  # entry is now in verified entries
+    assert set(ve.keys()) == keys
+    assert ve['properties']['data'] == 'cucumber'
+
+
+@pytest.fixture
+async def setup_02():
+    """Load some predefined entries into the database for testing."""
     await main.surveys['test-survey'].pending.insert_many([
         {
             '_id': 'tomato',
@@ -112,10 +161,9 @@ async def setup():
     ])
 
 
-@pytest.mark.xfail
 @pytest.mark.asyncio
-async def test_verify_valid_token(setup, cleanup):
-    """Test correct verification given a valid submission token."""
+async def test_verify_replace_valid_token(setup_02, cleanup):
+    """Test replacement of previously verified submission."""
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get(
@@ -137,7 +185,7 @@ async def test_verify_valid_token(setup, cleanup):
     
 
 @pytest.mark.asyncio
-async def test_verify_invalid_token(setup, cleanup):
+async def test_verify_invalid_token(setup_02, cleanup):
     """Test correct verification rejection given an invalid token."""
     token = 'peach'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
