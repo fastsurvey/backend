@@ -13,12 +13,11 @@ class Postman:
 
     def __init__(
             self, 
-            survey_id, 
             configuration,
         ):
         """Create a mailing client for a survey using its configuration."""
-        self.survey_id = survey_id
-        self.survey_name = configuration['title']
+        self.survey_name = configuration['name']
+        self.survey_title = configuration['title']
         self.from_email = From(
             configuration.get('email', 'noreply@fastsurvey.io'),
             configuration.get('contact', 'FastSurvey'),
@@ -26,7 +25,7 @@ class Postman:
 
     def _generate_verify_url(self, submission):
         """Generate the url that users need to visit to verify their email."""
-        return f"{BURL}/{self.survey_id}/verify/{submission['token']}"
+        return f"{BURL}/{self.survey_name}/verify/{submission['token']}"
 
     def _generate_change_url(self, submission):
         raise NotImplementedError
@@ -38,7 +37,7 @@ class Postman:
         """Generate the content of the confirmation email."""
         return HtmlContent(
             '<h2>We received your submission!</h2>'
-            + f'<p>Survey: {self.survey_name}</p>'
+            + f'<p>Survey: {self.survey_title}</p>'
             + f'<p>Please verify your e-mail address by clicking <a href=\'{self._generate_verify_url(submission)}\'>here</a></p>'
         )
 
