@@ -18,17 +18,19 @@ class Survey:
 
     def __init__(
             self,
-            identifier,
-            database,
             configuration,
+            database,
     ):
         """Create a survey from the given json configuration file."""
-        self.id = identifier
-        self.db = database
-        self.start = configuration['start']
-        self.end = configuration['end']
-        self.validator = validation.SubmissionValidator.create(configuration)
-        self.postman = mailing.Postman(self.id, configuration)
+        self.cn = configuration
+        self.admin = self.cn['admin']
+        self.name = self.cn['name']
+        self.start = self.cn['start']
+        self.end = self.cn['end']
+        self.validator = validation.SubmissionValidator.create(self.cn)
+        self.postman = mailing.Postman(self.cn)
+        self.pending = database[f'{self.admin}.{self.name}.pending']
+        self.verified = database[f'{self.admin}.{self.name}.verified']
 
     async def submit(self, submission):
         """Save a user submission in pending entries for verification."""
@@ -40,43 +42,43 @@ class Survey:
         if not self.validator.validate(submission):
             raise HTTPException(400, 'invalid submission')
         submission = {
-            'survey': self.id,
+            '_id': secrets.token_hex(32),
             'email': submission['email'],
             'timestamp': timestamp,
-            'token': secrets.token_hex(32),
             'properties': submission['properties'],
         }
-        await self.db['pending'].insert_one(submission)
+        await self.pending.insert_one(submission)
 
+        # TODO use token as primary key, to explicitly avoid token collisions
         # TODO send verification email
         # email sending needs to be somehow mocked (and tested) in the tests
 
     async def verify(self, token):
         """Verify user submission and move from it from pending to verified."""
-        pending = await self.db['pending'].find_one({
-            'survey': self.id,
-            'token': token,
-        })
-        if pending is None:
+        pe = await self.pending.find_one({'_id': token})
+        if pe is None:
             raise HTTPException(401, 'invalid token')
-        del pending['token']
+        ve = {
+            '_id': pe['email'],
+            'timestamp': pe['timestamp'],
+            'properties': pe['properties'],
+        }
         requests = [
             DeleteMany({
-                'email': pending['email'], 
-                'survey': self.id,
+                '_id': pe['email'], 
             }),
-            InsertOne(pending),
+            InsertOne(ve),
         ]
-        await self.db['verified'].bulk_write(requests, ordered=True)
-        return RedirectResponse(f'{FURL}/{self.id}/success')
+        await self.verified.bulk_write(requests, ordered=True)
+        return RedirectResponse(f'{FURL}/{self.name}/success')
 
     async def fetch(self):
         """Fetch and process the survey results."""
-        submissions = self.db['verified'].find({'survey': self.id})
+        submissions = self.verified.find()
         results = {}
-        async for sub in submissions:
-            for pro in sub['properties'].keys():
-                for option, choice in sub['properties'][pro]:
+        async for sb in submissions:
+            for pp in sb['properties'].keys():
+                for option, choice in sb['properties'][pp]:
                     # TODO works only for boolean values
                     results[option] = results.get(option, 0) + choice
         return results

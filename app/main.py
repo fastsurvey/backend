@@ -32,7 +32,7 @@ def create_surveys():
                 database=motor_client['main'],
             )
         )
-    return {sv.id: sv for sv in surveys}
+    return {sv.name: sv for sv in surveys}
 
 
 # create survey objects from configuration files
