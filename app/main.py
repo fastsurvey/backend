@@ -24,12 +24,12 @@ motor_client = AsyncIOMotorClient(MDBCSTR)
 def create_surveys():
     """Read survey configuration files and translate them to survey objects."""
     surveys = []
-    cfs = mongo_client['main']['configurations']
-    for cf in cfs.find({}):
+    cns = mongo_client['main']['configurations']
+    for cn in cns.find(projection={'_id': False}):
         surveys.append(
             survey.Survey(
-                configuration=cf,
-                collection=motor_client['main'][f"{cf['user']}.{cf['id']}"],
+                configuration=cn,
+                database=motor_client['main'],
             )
         )
     return {sv.id: sv for sv in surveys}
