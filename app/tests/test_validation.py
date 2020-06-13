@@ -1,20 +1,12 @@
 import pytest
-import os
-import json
 
+from .. import main
 from .. import validation
 
 
 @pytest.fixture
 def configuration(scope='module'):
-    path = os.path.join(
-        os.path.dirname(__file__), 
-        '..', 
-        'surveys',
-        'test-survey.json',
-    )
-    with open(path, 'r') as configuration:
-        return json.load(configuration)
+    return main.surveys['fastsurvey.test'].cn
 
 
 @pytest.fixture
@@ -80,7 +72,7 @@ def test_validator_passing(validator):
 def test_email_passing(validator):
     """Check that the validator lets some valid email addresses pass."""
     emails = [
-        'tt00est@mytum.de',
+        'aa00aaa@mytum.de'
         'ia72ihd@mytum.de',
     ]
     sub = submission.copy()

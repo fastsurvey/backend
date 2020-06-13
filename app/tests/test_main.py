@@ -20,8 +20,8 @@ def config(event_loop):
 async def cleanup():
     """Delete all pending and verified entries in the testing collections."""
     yield
-    await main.surveys['test-survey'].pending.delete_many({})
-    await main.surveys['test-survey'].verified.delete_many({})
+    await main.surveys['fastsurvey.test'].pending.delete_many({})
+    await main.surveys['fastsurvey.test'].verified.delete_many({})
 
 
 @pytest.mark.asyncio
@@ -49,10 +49,10 @@ async def test_submit_valid_submission(cleanup):
     }
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(
-            url='/test-survey/submit', 
+            url='/fastsurvey/test/submit', 
             json=submission,
         )
-    pe = await main.surveys['test-survey'].pending.find_one()
+    pe = await main.surveys['fastsurvey.test'].pending.find_one()
     keys = {'_id', 'email', 'timestamp', 'properties'}
     assert response.status_code == 200
     assert set(pe.keys()) == keys
@@ -75,8 +75,11 @@ async def test_submit_invalid_submission(cleanup):
         },
     }
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.post(url='/test-survey/submit', json=submission)
-    pe = await main.surveys['test-survey'].pending.find_one()
+        response = await ac.post(
+            url='/fastsurvey/test/submit', 
+            json=submission,
+        )
+    pe = await main.surveys['fastsurvey.test'].pending.find_one()
     assert response.status_code == 400
     assert pe is None
 
@@ -84,7 +87,7 @@ async def test_submit_invalid_submission(cleanup):
 @pytest.fixture
 async def setup_01():
     """Load some predefined entries into the database for testing."""
-    await main.surveys['test-survey'].pending.insert_many([
+    await main.surveys['fastsurvey.test'].pending.insert_many([
         {
             '_id': 'tomato',
             'email': 'aa00aaa@mytum.de',
@@ -98,7 +101,7 @@ async def setup_01():
             'properties': {'data': 'salad'},
         },
     ])
-    await main.surveys['test-survey'].verified.insert_many([
+    await main.surveys['fastsurvey.test'].verified.insert_many([
         {
             '_id': 'aa02aaa@mytum.de',
             'timestamp': 1590228136,
@@ -113,13 +116,13 @@ async def test_verify_valid_token(setup_01, cleanup):
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get(
-            url=f'/test-survey/verify/{token}',
+            url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    pe = await main.surveys['test-survey'].pending.find_one(
+    pe = await main.surveys['fastsurvey.test'].pending.find_one(
         filter={'_id': 'tomato'},
     )
-    ve = await main.surveys['test-survey'].verified.find_one(
+    ve = await main.surveys['fastsurvey.test'].verified.find_one(
         filter={'_id': 'aa00aaa@mytum.de'},
     )
     keys = {'_id', 'timestamp', 'properties'}
@@ -133,7 +136,7 @@ async def test_verify_valid_token(setup_01, cleanup):
 @pytest.fixture
 async def setup_02():
     """Load some predefined entries into the database for testing."""
-    await main.surveys['test-survey'].pending.insert_many([
+    await main.surveys['fastsurvey.test'].pending.insert_many([
         {
             '_id': 'tomato',
             'email': 'aa00aaa@mytum.de',
@@ -147,7 +150,7 @@ async def setup_02():
             'properties': {'data': 'salad'},
         },
     ])
-    await main.surveys['test-survey'].verified.insert_many([
+    await main.surveys['fastsurvey.test'].verified.insert_many([
         {
             '_id': 'aa00aaa@mytum.de',
             'timestamp': 1590228043,
@@ -167,13 +170,13 @@ async def test_verify_replace_valid_token(setup_02, cleanup):
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get(
-            url=f'/test-survey/verify/{token}',
+            url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    pe = await main.surveys['test-survey'].pending.find_one(
+    pe = await main.surveys['fastsurvey.test'].pending.find_one(
         filter={'_id': 'tomato'},
     )
-    ve = await main.surveys['test-survey'].verified.find_one(
+    ve = await main.surveys['fastsurvey.test'].verified.find_one(
         filter={'_id': 'aa00aaa@mytum.de'},
     )
     keys = {'_id', 'timestamp', 'properties'}
@@ -190,14 +193,18 @@ async def test_verify_invalid_token(setup_02, cleanup):
     token = 'peach'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get(
-            url=f'/test-survey/verify/{token}',
+            url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    pes = await main.surveys['test-survey'].pending.find().to_list(5)
-    ve = await main.surveys['test-survey'].verified.find_one(
+    pes = await main.surveys['fastsurvey.test'].pending.find().to_list(5)
+    ve = await main.surveys['fastsurvey.test'].verified.find_one(
         filter={'_id': 'aa00aaa@mytum.de'},
     )
     assert response.status_code == 401
     assert len(pes) == 2  # entries are unchanged in pending entries
     assert ve is not None  # old entry is still present
     assert ve['properties']['data'] == 'radish'
+
+
+# TODO test calling verification function before first submission
+# TODO test functions for non-existent survey

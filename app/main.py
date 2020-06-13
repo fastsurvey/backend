@@ -1,7 +1,7 @@
 import os
 import json
 
-from fastapi import FastAPI, Path, Body
+from fastapi import FastAPI, Path, Body, HTTPException
 from enum import Enum 
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient
@@ -22,22 +22,21 @@ motor_client = AsyncIOMotorClient(MDBCSTR)
 
 
 def create_surveys():
-    """Read survey configuration files and translate them to survey objects."""
-    surveys = []
-    cns = mongo_client['main']['configurations']
-    for cn in cns.find(projection={'_id': False}):
-        surveys.append(
-            survey.Survey(
-                configuration=cn,
-                database=motor_client['main'],
-            )
+    """Fetch survey configurations and translate them to survey objects."""
+    configurations = mongo_client['main']['configurations']
+    surveys = {
+        cn['_id']: survey.Survey(
+            configuration=cn,
+            database=motor_client['main'],
         )
-    return {sv.name: sv for sv in surveys}
+        for cn
+        in configurations.find()
+    }
+    return surveys
 
 
-# create survey objects from configuration files
+# create survey objects from configurations
 surveys = create_surveys()
-SurveyName = Enum('SurveyName', {k: k for k in surveys.keys()}, type=str)
 
 
 @app.get('/', tags=['status'])
@@ -52,11 +51,15 @@ async def status():
         return {'status': 'all services operational'}
 
 
-@app.post('/{survey}/submit', tags=['survey'])
+@app.post('/{admin}/{survey}/submit', tags=['survey'])
 async def submit(
-        survey: SurveyName = Path(
+        admin: str = Path(
             ...,
-            description='The identification tag of the survey',
+            description='The name of the admin',
+        ),
+        survey: str = Path(
+            ...,
+            description='The name of the survey',
         ),
         submission: dict = Body(
             ...,
@@ -64,14 +67,21 @@ async def submit(
         )
     ):
     """Validate submission and store it under pending submissions"""
-    return await surveys[survey].submit(submission)
+    identifier = f'{admin}.{survey}'
+    if identifier not in surveys:
+        raise HTTPException(404, 'survey not found')
+    return await surveys[identifier].submit(submission)
 
 
-@app.get('/{survey}/verify/{token}', tags=['survey'])
+@app.get('/{admin}/{survey}/verify/{token}', tags=['survey'])
 async def verify(
-        survey: SurveyName = Path(
+        admin: str = Path(
             ...,
-            description='The identification tag of the survey',
+            description='The name of the admin',
+        ),
+        survey: str = Path(
+            ...,
+            description='The name of the survey',
         ),
         token: str = Path(
             ...,
@@ -79,15 +89,25 @@ async def verify(
         ),
     ):
     """Verify user token and either fail or redirect to success page"""
-    return await surveys[survey].verify(token)
+    identifier = f'{admin}.{survey}'
+    if identifier not in surveys:
+        raise HTTPException(404, 'survey not found')
+    return await surveys[identifier].verify(token)
 
 
-@app.get('/{survey}/results', tags=['survey'])
+@app.get('/{admin}/{survey}/results', tags=['survey'])
 async def results(
-        survey: SurveyName = Path(
+        admin: str = Path(
             ...,
-            description='The identification tag of the survey',
+            description='The name of the admin',
+        ),
+        survey: str = Path(
+            ...,
+            description='The name of the survey',
         ),
     ):
     """Fetch the results of the given survey"""
-    return await surveys[survey].fetch()
+    identifier = f'{admin}.{survey}'
+    if identifier not in surveys:
+        raise HTTPException(404, 'survey not found')
+    return await surveys[identifier].fetch()
