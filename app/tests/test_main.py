@@ -124,7 +124,7 @@ async def test_verify_valid_token(setup_01, cleanup):
     )
     keys = {'_id', 'timestamp', 'properties'}
     assert response.status_code == 307
-    assert pe is None  # entry is no more in pending entries
+    assert pe is not None  # entry is still unchanged in pending entries
     assert ve is not None  # entry is now in verified entries
     assert set(ve.keys()) == keys
     assert ve['properties']['data'] == 'cucumber'
@@ -178,7 +178,7 @@ async def test_verify_replace_valid_token(setup_02, cleanup):
     )
     keys = {'_id', 'timestamp', 'properties'}
     assert response.status_code == 307
-    assert pe is None  # entry is no more in pending entries
+    assert pe is not None  # entry is still unchanged in pending entries
     assert ve is not None  # entry replaces previously verified entry
     assert set(ve.keys()) == keys
     assert ve['properties']['data'] == 'cucumber'

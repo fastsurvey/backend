@@ -60,7 +60,7 @@ class Survey:
             raise HTTPException(400, 'survey is not open yet')
         if timestamp >= self.end:
             raise HTTPException(400, 'survey is closed')
-        pe = await self.pending.find_one_and_delete({'_id': token})
+        pe = await self.pending.find_one({'_id': token})
         if pe is None:
             raise HTTPException(401, 'invalid token')
         ve = {
