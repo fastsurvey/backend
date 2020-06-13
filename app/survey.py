@@ -54,13 +54,18 @@ class Survey:
         # email sending needs to be somehow mocked (and tested) in the tests
 
     async def verify(self, token):
-        """Verify user submission and move from it from pending to verified."""
+        """Verify user submission and copy it from pending to verified."""
+        timestamp = int(time.time())
+        if timestamp < self.start:
+            raise HTTPException(400, 'survey is not open yet')
+        if timestamp >= self.end:
+            raise HTTPException(400, 'survey is closed')
         pe = await self.pending.find_one_and_delete({'_id': token})
         if pe is None:
             raise HTTPException(401, 'invalid token')
         ve = {
             '_id': pe['email'],
-            'timestamp': pe['timestamp'],
+            'timestamp': timestamp,  # time is verification not submission time
             'properties': pe['properties'],
         }
         await self.verified.find_one_and_replace(
