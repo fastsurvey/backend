@@ -8,7 +8,7 @@ from .. import main
 
 
 @pytest.fixture(autouse=True)
-def config(event_loop):
+def setup(event_loop):
     """Reconfigure motor client's event loop and database before every test."""
     # rebind event loop of the motor client
     main.motor_client = AsyncIOMotorClient(main.MDBCSTR, io_loop=event_loop)
@@ -31,6 +31,26 @@ async def test_status_passing():
         response = await ac.get('/')
     assert response.status_code == 200
     assert response.json() == {'status': 'all services operational'}
+
+
+@pytest.mark.asyncio
+async def test_configuration_valid_identifier():
+    """Test that the correct configuration is returned for a valid survey."""
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.get('/fastsurvey/test')
+    configuration = await main.motor_client['main']['configurations'].find_one(
+        filter={'_id': 'fastsurvey.test'},
+    )
+    assert response.status_code == 200
+    assert response.json() == configuration
+
+
+@pytest.mark.asyncio
+async def test_configuration_invalid_identifier():
+    """Test the error on requesting the configuration of an invalid survey."""
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.get('/fastsurvey/carrot')
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio
@@ -85,7 +105,7 @@ async def test_submit_invalid_submission(cleanup):
 
 
 @pytest.fixture
-async def setup_01():
+async def scenario1():
     """Load some predefined entries into the database for testing."""
     await main.surveys['fastsurvey.test'].pending.insert_many([
         {
@@ -111,7 +131,7 @@ async def setup_01():
 
 
 @pytest.mark.asyncio
-async def test_verify_valid_token(setup_01, cleanup):
+async def test_verify_valid_token(scenario1, cleanup):
     """Test correct verification given a valid submission token."""
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -134,7 +154,7 @@ async def test_verify_valid_token(setup_01, cleanup):
 
 
 @pytest.fixture
-async def setup_02():
+async def scenario2():
     """Load some predefined entries into the database for testing."""
     await main.surveys['fastsurvey.test'].pending.insert_many([
         {
@@ -165,7 +185,7 @@ async def setup_02():
 
 
 @pytest.mark.asyncio
-async def test_verify_replace_valid_token(setup_02, cleanup):
+async def test_verify_replace_valid_token(scenario2, cleanup):
     """Test replacement of previously verified submission."""
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -188,7 +208,7 @@ async def test_verify_replace_valid_token(setup_02, cleanup):
     
 
 @pytest.mark.asyncio
-async def test_verify_invalid_token(setup_02, cleanup):
+async def test_verify_invalid_token(scenario2, cleanup):
     """Test correct verification rejection given an invalid token."""
     token = 'peach'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
