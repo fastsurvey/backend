@@ -51,6 +51,24 @@ async def status():
         return {'status': 'all services operational'}
 
 
+@app.get('/{admin}/{survey}', tags=['survey'])
+async def configure(
+        admin: str = Path(
+            ...,
+            description='The name of the admin',
+        ),
+        survey: str = Path(
+            ...,
+            description='The name of the survey',
+        ),
+    ):
+    """Fetch the configuration document of the given survey"""
+    identifier = f'{admin}.{survey}'
+    if identifier not in surveys:
+        raise HTTPException(404, 'survey not found')
+    return surveys[identifier].cn
+
+
 @app.post('/{admin}/{survey}/submit', tags=['survey'])
 async def submit(
         admin: str = Path(
