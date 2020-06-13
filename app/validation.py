@@ -78,10 +78,11 @@ def _generate_schema(configuration):
                 fs['schema'] = {
                     str(i+1): _generate_field_schema(child)
                     for i, child
-                    in enumerate(field['properties'].pop('fields'))
+                    in enumerate(field['properties']['fields'])
                 }
             for k, v in field['properties'].items():
-                fs[k] = v
+                if k != 'fields':
+                    fs[k] = v
         return fs
 
     schema = {
