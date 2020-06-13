@@ -72,7 +72,7 @@ def test_validator_passing(validator):
 def test_email_passing(validator):
     """Check that the validator lets some valid email addresses pass."""
     emails = [
-        'aa00aaa@mytum.de'
+        'aa00aaa@mytum.de',
         'ia72ihd@mytum.de',
     ]
     sub = submission.copy()
