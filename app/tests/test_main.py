@@ -106,20 +106,20 @@ async def scenario1():
             '_id': 'tomato',
             'email': 'aa00aaa@mytum.de',
             'timestamp': 1590228251,
-            'properties': {'data': 'cucumber'},
+            'properties': {'1': 'cucumber'},
         },
         {
             '_id': 'carrot',
             'email': 'aa00aaa@mytum.de',
             'timestamp': 1590228461,
-            'properties': {'data': 'salad'},
+            'properties': {'1': 'salad'},
         },
     ])
     await survey.verified.insert_many([
         {
             '_id': 'aa02aaa@mytum.de',
             'timestamp': 1590228136,
-            'properties': {'data': 'cabbage'},
+            'properties': {'1': 'cabbage'},
         },
     ])
 
@@ -145,7 +145,7 @@ async def test_verify_valid_token(scenario1, cleanup):
     assert pe is not None  # entry is still unchanged in pending entries
     assert ve is not None  # entry is now in verified entries
     assert set(ve.keys()) == keys
-    assert ve['properties']['data'] == 'cucumber'
+    assert ve['properties']['1'] == 'cucumber'
 
 
 @pytest.fixture(scope='function')
@@ -157,25 +157,25 @@ async def scenario2():
             '_id': 'tomato',
             'email': 'aa00aaa@mytum.de',
             'timestamp': 1590228251,
-            'properties': {'data': 'cucumber'},
+            'properties': {'1': 'cucumber'},
         },
         {
             '_id': 'carrot',
             'email': 'aa00aaa@mytum.de',
             'timestamp': 1590228461,
-            'properties': {'data': 'salad'},
+            'properties': {'1': 'salad'},
         },
     ])
     await survey.verified.insert_many([
         {
             '_id': 'aa00aaa@mytum.de',
             'timestamp': 1590228043,
-            'properties': {'data': 'radish'},
+            'properties': {'1': 'radish'},
         },
         {
             '_id': 'aa02aaa@mytum.de',
             'timestamp': 1590228136,
-            'properties': {'data': 'cabbage'},
+            'properties': {'1': 'cabbage'},
         },
     ])
 
@@ -201,7 +201,7 @@ async def test_verify_replace_valid_token(scenario2, cleanup):
     assert pe is not None  # entry is still unchanged in pending entries
     assert ve is not None  # entry replaces previously verified entry
     assert set(ve.keys()) == keys
-    assert ve['properties']['data'] == 'cucumber'
+    assert ve['properties']['1'] == 'cucumber'
     
 
 @pytest.mark.asyncio
@@ -221,7 +221,7 @@ async def test_verify_invalid_token(scenario2, cleanup):
     assert response.status_code == 401
     assert len(pes) == 2  # entries are unchanged in pending entries
     assert ve is not None  # old entry is still present
-    assert ve['properties']['data'] == 'radish'
+    assert ve['properties']['1'] == 'radish'
 
 
 @pytest.mark.asyncio
