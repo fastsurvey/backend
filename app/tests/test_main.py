@@ -1,5 +1,7 @@
 import asyncio
 import pytest
+import secrets
+import copy
 
 from httpx import AsyncClient
 
@@ -45,19 +47,8 @@ async def cleanup():
 
 
 @pytest.mark.asyncio
-async def test_submit_valid_submission(cleanup):
+async def test_submit_valid_submission(submission, cleanup):
     """Test that submit works with a valid submission for the test survey."""
-    submission = {
-        'email': 'aa00aaa@mytum.de',
-        'properties': {
-            '1': {
-                '1': True,
-                '2': True,
-                '3': '',
-            },
-            '2': 'insert very good reason here',
-        },
-    }
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(
             url='/fastsurvey/test/submit', 
@@ -73,19 +64,10 @@ async def test_submit_valid_submission(cleanup):
 
 
 @pytest.mark.asyncio
-async def test_submit_invalid_submission(cleanup):
+async def test_submit_invalid_submission(submission, cleanup):
     """Test that submit correctly rejects an invalid test survey submission."""
-    submission = {
-        'email': 'aa00aaa@mytum.de',
-        'properties': {
-            '1': {
-                '1': 5,  # should be a boolean instead of an integer
-                '2': True,
-                '3': '',
-            },
-            '2': 'insert very good reason here',
-        },
-    }
+    submission = copy.deepcopy(submission)
+    submission['properties']['1']['1'] = 5  # should be boolean
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(
             url='/fastsurvey/test/submit', 
@@ -122,6 +104,39 @@ async def scenario1():
             'properties': {'1': 'cabbage'},
         },
     ])
+
+
+@pytest.mark.asyncio
+async def test_submit_duplicate_token(
+        monkeypatch, 
+        scenario1, 
+        submission, 
+        cleanup,
+    ):
+    """Test that duplicate tokens in submissions are correctly resolved."""
+    i = 0
+    tokens = ['tomato', 'carrot', 'cucumber']
+
+    def token(length):
+        """Return predefined tokens in order to test token collisions."""
+        nonlocal i
+        i += 1
+        return tokens[i-1]
+
+    # set up mocking for token generation
+    monkeypatch.setattr(secrets, 'token_hex', token)
+    
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.post(
+            url='/fastsurvey/test/submit', 
+            json=submission,
+        )
+    assert response.status_code == 200
+    survey = await main.manager.get('fastsurvey', 'test')
+    pes = await survey.pending.find().to_list(10)
+    assert len(pes) == len(tokens)
+    for token, pe in zip(tokens, pes):
+        assert pe['_id'] == token
 
 
 @pytest.mark.asyncio
@@ -214,7 +229,7 @@ async def test_verify_invalid_token(scenario2, cleanup):
             allow_redirects=False,
         )
     survey = await main.manager.get('fastsurvey', 'test')
-    pes = await survey.pending.find().to_list(5)
+    pes = await survey.pending.find().to_list(10)
     ve = await survey.verified.find_one(
         filter={'_id': 'aa00aaa@mytum.de'},
     )
