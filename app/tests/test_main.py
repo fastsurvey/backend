@@ -1,27 +1,18 @@
 import asyncio
 import pytest
 
-from motor.motor_asyncio import AsyncIOMotorClient
 from httpx import AsyncClient
 
 from .. import main
 
 
-@pytest.fixture(autouse=True)
-def setup(event_loop):
-    """Reconfigure motor client's event loop and database before every test."""
-    # rebind event loop of the motor client
-    main.motor_client = AsyncIOMotorClient(main.MDBCSTR, io_loop=event_loop)
-    # rebind surveys with new testing database
-    main.surveys = main.create_surveys()
-
-
-@pytest.fixture
+@pytest.fixture(scope='function')
 async def cleanup():
-    """Delete all pending and verified entries in the testing collections."""
+    """Drop the pending and verified test survey collections after a test."""
     yield
-    await main.surveys['fastsurvey.test'].pending.drop()
-    await main.surveys['fastsurvey.test'].verified.drop()
+    survey = await main.manager.get('fastsurvey', 'test')
+    await survey.pending.drop()
+    await survey.verified.drop()
 
 
 @pytest.mark.asyncio
@@ -72,7 +63,8 @@ async def test_submit_valid_submission(cleanup):
             url='/fastsurvey/test/submit', 
             json=submission,
         )
-    pe = await main.surveys['fastsurvey.test'].pending.find_one()
+    survey = await main.manager.get('fastsurvey', 'test')
+    pe = await survey.pending.find_one()
     keys = {'_id', 'email', 'timestamp', 'properties'}
     assert response.status_code == 200
     assert set(pe.keys()) == keys
@@ -99,15 +91,17 @@ async def test_submit_invalid_submission(cleanup):
             url='/fastsurvey/test/submit', 
             json=submission,
         )
-    pe = await main.surveys['fastsurvey.test'].pending.find_one()
+    survey = await main.manager.get('fastsurvey', 'test')
+    pe = await survey.pending.find_one()
     assert response.status_code == 400
     assert pe is None
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 async def scenario1():
     """Load some predefined entries into the database for testing."""
-    await main.surveys['fastsurvey.test'].pending.insert_many([
+    survey = await main.manager.get('fastsurvey', 'test')
+    await survey.pending.insert_many([
         {
             '_id': 'tomato',
             'email': 'aa00aaa@mytum.de',
@@ -121,7 +115,7 @@ async def scenario1():
             'properties': {'data': 'salad'},
         },
     ])
-    await main.surveys['fastsurvey.test'].verified.insert_many([
+    await survey.verified.insert_many([
         {
             '_id': 'aa02aaa@mytum.de',
             'timestamp': 1590228136,
@@ -139,10 +133,11 @@ async def test_verify_valid_token(scenario1, cleanup):
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    pe = await main.surveys['fastsurvey.test'].pending.find_one(
+    survey = await main.manager.get('fastsurvey', 'test')
+    pe = await survey.pending.find_one(
         filter={'_id': 'tomato'},
     )
-    ve = await main.surveys['fastsurvey.test'].verified.find_one(
+    ve = await survey.verified.find_one(
         filter={'_id': 'aa00aaa@mytum.de'},
     )
     keys = {'_id', 'timestamp', 'properties'}
@@ -153,10 +148,11 @@ async def test_verify_valid_token(scenario1, cleanup):
     assert ve['properties']['data'] == 'cucumber'
 
 
-@pytest.fixture
+@pytest.fixture(scope='function')
 async def scenario2():
     """Load some predefined entries into the database for testing."""
-    await main.surveys['fastsurvey.test'].pending.insert_many([
+    survey = await main.manager.get('fastsurvey', 'test')
+    await survey.pending.insert_many([
         {
             '_id': 'tomato',
             'email': 'aa00aaa@mytum.de',
@@ -170,7 +166,7 @@ async def scenario2():
             'properties': {'data': 'salad'},
         },
     ])
-    await main.surveys['fastsurvey.test'].verified.insert_many([
+    await survey.verified.insert_many([
         {
             '_id': 'aa00aaa@mytum.de',
             'timestamp': 1590228043,
@@ -193,10 +189,11 @@ async def test_verify_replace_valid_token(scenario2, cleanup):
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    pe = await main.surveys['fastsurvey.test'].pending.find_one(
+    survey = await main.manager.get('fastsurvey', 'test')
+    pe = await survey.pending.find_one(
         filter={'_id': 'tomato'},
     )
-    ve = await main.surveys['fastsurvey.test'].verified.find_one(
+    ve = await survey.verified.find_one(
         filter={'_id': 'aa00aaa@mytum.de'},
     )
     keys = {'_id', 'timestamp', 'properties'}
@@ -216,8 +213,9 @@ async def test_verify_invalid_token(scenario2, cleanup):
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    pes = await main.surveys['fastsurvey.test'].pending.find().to_list(5)
-    ve = await main.surveys['fastsurvey.test'].verified.find_one(
+    survey = await main.manager.get('fastsurvey', 'test')
+    pes = await survey.pending.find().to_list(5)
+    ve = await survey.verified.find_one(
         filter={'_id': 'aa00aaa@mytum.de'},
     )
     assert response.status_code == 401
@@ -234,9 +232,9 @@ async def test_verify_with_no_prior_submission(cleanup):
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    pe = await main.surveys['fastsurvey.test'].pending.find_one()
-    ve = await main.surveys['fastsurvey.test'].verified.find_one()
-    print(pe)
+    survey = await main.manager.get('fastsurvey', 'test')
+    pe = await survey.pending.find_one()
+    ve = await survey.verified.find_one()
     assert response.status_code == 401
     assert pe is None
     assert ve is None

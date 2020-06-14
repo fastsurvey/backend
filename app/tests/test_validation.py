@@ -4,17 +4,19 @@ from .. import main
 from .. import validation
 
 
-@pytest.fixture
-def configuration(scope='module'):
-    return main.surveys['fastsurvey.test'].cn
+@pytest.fixture(scope='function')
+async def configuration():
+    survey = await main.manager.get('fastsurvey', 'test')
+    return survey.cn
 
 
-@pytest.fixture
-def validator(configuration, scope='module'):
+@pytest.fixture(scope='function')
+def validator(configuration):
     return validation.SubmissionValidator.create(configuration)
 
 
-def test_generate_schema(configuration):
+@pytest.mark.asyncio
+async def test_generate_schema(configuration):
     """Test that the schema generation function returns the correct result."""
     schema = validation._generate_schema(configuration)
     assert schema ==  {
@@ -64,12 +66,14 @@ submission = {
 }
 
 
-def test_validator_passing(validator):
+@pytest.mark.asyncio
+async def test_validator_passing(validator):
     """Check that the generated validator lets a valid submissions pass."""
     assert validator.validate(submission)
 
 
-def test_email_passing(validator):
+@pytest.mark.asyncio
+async def test_email_passing(validator):
     """Check that the validator lets some valid email addresses pass."""
     emails = [
         'aa00aaa@mytum.de',
@@ -81,7 +85,8 @@ def test_email_passing(validator):
         assert validator.validate(sub)
 
 
-def test_email_failing(validator):
+@pytest.mark.asyncio
+async def test_email_failing(validator):
     """Check that the validator rejects some invalid email addresses."""
     emails = [
         8,
@@ -109,14 +114,16 @@ def test_email_failing(validator):
         assert not validator.validate(sub)
 
 
-def test_validate_min_chars_passing(validator):
+@pytest.mark.asyncio
+async def test_validate_min_chars_passing(validator):
     """Test that min_chars rule works correctly for some valid values."""
     assert validator._validate_min_chars(2, 'test', 'aa') is None
     assert validator._validate_min_chars(5, 'test', '             ') is None
     assert validator._validate_min_chars(0, 'test', '') is None
 
 
-def test_validate_min_chars_failing(validator):
+@pytest.mark.asyncio
+async def test_validate_min_chars_failing(validator):
     """Test that min_chars rule works correctly for some invalid values."""
     with pytest.raises(AttributeError):
         validator._validate_min_chars(1, 'test', '')
@@ -124,14 +131,16 @@ def test_validate_min_chars_failing(validator):
         validator._validate_min_chars(1000000, 'test', 'hello!')
 
 
-def test_validate_max_chars_passing(validator):
+@pytest.mark.asyncio
+async def test_validate_max_chars_passing(validator):
     """Test that max_chars rule works correctly for some valid values."""
     assert validator._validate_max_chars(2, 'test', 'aa') is None
     assert validator._validate_max_chars(100000, 'test', '          ') is None
     assert validator._validate_max_chars(0, 'test', '') is None
 
 
-def test_validate_max_chars_failing(validator):
+@pytest.mark.asyncio
+async def test_validate_max_chars_failing(validator):
     """Test that max_chars rule works correctly for some invalid values."""
     with pytest.raises(AttributeError):
         validator._validate_max_chars(0, 'test', ' ')
@@ -146,13 +155,15 @@ value = {
 }
 
 
-def test_validate_min_select_passing(validator):
+@pytest.mark.asyncio
+async def test_validate_min_select_passing(validator):
     """Test that min_select rule works correctly for some valid values."""
     assert validator._validate_min_select(3, 'test', value) is None
     assert validator._validate_min_select(0, 'test', value) is None
 
 
-def test_validate_min_select_failing(validator):
+@pytest.mark.asyncio
+async def test_validate_min_select_failing(validator):
     """Test that min_select rule works correctly for some invalid values."""
     with pytest.raises(AttributeError):
         validator._validate_min_select(4, 'test', value)
@@ -160,13 +171,15 @@ def test_validate_min_select_failing(validator):
         validator._validate_min_select(99999, 'test', value)
 
 
-def test_validate_max_select_passing(validator):
+@pytest.mark.asyncio
+async def test_validate_max_select_passing(validator):
     """Test that max_select rule works correctly for some valid values."""
     assert validator._validate_max_select(3, 'test', value) is None
     assert validator._validate_max_select(999, 'test', value) is None
 
 
-def test_validate_max_select_failing(validator):
+@pytest.mark.asyncio
+async def test_validate_max_select_failing(validator):
     """Test that max_select rule works correctly for some invalid values."""
     with pytest.raises(AttributeError):
         validator._validate_max_select(2, 'test', value)
