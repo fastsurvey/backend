@@ -23,3 +23,19 @@ def event_loop(request):
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
+
+
+@pytest.fixture(scope='session')
+def submission():
+    """Provide a correct sample submission for the test survey."""
+    return {
+        'email': 'aa00aaa@mytum.de',
+        'properties': {
+            '1': {
+                '1': True,
+                '2': True,
+                '3': '',
+            },
+            '2': 'hello world!',
+        }
+    }

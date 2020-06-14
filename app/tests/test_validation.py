@@ -121,22 +121,6 @@ def test_validate_max_select_failing(validator, selection):
         validator._validate_max_select(0, 'test', selection)
 
 
-@pytest.fixture(scope='module')
-def submission():
-    """Provide a correct sample submission for the test survey."""
-    return {
-        'email': 'aa00aaa@mytum.de',
-        'properties': {
-            '1': {
-                '1': True,
-                '2': True,
-                '3': '',
-            },
-            '2': 'hello world!',
-        }
-    }
-
-
 def test_validator_passing(validator, submission):
     """Check that the generated validator lets a valid submissions pass."""
     assert validator.validate(submission)
