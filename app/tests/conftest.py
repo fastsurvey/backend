@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -6,12 +7,19 @@ from .. import main
 from .. import survey
 
 
-@pytest.fixture(scope='function', autouse=True)
-def setup(event_loop):
-    """Reconfigure motor client's event loop and database before a test."""
-    # rebind event loop of the motor client
-    main.motor_client = AsyncIOMotorClient(main.MDBCSTR, io_loop=event_loop)
-    # rebind database to new motor client
-    main.database = main.motor_client['main']
-    # rebind survey manager
-    main.manager = survey.SurveyManager(main.database)
+@pytest.fixture(scope='session')
+def event_loop(request):
+    """Create an instance of the default event loop for each test case.
+
+    Normally, pytest-asyncio would create a new loop for each test case,
+    probably with the intention of not sharing resources between tests, as
+    is best practice. In our case we would thus need to recreate the motor
+    client and all surveys (as they depend on the motor client) for each
+    test case. This severly slows the testing, which is why we in this case
+    deviate from the best practice and use a single event loop for all our
+    test cases.
+
+    """
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()

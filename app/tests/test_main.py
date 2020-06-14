@@ -6,15 +6,6 @@ from httpx import AsyncClient
 from .. import main
 
 
-@pytest.fixture(scope='function')
-async def cleanup():
-    """Drop the pending and verified test survey collections after a test."""
-    yield
-    survey = await main.manager.get('fastsurvey', 'test')
-    await survey.pending.drop()
-    await survey.verified.drop()
-
-
 @pytest.mark.asyncio
 async def test_status_passing():
     """Test that status function returns that all services are operational."""
@@ -42,6 +33,15 @@ async def test_configuration_invalid_identifier():
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get('/fastsurvey/carrot')
     assert response.status_code == 404
+
+
+@pytest.fixture(scope='function')
+async def cleanup():
+    """Drop the pending and verified test survey collections after a test."""
+    yield
+    survey = await main.manager.get('fastsurvey', 'test')
+    await survey.pending.drop()
+    await survey.verified.drop()
 
 
 @pytest.mark.asyncio
