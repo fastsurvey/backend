@@ -1,9 +1,9 @@
 import secrets
 import time
 
-from pymongo import DeleteMany, InsertOne
 from fastapi import HTTPException
 from starlette.responses import RedirectResponse
+from pymongo.errors import DuplicateKeyError
 
 import credentials
 import validation
@@ -74,9 +74,13 @@ class Survey:
             'timestamp': timestamp,
             'properties': submission['properties'],
         }
-        await self.pending.insert_one(submission)
+        while True:
+            try: 
+                await self.pending.insert_one(submission)
+                break
+            except DuplicateKeyError: 
+                submission['_id'] = secrets.token_hex(32)
 
-        # TODO use token as primary key, to explicitly avoid token collisions
         # TODO send verification email
         # email sending needs to be somehow mocked (and tested) in the tests
 
@@ -92,7 +96,7 @@ class Survey:
             raise HTTPException(401, 'invalid token')
         ve = {
             '_id': pe['email'],
-            'timestamp': timestamp,  # time is verification not submission time
+            'timestamp': timestamp,  # time is verify time, not submit time
             'properties': pe['properties'],
         }
         await self.verified.find_one_and_replace(
