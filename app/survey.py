@@ -13,6 +13,33 @@ import mailing
 FURL = credentials.FRONTEND_URL
 
 
+class SurveyManager:
+    """The manager manages creating, updating and deleting survey objects."""
+
+    def __init__(self, database):
+        """Initialize this class with empty suveys dictionary."""
+        self.database = database
+        self.surveys = {}
+
+    def add(self, configuration):
+        """Add new survey object via translation of given configuration."""
+        self.surveys.update({
+            configuration['_id']: Survey(configuration, self.database)
+        })
+
+    async def get(self, admin, survey):
+        """Return the survey object corresponding to the given identifiers."""
+        identifier = f'{admin}.{survey}'
+        if identifier not in self.surveys:
+            cn = await self.database['configurations'].find_one(
+                {'_id': identifier},
+            )
+            if cn is None:
+                raise HTTPException(404, 'survey not found')
+            self.add(cn)
+        return self.surveys[identifier]
+
+
 class Survey:
     """The survey class that all surveys instantiate."""
 
