@@ -20,8 +20,8 @@ def setup(event_loop):
 async def cleanup():
     """Delete all pending and verified entries in the testing collections."""
     yield
-    await main.surveys['fastsurvey.test'].pending.delete_many({})
-    await main.surveys['fastsurvey.test'].verified.delete_many({})
+    await main.surveys['fastsurvey.test'].pending.drop()
+    await main.surveys['fastsurvey.test'].verified.drop()
 
 
 @pytest.mark.asyncio
@@ -226,5 +226,17 @@ async def test_verify_invalid_token(scenario2, cleanup):
     assert ve['properties']['data'] == 'radish'
 
 
-# TODO test calling verification function before first submission
-# TODO test functions for non-existent survey
+@pytest.mark.asyncio
+async def test_verify_with_no_prior_submission(cleanup):
+    token = 'olive'
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.get(
+            url=f'/fastsurvey/test/verify/{token}',
+            allow_redirects=False,
+        )
+    pe = await main.surveys['fastsurvey.test'].pending.find_one()
+    ve = await main.surveys['fastsurvey.test'].verified.find_one()
+    print(pe)
+    assert response.status_code == 401
+    assert pe is None
+    assert ve is None
