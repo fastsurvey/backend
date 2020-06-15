@@ -1,6 +1,8 @@
 import pytest
 import asyncio
 
+from .. import main
+
 
 @pytest.fixture(scope='session')
 def event_loop(request):
@@ -21,6 +23,12 @@ def event_loop(request):
 
 
 @pytest.fixture(scope='session')
+async def survey():
+    """Provide an instant of the test survey."""
+    return await main.manager.get('fastsurvey', 'test')
+
+
+@pytest.fixture(scope='session')
 def submission():
     """Provide a correct sample submission for the test survey."""
     return {
@@ -28,9 +36,13 @@ def submission():
         'properties': {
             '1': {
                 '1': True,
-                '2': True,
-                '3': '',
+                '2': False,
             },
-            '2': 'hello world!',
+            '2': {
+                '1': True,
+                '2': True,
+                '3': False,
+            },
+            '3': 'hello world!',
         }
     }

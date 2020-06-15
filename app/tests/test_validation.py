@@ -5,15 +5,9 @@ from .. import main
 from .. import validation
 
 
-@pytest.fixture(scope='module')
-async def configuration():
-    survey = await main.manager.get('fastsurvey', 'test')
-    return survey.cn
-
-
-def test_generate_schema(configuration):
+def test_generate_schema(survey):
     """Test that the schema generation function returns the correct result."""
-    schema = validation._generate_schema(configuration)
+    schema = validation._generate_schema(survey.cn)
     assert schema ==  {
         'email': {
             'type': 'Email',
@@ -48,40 +42,36 @@ def test_generate_schema(configuration):
         },
     }
 
+'''
 
-@pytest.fixture(scope='module')
-def validator(configuration):
-    return validation.SubmissionValidator.create(configuration)
-
-
-def test_validate_min_chars_passing(validator):
+def test_validate_min_chars_passing(survey):
     """Test that min_chars rule works correctly for some valid values."""
-    assert validator._validate_min_chars(2, 'test', 'aa') is None
-    assert validator._validate_min_chars(5, 'test', '             ') is None
-    assert validator._validate_min_chars(0, 'test', '') is None
+    assert survey.validator._validate_min_chars(2, 'test', 'aa') is None
+    assert survey.validator._validate_min_chars(5, 'test', '       ') is None
+    assert survey.validator._validate_min_chars(0, 'test', '') is None
 
 
-def test_validate_min_chars_failing(validator):
+def test_validate_min_chars_failing(survey):
     """Test that min_chars rule works correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        validator._validate_min_chars(1, 'test', '')
+        survey.validator._validate_min_chars(1, 'test', '')
     with pytest.raises(AttributeError):
-        validator._validate_min_chars(1000000, 'test', 'hello!')
+        survey.validator._validate_min_chars(1000000, 'test', 'hello!')
 
 
-def test_validate_max_chars_passing(validator):
+def test_validate_max_chars_passing(survey):
     """Test that max_chars rule works correctly for some valid values."""
-    assert validator._validate_max_chars(2, 'test', 'aa') is None
-    assert validator._validate_max_chars(100000, 'test', '          ') is None
-    assert validator._validate_max_chars(0, 'test', '') is None
+    assert survey.validator._validate_max_chars(2, 'test', 'aa') is None
+    assert survey.validator._validate_max_chars(100000, 'test', '   ') is None
+    assert survey.validator._validate_max_chars(0, 'test', '') is None
 
 
-def test_validate_max_chars_failing(validator):
+def test_validate_max_chars_failing(survey):
     """Test that max_chars rule works correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        validator._validate_max_chars(0, 'test', ' ')
+        survey.validator._validate_max_chars(0, 'test', ' ')
     with pytest.raises(AttributeError):
-        validator._validate_max_chars(9999, 'test', 'aaaaaaaaaa' * 1000)
+        survey.validator._validate_max_chars(9999, 'test', 'a' * 10000)
 
 
 @pytest.fixture(scope='module')
@@ -96,40 +86,43 @@ def selection():
     }
 
 
-def test_validate_min_select_passing(validator, selection):
+def test_validate_min_select_passing(survey, selection):
     """Test that min_select rule works correctly for some valid values."""
-    assert validator._validate_min_select(3, 'test', selection) is None
-    assert validator._validate_min_select(0, 'test', selection) is None
+    assert survey.validator._validate_min_select(3, 'test', selection) is None
+    assert survey.validator._validate_min_select(0, 'test', selection) is None
 
 
-def test_validate_min_select_failing(validator, selection):
+def test_validate_min_select_failing(survey, selection):
     """Test that min_select rule works correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        validator._validate_min_select(4, 'test', selection)
+        survey.validator._validate_min_select(4, 'test', selection)
     with pytest.raises(AttributeError):
-        validator._validate_min_select(99999, 'test', selection)
+        survey.validator._validate_min_select(99999, 'test', selection)
 
 
-def test_validate_max_select_passing(validator, selection):
+def test_validate_max_select_passing(survey, selection):
     """Test that max_select rule works correctly for some valid values."""
-    assert validator._validate_max_select(3, 'test', selection) is None
-    assert validator._validate_max_select(999, 'test', selection) is None
+    assert survey.validator._validate_max_select(3, 'test', selection) is None
+    assert survey.validator._validate_max_select(99, 'test', selection) is None
 
 
-def test_validate_max_select_failing(validator, selection):
+def test_validate_max_select_failing(survey, selection):
     """Test that max_select rule works correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        validator._validate_max_select(2, 'test', selection)
+        survey.validator._validate_max_select(2, 'test', selection)
     with pytest.raises(AttributeError):
-        validator._validate_max_select(0, 'test', selection)
+        survey.validator._validate_max_select(0, 'test', selection)
 
 
-def test_validator_passing(validator, submission):
+'''
+
+
+def test_validator_passing(survey, submission):
     """Check that the generated validator lets a valid submissions pass."""
-    assert validator.validate(submission)
+    assert survey.validator.validate(submission)
 
 
-def test_email_passing(validator, submission):
+def test_email_passing(survey, submission):
     """Check that the validator lets some valid email addresses pass."""
     emails = [
         'aa00aaa@mytum.de',
@@ -138,10 +131,10 @@ def test_email_passing(validator, submission):
     submission = copy.deepcopy(submission)
     for email in emails:
         submission['email'] = email
-        assert validator.validate(submission)
+        assert survey.validator.validate(submission)
 
 
-def test_email_failing(validator, submission):
+def test_email_failing(survey, submission):
     """Check that the validator rejects some invalid email addresses."""
     emails = [
         8,
@@ -166,4 +159,4 @@ def test_email_failing(validator, submission):
     submission = copy.deepcopy(submission)
     for email in emails:
         submission['email'] = email
-        assert not validator.validate(submission)
+        assert not survey.validator.validate(submission)

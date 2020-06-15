@@ -38,23 +38,21 @@ async def test_configuration_invalid_identifier():
 
 
 @pytest.fixture(scope='function')
-async def cleanup():
+async def cleanup(survey):
     """Drop the pending and verified test survey collections after a test."""
     yield
-    survey = await main.manager.get('fastsurvey', 'test')
     await survey.pending.drop()
     await survey.verified.drop()
 
 
 @pytest.mark.asyncio
-async def test_submit_valid_submission(submission, cleanup):
+async def test_submit_valid_submission(survey, submission, cleanup):
     """Test that submit works with a valid submission for the test survey."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(
             url='/fastsurvey/test/submit', 
             json=submission,
         )
-    survey = await main.manager.get('fastsurvey', 'test')
     pe = await survey.pending.find_one()
     keys = {'_id', 'email', 'timestamp', 'properties'}
     assert response.status_code == 200
@@ -64,7 +62,7 @@ async def test_submit_valid_submission(submission, cleanup):
 
 
 @pytest.mark.asyncio
-async def test_submit_invalid_submission(submission, cleanup):
+async def test_submit_invalid_submission(survey, submission, cleanup):
     """Test that submit correctly rejects an invalid test survey submission."""
     submission = copy.deepcopy(submission)
     submission['properties']['1']['1'] = 5  # should be boolean
@@ -73,16 +71,14 @@ async def test_submit_invalid_submission(submission, cleanup):
             url='/fastsurvey/test/submit', 
             json=submission,
         )
-    survey = await main.manager.get('fastsurvey', 'test')
     pe = await survey.pending.find_one()
     assert response.status_code == 400
     assert pe is None
 
 
 @pytest.fixture(scope='function')
-async def scenario1():
+async def scenario1(survey):
     """Load some predefined entries into the database for testing."""
-    survey = await main.manager.get('fastsurvey', 'test')
     await survey.pending.insert_many([
         {
             '_id': 'tomato',
@@ -110,6 +106,7 @@ async def scenario1():
 async def test_submit_duplicate_token(
         monkeypatch, 
         scenario1, 
+        survey,
         submission, 
         cleanup,
     ):
@@ -131,16 +128,15 @@ async def test_submit_duplicate_token(
             url='/fastsurvey/test/submit', 
             json=submission,
         )
-    assert response.status_code == 200
-    survey = await main.manager.get('fastsurvey', 'test')
     pes = await survey.pending.find().to_list(10)
+    assert response.status_code == 200
     assert len(pes) == len(tokens)
     for token, pe in zip(tokens, pes):
         assert pe['_id'] == token
 
 
 @pytest.mark.asyncio
-async def test_verify_valid_token(scenario1, cleanup):
+async def test_verify_valid_token(scenario1, survey, cleanup):
     """Test correct verification given a valid submission token."""
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -148,7 +144,6 @@ async def test_verify_valid_token(scenario1, cleanup):
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    survey = await main.manager.get('fastsurvey', 'test')
     pe = await survey.pending.find_one(
         filter={'_id': 'tomato'},
     )
@@ -164,9 +159,8 @@ async def test_verify_valid_token(scenario1, cleanup):
 
 
 @pytest.fixture(scope='function')
-async def scenario2():
+async def scenario2(survey):
     """Load some predefined entries into the database for testing."""
-    survey = await main.manager.get('fastsurvey', 'test')
     await survey.pending.insert_many([
         {
             '_id': 'tomato',
@@ -196,7 +190,7 @@ async def scenario2():
 
 
 @pytest.mark.asyncio
-async def test_verify_replace_valid_token(scenario2, cleanup):
+async def test_verify_replace_valid_token(scenario2, survey, cleanup):
     """Test replacement of previously verified submission."""
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -204,7 +198,6 @@ async def test_verify_replace_valid_token(scenario2, cleanup):
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    survey = await main.manager.get('fastsurvey', 'test')
     pe = await survey.pending.find_one(
         filter={'_id': 'tomato'},
     )
@@ -220,7 +213,7 @@ async def test_verify_replace_valid_token(scenario2, cleanup):
     
 
 @pytest.mark.asyncio
-async def test_verify_invalid_token(scenario2, cleanup):
+async def test_verify_invalid_token(scenario2, survey, cleanup):
     """Test correct verification rejection given an invalid token."""
     token = 'peach'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -228,7 +221,6 @@ async def test_verify_invalid_token(scenario2, cleanup):
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    survey = await main.manager.get('fastsurvey', 'test')
     pes = await survey.pending.find().to_list(10)
     ve = await survey.verified.find_one(
         filter={'_id': 'aa00aaa@mytum.de'},
@@ -240,16 +232,16 @@ async def test_verify_invalid_token(scenario2, cleanup):
 
 
 @pytest.mark.asyncio
-async def test_verify_with_no_prior_submission(cleanup):
+async def test_verify_with_no_prior_submission(survey, cleanup):
     token = 'olive'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get(
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
-    survey = await main.manager.get('fastsurvey', 'test')
     pe = await survey.pending.find_one()
     ve = await survey.verified.find_one()
     assert response.status_code == 401
     assert pe is None
     assert ve is None
+
