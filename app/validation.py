@@ -52,9 +52,9 @@ class SubmissionValidator(Validator):
         for v in value.values():
             count += v
             '''
-            if isinstance(v, bool) and v:  # for option children
+            if isinstance(v, bool) and v:  # for option subfields
                 count += 1
-            if isinstance(v, str):  # for list children
+            if isinstance(v, str):  # for list subfields
                 split = set([e.strip() for e in v.split(',') if e.strip()])
                 count += len(split)
             '''
@@ -80,8 +80,8 @@ def _generate_schema(configuration):
         if 'properties' in field.keys():
             if 'fields' in field['properties'].keys():
                 fs['schema'] = {
-                    str(i+1): _generate_field_schema(child)
-                    for i, child
+                    str(i+1): _generate_field_schema(subfield)
+                    for i, subfield
                     in enumerate(field['properties']['fields'])
                 }
             for k, v in field['properties'].items():
