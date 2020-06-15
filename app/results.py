@@ -2,6 +2,7 @@ class Alligator:
     """Does it aggregate ... or does it alligate ... ?"""
 
     def __init__(self, configuration, database):
+        """Initialize alligator with some pipeline parts already defined."""
         self.cn = configuration
         self.verified = database[f"{self.cn['_id']}.verified"]
         self.results = database['results']
@@ -23,6 +24,7 @@ class Alligator:
         }
    
     def _add_radio(self, field, index):
+        """Add commands to deal with radio field to results pipeline."""
         subfields = field['properties']['fields']
         for i in range(len(subfields)):
             path = f'properties.{index}.{i+1}'
@@ -30,9 +32,11 @@ class Alligator:
             self.group[f'{index}-{i+1}'] = {'$sum': f'${path}'}
 
     def _add_selection(self, field, index):
-        pass
+        """Add commands to deal with selection field to results pipeline."""
+        self._add_radio(field, index)
 
     def _add_text(self, field, index):
+        """Add commands to deal with text field to results pipeline."""
         pass
 
     def _build_pipeline(self):
@@ -47,6 +51,7 @@ class Alligator:
         return pipeline
 
     async def fetch(self):
+        """Fetch results, aggregating them beforehand on first call."""
         results = await self.results.find_one(self.cn['_id'])
         if results is not None:
             return results
@@ -54,5 +59,6 @@ class Alligator:
             pipeline=self._build_pipeline(),
             allowDiskUse=True,
         )
+        # needed to make sure that aggregation finished
         async for _ in cursor: pass
         return await self.results.find_one(self.cn['_id'])
