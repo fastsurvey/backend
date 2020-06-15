@@ -43,6 +43,7 @@ async def cleanup(survey):
     yield
     await survey.pending.drop()
     await survey.verified.drop()
+    await survey.alligator.results.delete_one({'_id': 'fastsurvey.test'})
 
 
 @pytest.mark.asyncio
@@ -245,3 +246,73 @@ async def test_verify_with_no_prior_submission(survey, cleanup):
     assert pe is None
     assert ve is None
 
+
+@pytest.fixture(scope='function')
+async def scenario3(survey):
+    """Load some predefined entries into the database for testing."""
+    await survey.verified.insert_many([
+        {
+            '_id': 'aa01aaa@mytum.de',
+            'timestamp': 1590228136,
+            'properties': {
+                '1': {
+                    '1': True,
+                    '2': False,
+                },
+                '2': {
+                    '1': True,
+                    '2': True,
+                    '3': False,
+                },
+                '3': 'tomato! tomato! tomato!',
+            },
+        },
+        {
+            '_id': 'aa02aaa@mytum.de',
+            'timestamp': 1590228136,
+            'properties': {
+                '1': {
+                    '1': True,
+                    '2': False,
+                },
+                '2': {
+                    '1': True,
+                    '2': False,
+                    '3': False,
+                },
+                '3': 'apple! apple! apple!',
+            },
+        },
+        {
+            '_id': 'aa03aaa@mytum.de',
+            'timestamp': 1590228136,
+            'properties': {
+                '1': {
+                    '1': False,
+                    '2': True,
+                },
+                '2': {
+                    '1': False,
+                    '2': True,
+                    '3': False,
+                },
+                '3': 'cabbage! cabbage! cabbage!',
+            },
+        },
+    ])
+
+
+@pytest.mark.asyncio
+async def test_fetch(scenario3, cleanup):
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        response = await ac.get(
+            url=f'/fastsurvey/test/results',
+            allow_redirects=False,
+        )
+    assert response.status_code == 200
+    assert response.json() == {
+        '_id': 'fastsurvey.test',
+        'count': 3,
+        '1-1': 2,
+        '1-2': 1,
+    }
