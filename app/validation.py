@@ -14,8 +14,9 @@ class SubmissionValidator(Validator):
     types_mapping = {
         'Email': TypeDefinition('Email', (str,), ()),
         'Properties': TypeDefinition('Properties', (dict,), ()),
+        'Radio': TypeDefinition('Selection', (dict,), ()),
         'Selection': TypeDefinition('Selection', (dict,), ()),
-        'List': TypeDefinition('List', (str,), ()),
+        # 'List': TypeDefinition('List', (str,), ()),
         'Option': TypeDefinition('Option', (bool,), ()),
         'Text': TypeDefinition('Text', (str,), ()),
     }
@@ -49,11 +50,14 @@ class SubmissionValidator(Validator):
         """Count the number of selected options in a selection field."""
         count = 0
         for v in value.values():
+            count += v
+            '''
             if isinstance(v, bool) and v:  # for option children
                 count += 1
             if isinstance(v, str):  # for list children
                 split = set([e.strip() for e in v.split(',') if e.strip()])
                 count += len(split)
+            '''
         return count
 
     def _validate_min_select(self, min_select, field, value):

@@ -23,22 +23,23 @@ def test_generate_schema(configuration):
             'type': 'Properties',
             'schema': {
                 '1': {
+                    'type': 'Radio',
+                    'schema': {
+                        '1': {'type': 'Option'},
+                        '2': {'type': 'Option'},
+                    },
+                },
+                '2': {
                     'type': 'Selection',
                     'min_select': 0,
                     'max_select': 2,
                     'schema': {
-                        '1': {
-                            'type': 'Option',
-                        },
-                        '2': {
-                            'type': 'Option',
-                        },
-                        '3': {
-                            'type': 'List',
-                        },
+                        '1': {'type': 'Option'},
+                        '2': {'type': 'Option'},
+                        '3': {'type': 'Option'},
                     },
                 },
-                '2': {
+                '3': {
                     'type': 'Text',
                     'min_chars': 10,
                     'max_chars': 100,
@@ -87,9 +88,11 @@ def test_validate_max_chars_failing(validator):
 def selection():
     """Provide a correct sample selection field for the test survey."""
     return {
-        'B': False,
-        'other': ',,,,,C    ,D,   D,,   , , ,,     C,D,, , ,    ',
-        'A': True,
+        '1': False,
+        '2': True,
+        '3': True,
+        '4': False,
+        '5': True,
     }
 
 
