@@ -18,7 +18,7 @@ class SurveyManager:
     """The manager manages creating, updating and deleting survey objects."""
 
     def __init__(self, database):
-        """Initialize this class with empty suveys dictionary."""
+        """Initialize this class with empty surveys dictionary."""
         self.database = database
         self.surveys = {}
 

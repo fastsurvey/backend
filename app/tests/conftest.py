@@ -22,7 +22,7 @@ def event_loop(request):
     loop.close()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 async def survey():
     """Provide an instant of the test survey."""
     return await main.manager.get('fastsurvey', 'test')
