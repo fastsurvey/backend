@@ -28,7 +28,19 @@ async def survey():
     return await main.manager.get('fastsurvey', 'test')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function', autouse=True)
+async def cleanup(survey):
+    """Clean up database and survey instants after each test."""
+    yield
+    idd = {'_id': 'fastsurvey.test'}
+    await survey.pending.drop()
+    await survey.verified.drop()
+    await survey.alligator.results.delete_one(idd)
+    cn = await main.database['configurations'].find_one(idd)
+    main.manager.add(cn)
+
+
+@pytest.fixture(scope='function')
 def submission():
     """Provide a correct sample submission for the test survey."""
     return {

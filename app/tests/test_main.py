@@ -1,7 +1,6 @@
 import asyncio
 import pytest
 import secrets
-import copy
 
 from httpx import AsyncClient
 
@@ -37,17 +36,8 @@ async def test_configuration_invalid_identifier():
     assert response.status_code == 404
 
 
-@pytest.fixture(scope='function')
-async def cleanup(survey):
-    """Drop the pending and verified test survey collections after a test."""
-    yield
-    await survey.pending.drop()
-    await survey.verified.drop()
-    await survey.alligator.results.delete_one({'_id': 'fastsurvey.test'})
-
-
 @pytest.mark.asyncio
-async def test_submit_valid_submission(survey, submission, cleanup):
+async def test_submit_valid_submission(survey, submission):
     """Test that submit works with a valid submission for the test survey."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(
@@ -63,9 +53,8 @@ async def test_submit_valid_submission(survey, submission, cleanup):
 
 
 @pytest.mark.asyncio
-async def test_submit_invalid_submission(survey, submission, cleanup):
+async def test_submit_invalid_submission(survey, submission):
     """Test that submit correctly rejects an invalid test survey submission."""
-    submission = copy.deepcopy(submission)
     submission['properties']['1']['1'] = 5  # should be boolean
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(
@@ -109,7 +98,6 @@ async def test_submit_duplicate_token(
         scenario1, 
         survey,
         submission, 
-        cleanup,
     ):
     """Test that duplicate tokens in submissions are correctly resolved."""
     i = 0
@@ -137,7 +125,7 @@ async def test_submit_duplicate_token(
 
 
 @pytest.mark.asyncio
-async def test_verify_valid_token(scenario1, survey, cleanup):
+async def test_verify_valid_token(scenario1, survey):
     """Test correct verification given a valid submission token."""
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -191,7 +179,7 @@ async def scenario2(survey):
 
 
 @pytest.mark.asyncio
-async def test_verify_replace_valid_token(scenario2, survey, cleanup):
+async def test_verify_replace_valid_token(scenario2, survey):
     """Test replacement of previously verified submission."""
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -214,7 +202,7 @@ async def test_verify_replace_valid_token(scenario2, survey, cleanup):
     
 
 @pytest.mark.asyncio
-async def test_verify_invalid_token(scenario2, survey, cleanup):
+async def test_verify_invalid_token(scenario2, survey):
     """Test correct verification rejection given an invalid token."""
     token = 'peach'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -233,7 +221,7 @@ async def test_verify_invalid_token(scenario2, survey, cleanup):
 
 
 @pytest.mark.asyncio
-async def test_verify_with_no_prior_submission(survey, cleanup):
+async def test_verify_with_no_prior_submission(survey):
     token = 'olive'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get(
@@ -303,7 +291,7 @@ async def scenario3(survey):
 
 
 @pytest.mark.asyncio
-async def test_fetch(scenario3, cleanup):
+async def test_fetch(scenario3):
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get(
             url=f'/fastsurvey/test/results',
@@ -315,4 +303,7 @@ async def test_fetch(scenario3, cleanup):
         'count': 3,
         '1-1': 2,
         '1-2': 1,
+        '2-1': 2,
+        '2-2': 2,
+        '2-3': 0,
     }

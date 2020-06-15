@@ -42,7 +42,6 @@ def test_generate_schema(survey):
         },
     }
 
-'''
 
 def test_validate_min_chars_passing(survey):
     """Test that min_chars rule works correctly for some valid values."""
@@ -112,9 +111,6 @@ def test_validate_max_select_failing(survey, selection):
         survey.validator._validate_max_select(2, 'test', selection)
     with pytest.raises(AttributeError):
         survey.validator._validate_max_select(0, 'test', selection)
-
-
-'''
 
 
 def test_validator_passing(survey, submission):
