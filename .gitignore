@@ -12,7 +12,7 @@ __pycache__
 /admin
 
 credentials.py
-
+surveys/
 
 
 # Created by https://www.gitignore.io/api/git,node,react,linux,macos,flask,python,pycharm,windows,intellij,webstorm
