@@ -1,11 +1,6 @@
 import pytest
 import asyncio
 
-from motor.motor_asyncio import AsyncIOMotorClient
-
-from .. import main
-from .. import survey
-
 
 @pytest.fixture(scope='session')
 def event_loop(request):
