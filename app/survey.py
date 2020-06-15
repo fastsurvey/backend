@@ -8,6 +8,7 @@ from pymongo.errors import DuplicateKeyError
 import credentials
 import validation
 import mailing
+import results
 
 
 FURL = credentials.FRONTEND_URL
@@ -36,7 +37,9 @@ class SurveyManager:
             )
             if cn is None:
                 raise HTTPException(404, 'survey not found')
-            self.add(cn)
+            # due to await, check again to make sure add is only run once
+            if identifier not in self.surveys:
+                self.add(cn)
         return self.surveys[identifier]
 
 
@@ -56,6 +59,7 @@ class Survey:
         self.end = self.cn['end']
         self.validator = validation.SubmissionValidator.create(self.cn)
         self.postman = mailing.Postman(self.cn)
+        self.alligator = results.Alligator(self.cn, database)
         self.pending = database[f'{self.admin}.{self.name}.pending']
         self.verified = database[f'{self.admin}.{self.name}.verified']
 
@@ -104,15 +108,8 @@ class Survey:
             replacement=ve, 
             upsert=True,
         )
-        return RedirectResponse(f'{FURL}/{self.name}/success')
+        return RedirectResponse(f'{FURL}/{self.admin}/{self.name}/success')
 
     async def fetch(self):
-        """Fetch and process the survey results."""
-        submissions = self.verified.find()
-        results = {}
-        async for sb in submissions:
-            for pp in sb['properties'].keys():
-                for option, choice in sb['properties'][pp]:
-                    # TODO works only for boolean values
-                    results[option] = results.get(option, 0) + choice
-        return results
+        """Query the survey submissions and return aggregated results."""
+        return await self.alligator.fetch()

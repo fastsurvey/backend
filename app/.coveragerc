@@ -8,3 +8,4 @@ include =
     survey.py
     validation.py
     mailing.py
+    results.py
