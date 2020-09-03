@@ -2,14 +2,14 @@ import os
 import json
 
 from fastapi import FastAPI, Path, Body, HTTPException
-from enum import Enum 
+from enum import Enum
 from motor.motor_asyncio import AsyncIOMotorClient
 
-import credentials
-import survey
+from app.credentials import MDB_CONNECTION_STRING
+from app.survey import SurveyManager
 
 
-MDBCSTR = credentials.MDB_CONNECTION_STRING
+MDBCSTR = MDB_CONNECTION_STRING
 
 
 # create fastapi app
@@ -19,7 +19,7 @@ motor_client = AsyncIOMotorClient(MDBCSTR)
 # get link to database
 database = motor_client['main']
 # instantiate survey manager
-manager = survey.SurveyManager(database)
+manager = SurveyManager(database)
 
 
 @app.get('/', tags=['status'])

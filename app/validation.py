@@ -1,6 +1,12 @@
 from cerberus import Validator, TypeDefinition
 
 
+
+# TODO check that radio has only one selection
+# TODO add default max length for text
+
+
+
 class SubmissionValidator(Validator):
     """The cerberus submission validator with added custom validation rules.
 

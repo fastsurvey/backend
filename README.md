@@ -1,4 +1,4 @@
 - documentation is available at docs.fastsurvey.io
 - run locally via `uvicorn app.main:app --reload`
 - Swagger and ReDoc API documentations lie at /docs and /redoc
-- test via `python3 -m pytest -vvsx --cov --cov-report term-missing` inside the app folder
+- test via `python3 -m pytest -vvsx --cov --cov-report term-missing`

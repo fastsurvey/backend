@@ -5,13 +5,13 @@ from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 from pymongo.errors import DuplicateKeyError
 
-import credentials
-import validation
-import mailing
-import results
+from app.credentials import FRONTEND_URL
+from app.validation import SubmissionValidator
+from app.mailing import Postman
+from app.results import Alligator
 
 
-FURL = credentials.FRONTEND_URL
+FURL = FRONTEND_URL
 
 
 class SurveyManager:
@@ -57,9 +57,9 @@ class Survey:
         self.name = self.cn['name']
         self.start = self.cn['start']
         self.end = self.cn['end']
-        self.validator = validation.SubmissionValidator.create(self.cn)
-        self.postman = mailing.Postman(self.cn)
-        self.alligator = results.Alligator(self.cn, database)
+        self.validator = SubmissionValidator.create(self.cn)
+        self.postman = Postman(self.cn)
+        self.alligator = Alligator(self.cn, database)
         self.pending = database[f'{self.admin}.{self.name}.pending']
         self.verified = database[f'{self.admin}.{self.name}.verified']
 
@@ -79,10 +79,10 @@ class Survey:
             'properties': submission['properties'],
         }
         while True:
-            try: 
+            try:
                 await self.pending.insert_one(submission)
                 break
-            except DuplicateKeyError: 
+            except DuplicateKeyError:
                 submission['_id'] = secrets.token_hex(32)
 
         # TODO send verification email
@@ -105,7 +105,7 @@ class Survey:
         }
         await self.verified.find_one_and_replace(
             filter={'_id': pe['email']},
-            replacement=ve, 
+            replacement=ve,
             upsert=True,
         )
         return RedirectResponse(f'{FURL}/{self.admin}/{self.name}/success')

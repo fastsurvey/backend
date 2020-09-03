@@ -1,18 +1,18 @@
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Subject, From, To, Mail, HtmlContent
 
-import credentials
+from app.credentials import SENDGRID_API_KEY, BACKEND_URL
 
 
-SGKEY = credentials.SENDGRID_API_KEY
-BURL = credentials.BACKEND_URL
+SGKEY = SENDGRID_API_KEY
+BURL = BACKEND_URL
 
 
 class Postman:
     """It's the postman who delivers the (electronic) love letters!"""
 
     def __init__(
-            self, 
+            self,
             configuration,
         ):
         """Create a mailing client for a survey using its configuration."""
