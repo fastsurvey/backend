@@ -10,17 +10,11 @@ pytest-asyncio = "~=0.12.0"
 httpx = "*"
 
 [packages]
-pymongo = "*"
-flask = "*"
-flask-cors = "*"
-certifi = "*"
+motor = "*"
+fastapi = "*"
+cerberus = "*"
 sendgrid = "*"
 dnspython = "*"
-gunicorn = "*"
-cerberus = "*"
-google-cloud-datastore = "*"
-fastapi = "*"
-motor = "*"
 
 [requires]
 python_version = "3.8"
