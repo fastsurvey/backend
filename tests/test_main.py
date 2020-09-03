@@ -1,10 +1,9 @@
-import asyncio
 import pytest
 import secrets
 
 from httpx import AsyncClient
 
-from .. import main
+import app.main as main
 
 
 @pytest.mark.asyncio
@@ -41,7 +40,7 @@ async def test_submit_valid_submission(survey, submission):
     """Test that submit works with a valid submission for the test survey."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(
-            url='/fastsurvey/test/submit', 
+            url='/fastsurvey/test/submit',
             json=submission,
         )
     pe = await survey.pending.find_one()
@@ -58,7 +57,7 @@ async def test_submit_invalid_submission(survey, submission):
     submission['properties']['1']['1'] = 5  # should be boolean
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(
-            url='/fastsurvey/test/submit', 
+            url='/fastsurvey/test/submit',
             json=submission,
         )
     pe = await survey.pending.find_one()
@@ -94,10 +93,10 @@ async def scenario1(survey):
 
 @pytest.mark.asyncio
 async def test_submit_duplicate_token(
-        monkeypatch, 
-        scenario1, 
+        monkeypatch,
+        scenario1,
         survey,
-        submission, 
+        submission,
     ):
     """Test that duplicate tokens in submissions are correctly resolved."""
     i = 0
@@ -111,10 +110,10 @@ async def test_submit_duplicate_token(
 
     # set up mocking for token generation
     monkeypatch.setattr(secrets, 'token_hex', token)
-    
+
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(
-            url='/fastsurvey/test/submit', 
+            url='/fastsurvey/test/submit',
             json=submission,
         )
     pes = await survey.pending.find().to_list(10)
@@ -199,7 +198,7 @@ async def test_verify_replace_valid_token(scenario2, survey):
     assert ve is not None  # entry replaces previously verified entry
     assert set(ve.keys()) == keys
     assert ve['properties']['1'] == 'cucumber'
-    
+
 
 @pytest.mark.asyncio
 async def test_verify_invalid_token(scenario2, survey):

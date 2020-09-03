@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 
-from .. import main
+import app.main as main
 
 
 @pytest.fixture(scope='session')

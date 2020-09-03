@@ -1,8 +1,8 @@
 import pytest
 import copy
 
-from .. import main
-from .. import results
+import app.main as main
+import app.results as results
 
 
 def test_add_radio(survey):
@@ -25,8 +25,6 @@ def test_add_radio(survey):
 
 def test_add_selection(survey):
     """Test that radio field is correctly added to the pipeline."""
-    import json
-    print(json.dumps(survey.alligator.project, indent=4))
     survey.alligator._add_selection(
         field=survey.cn['fields'][1],
         index=2,

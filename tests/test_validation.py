@@ -1,8 +1,8 @@
 import pytest
 import copy
 
-from .. import main
-from .. import validation
+import app.main as main
+import app.validation as validation
 
 
 def test_generate_schema(survey):
