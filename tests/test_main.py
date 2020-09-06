@@ -20,7 +20,7 @@ async def test_configuration_valid_identifier():
     """Test that the correct configuration is returned for a valid survey."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get('/fastsurvey/test')
-    configuration = await main.motor_client['main']['configurations'].find_one(
+    configuration = await main.database['configurations'].find_one(
         filter={'_id': 'fastsurvey.test'},
     )
     assert response.status_code == 200

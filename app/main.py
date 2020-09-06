@@ -16,7 +16,7 @@ app = FastAPI()
 # connect to mongodb via pymongo and motor
 motor_client = AsyncIOMotorClient(MDBCS)
 # get link to database
-database = motor_client['main']
+database = motor_client[os.getenv('ENVIRONMENT')]
 # instantiate survey manager
 manager = SurveyManager(database)
 
