@@ -5,17 +5,16 @@ from fastapi import FastAPI, Path, Body, HTTPException
 from enum import Enum
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from app.credentials import MDB_CONNECTION_STRING
 from app.survey import SurveyManager
 
 
-MDBCSTR = MDB_CONNECTION_STRING
+MDBCS = os.getenv('MDBCS')  # MongoDB connection string
 
 
 # create fastapi app
 app = FastAPI()
 # connect to mongodb via pymongo and motor
-motor_client = AsyncIOMotorClient(MDBCSTR)
+motor_client = AsyncIOMotorClient(MDBCS)
 # get link to database
 database = motor_client['main']
 # instantiate survey manager

@@ -1,17 +1,17 @@
 import secrets
 import time
+import os
 
 from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 from pymongo.errors import DuplicateKeyError
 
-from app.credentials import FRONTEND_URL
 from app.validation import SubmissionValidator
 from app.mailing import Postman
 from app.results import Alligator
 
 
-FURL = FRONTEND_URL
+FURL = os.getenv('FURL')  # frontend url
 
 
 class SurveyManager:

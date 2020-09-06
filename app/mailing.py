@@ -1,11 +1,11 @@
+import os
+
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Subject, From, To, Mail, HtmlContent
 
-from app.credentials import SENDGRID_API_KEY, BACKEND_URL
 
-
-SGKEY = SENDGRID_API_KEY
-BURL = BACKEND_URL
+SGKEY = os.getenv('SGKEY')  # SendGrid api key
+BURL = os.getenv('BURL')  # backend url
 
 
 class Postman:
