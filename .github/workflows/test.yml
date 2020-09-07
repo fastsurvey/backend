@@ -25,7 +25,7 @@ jobs:
         BURL: ${{ secrets.BURL }}
         MDBCS: ${{ secrets.MDBCS }}
         DPMST: ${{ secrets.DPMST }}
-        PPMST: ${{ secrets PPMST }}
+        PPMST: ${{ secrets.PPMST }}
     - name: Code Climate Coverage Action
       uses: paambaati/codeclimate-action@v2.3.0
       env:
