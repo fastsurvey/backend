@@ -1,0 +1,27 @@
+name: Test
+
+on:
+  push:
+    
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install pipenv
+      uses: dschep/install-pipenv-action@v1
+    - name: Install Python Dependencies
+      run: pipenv install --dev
+    - name: Test with pytest
+      run: pipenv run pytest
+    - name: Code Climate Coverage Action
+      uses: paambaati/codeclimate-action@v2.3.0
+      env:
+        CC_TEST_REPORTER_ID: 3298667b78909cd0b6566313fce031e23d17c5efc5aa6d1cc8d3c10ce2ef2e9a
+      with:
+        coverageCommand: coverage xml
