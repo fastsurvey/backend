@@ -18,7 +18,7 @@ jobs:
     - name: Install Python Dependencies
       run: pipenv install --dev
     - name: Test with pytest
-      run: python -m pytest --cov=app --cov-report=term-missing --cov-report=xml tests
+      run: pipenv run pytest --cov=app --cov-report=term-missing --cov-report=xml tests
       env:
         ENV: ${{ secrets.ENV }}
         FURL: ${{ secrets.FURL }}
