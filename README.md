@@ -4,5 +4,5 @@
 - export your environment variables via `source .env`
 - run locally via `python -m uvicorn app.main:app --reload`
 - Swagger and ReDoc API documentations lie at /docs and /redoc
-- test via `pytest -sx --cov --cov-report term-missing`
+- test via `python -m pytest -sx --cov=app --cov-report=term-missing tests`
 - more documentation is available at [docs.fastsurvey.io](https://docs.fastsurvey.io/)

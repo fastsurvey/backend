@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -18,7 +18,7 @@ jobs:
     - name: Install Python Dependencies
       run: pipenv install --dev
     - name: Test with pytest
-      run: pipenv run pytest
+      run: python -m pytest --cov=app --cov-report=term-missing --cov-report=xml tests
       env:
         ENV: ${{ secrets.ENV }}
         FURL: ${{ secrets.FURL }}
@@ -26,9 +26,9 @@ jobs:
         MDBCS: ${{ secrets.MDBCS }}
         DPMST: ${{ secrets.DPMST }}
         PPMST: ${{ secrets.PPMST }}
-    - name: Code Climate Coverage Action
+    - name:  Push Coverage to CodeClimate
       uses: paambaati/codeclimate-action@v2.3.0
       env:
         CC_TEST_REPORTER_ID: 3298667b78909cd0b6566313fce031e23d17c5efc5aa6d1cc8d3c10ce2ef2e9a
       with:
-        coverageCommand: coverage xml
+        coverageCommand: true
