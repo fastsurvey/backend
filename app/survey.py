@@ -93,13 +93,11 @@ class Survey:
                 submission['_id'] = secrets.token_hex(32)
 
         '''
-
         try:
             self.postman.on_submit(submission)
         except Exception as e:
             print(e)
             raise HTTPException(500, 'verification email delivery failure')
-
         '''
 
 
