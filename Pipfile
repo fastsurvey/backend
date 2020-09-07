@@ -13,10 +13,10 @@ httpx = "*"
 motor = "*"
 fastapi = "*"
 cerberus = "*"
-sendgrid = "*"
 dnspython = "*"
 uvicorn = "*"
 pymongo = "*"
+postmarker = "*"
 
 [requires]
 python_version = "3.8"

@@ -1,61 +1,48 @@
 import os
 
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Subject, From, To, Mail, HtmlContent
 
-
-SGKEY = os.getenv('SGKEY')  # SendGrid api key
-BURL = os.getenv('BURL')  # backend url
+# dev / production environment
+ENV = os.getenv('ENV')
+# backend url
+BURL = os.getenv('BURL')
 
 
 class Postman:
-    """It's the postman who delivers the (electronic) love letters!"""
+    """It's the postman who delivers the electronic letters!"""
 
     def __init__(
             self,
             configuration,
+            postmark,
         ):
         """Create a mailing client for a survey using its configuration."""
-        self.survey_name = configuration['name']
-        self.survey_title = configuration['title']
-        self.from_email = From(
-            configuration.get('email', 'noreply@fastsurvey.io'),
-            configuration.get('contact', 'FastSurvey'),
-        )
+        self.s_admin = configuration['admin']
+        self.s_name = configuration['name']
+        self.s_title = configuration['title']
+        self.sender = 'noreply@fastsurvey.io'
+        self.postmark = postmark
 
     def _generate_verify_url(self, submission):
         """Generate the url that users need to visit to verify their email."""
-        return f"{BURL}/{self.survey_name}/verify/{submission['token']}"
+        token = submission['token']
+        return f"{BURL}/{self.s_admin}/{self.s_name}/verify/{token}"
 
-    def _generate_change_url(self, submission):
-        raise NotImplementedError
-
-    def _generate_summary(self, submission):
-        raise NotImplementedError
-
-    def _generate_content(self, submission):
-        """Generate the content of the confirmation email."""
-        return HtmlContent(
-            '<h2>We received your submission!</h2>'
-            + f'<p>Survey: {self.survey_title}</p>'
-            + f'<p>Please verify your e-mail address by clicking <a href=\'{self._generate_verify_url(submission)}\'>here</a></p>'
-        )
-
-    def confirm(self, submission):
+    def on_submit(self, submission):
         """Send a confirmation email used to verify a user's email address."""
-        message = Mail(
-            from_email=self.from_email,
-            to_emails=To(submission['email']),
-            subject=Subject('Please confirm your e-mail address'),
-            html_content=self._generate_content(submission),
+        email = self.postmark.emails.Email(
+            From=self.sender,
+            To=(
+                'test@blackhole.postmarkapp.com'
+                if ENV == 'development'
+                else submission['email']
+            ),
+            Subject='Please verify your submission',
+            HtmlBody=(
+                '<h2>We received your submission!</h2>'
+                + f'<p>Survey: {self.s_title}</p>'
+                + f'<p>Please verify your submission by <a href=\'{self._generate_verify_url(submission)}\'>clicking here</a></p>'
+                + '<p>We hope to have you over answering cool surveys again, soon!</p>'
+                + '<p>Your FastSurvey team</p>'
+            ),
         )
-        try:
-            sg_client = SendGridAPIClient(SGKEY)
-            response = sg_client.send(message)
-            print(response.status_code)
-            print(response.body)
-            print(response.headers)
-            return True
-        except Exception as e:
-            print(e)
-            return False
+        email.send()

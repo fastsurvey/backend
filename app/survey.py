@@ -11,21 +11,27 @@ from app.mailing import Postman
 from app.results import Alligator
 
 
-FURL = os.getenv('FURL')  # frontend url
+# frontend url
+FURL = os.getenv('FURL')
 
 
 class SurveyManager:
     """The manager manages creating, updating and deleting survey objects."""
 
-    def __init__(self, database):
+    def __init__(self, database, postmark):
         """Initialize this class with empty surveys dictionary."""
         self.database = database
+        self.postmark = postmark
         self.surveys = {}
 
     def add(self, configuration):
         """Add new survey object via translation of given configuration."""
         self.surveys.update({
-            configuration['_id']: Survey(configuration, self.database)
+            configuration['_id']: Survey(
+                configuration,
+                self.database,
+                self.postmark,
+            )
         })
 
     async def get(self, admin, survey):
@@ -50,6 +56,7 @@ class Survey:
             self,
             configuration,
             database,
+            postmark,
     ):
         """Create a survey from the given json configuration file."""
         self.cn = configuration
@@ -58,7 +65,7 @@ class Survey:
         self.start = self.cn['start']
         self.end = self.cn['end']
         self.validator = SubmissionValidator.create(self.cn)
-        self.postman = Postman(self.cn)
+        self.postman = Postman(self.cn, postmark)
         self.alligator = Alligator(self.cn, database)
         self.pending = database[f'{self.admin}.{self.name}.pending']
         self.verified = database[f'{self.admin}.{self.name}.verified']
@@ -85,8 +92,16 @@ class Survey:
             except DuplicateKeyError:
                 submission['_id'] = secrets.token_hex(32)
 
-        # TODO send verification email
-        # email sending needs to be somehow mocked (and tested) in the tests
+        '''
+
+        try:
+            self.postman.on_submit(submission)
+        except Exception as e:
+            print(e)
+            raise HTTPException(500, 'verification email delivery failure')
+
+        '''
+
 
     async def verify(self, token):
         """Verify user submission and copy it from pending to verified."""

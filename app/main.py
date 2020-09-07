@@ -4,21 +4,29 @@ import json
 from fastapi import FastAPI, Path, Body, HTTPException
 from enum import Enum
 from motor.motor_asyncio import AsyncIOMotorClient
+from postmarker.core import PostmarkClient
 
 from app.survey import SurveyManager
 
 
-MDBCS = os.getenv('MDBCS')  # MongoDB connection string
+# dev / production environment
+ENV = os.getenv('ENV')
+# MongoDB connection string
+MDBCS = os.getenv('MDBCS')
+# Postmark dev / production server token
+PMST = os.getenv('DPMST' if ENV == 'development' else 'PPMST')
 
 
 # create fastapi app
 app = FastAPI()
 # connect to mongodb via pymongo and motor
 motor_client = AsyncIOMotorClient(MDBCS)
-# get link to database
-database = motor_client[os.getenv('ENVIRONMENT')]
+# get link to dev / production database
+database = motor_client[ENV]
+# connect to postmark
+postmark = PostmarkClient(server_token=PMST)
 # instantiate survey manager
-manager = SurveyManager(database)
+manager = SurveyManager(database, postmark)
 
 
 @app.get('/', tags=['status'])
