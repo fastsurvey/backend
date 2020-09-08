@@ -1,0 +1,81 @@
+{
+    "_id": "fastsurvey.1",
+    "admin": "fastsurvey",
+    "name": "1",
+    "title": "Test Survey",
+    "description": "This is a sample survey used to test backend functionality.",
+    "start": 1000000000,
+    "end": 2000000000,
+    "fields": [
+        {
+            "type": "Option",
+            "required": true,
+            "title": "I have read and agree to the terms and conditions",
+            "description": ""
+        },
+        {
+            "type": "Radio",
+            "title": "What is your favorite fruit?",
+            "description": "",
+            "properties": {
+                "fields": [
+                    {
+                        "type": "Option",
+                        "title": "Asparagus",
+                        "description": ""
+                    },
+                    {
+                        "type": "Option",
+                        "title": "Spinach",
+                        "description": ""
+                    },
+                    {
+                        "type": "Option",
+                        "title": "Artichoke",
+                        "description": ""
+                    },
+                    {
+                        "type": "Option",
+                        "title": "None of these is a fruit",
+                        "description": ""
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Selection",
+            "title": "What's are your favorite ice cream flavors?",
+            "description": "",
+            "properties": {
+                "min_select": 0,
+                "max_select": 2,
+                "fields": [
+                    {
+                        "type": "Option",
+                        "title": "Strawberry",
+                        "description": ""
+                    },
+                    {
+                        "type": "Option",
+                        "title": "Vanilla",
+                        "description": ""
+                    },
+                    {
+                        "type": "Option",
+                        "title": "Chocolate",
+                        "description": ""
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Text",
+            "title": "Why do you like ice cream?",
+            "description": "",
+            "properties": {
+                "min_chars": 10,
+                "max_chars": 1000
+            }
+        }
+    ]
+}

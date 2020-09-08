@@ -1,5 +1,7 @@
 import pytest
 import asyncio
+import json
+import os
 
 import app.main as main
 
@@ -22,6 +24,22 @@ def event_loop(request):
     loop.close()
 
 
+@pytest.fixture(scope='session', autouse=True)
+async def synchronize():
+    """Synchronize available (in JSON) test surveys to the database."""
+    folder = 'tests/surveys'
+    main.database['configurations'].drop()
+    for file in os.listdir(folder):
+        name, ext = os.path.splitext(file)
+        if ext == '.json':
+            with open(f'{folder}/{file}', 'r') as configuration:
+                await main.manager.update(
+                    'fastsurvey',
+                    name,
+                    json.load(configuration),
+                )
+
+
 @pytest.fixture(scope='function')
 async def survey():
     """Provide an instant of the test survey."""
@@ -37,7 +55,7 @@ async def cleanup(survey):
     await survey.verified.drop()
     await survey.alligator.results.delete_one(idd)
     cn = await main.database['configurations'].find_one(idd)
-    main.manager.add(cn)
+    main.manager._cache(cn)
 
 
 @pytest.fixture(scope='function')

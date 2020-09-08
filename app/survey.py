@@ -24,8 +24,8 @@ class SurveyManager:
         self.postmark = postmark
         self.surveys = {}
 
-    def add(self, configuration):
-        """Add new survey object via translation of given configuration."""
+    def _cache(self, configuration):
+        """Update local survey cache with config-generated survey object."""
         self.surveys.update({
             configuration['_id']: Survey(
                 configuration,
@@ -38,15 +38,23 @@ class SurveyManager:
         """Return the survey object corresponding to the given identifiers."""
         identifier = f'{admin}.{survey}'
         if identifier not in self.surveys:
-            cn = await self.database['configurations'].find_one(
+            configuration = await self.database['configurations'].find_one(
                 {'_id': identifier},
             )
-            if cn is None:
+            if configuration is None:
                 raise HTTPException(404, 'survey not found')
-            # due to await, check again to make sure add is only run once
-            if identifier not in self.surveys:
-                self.add(cn)
+            self._cache(configuration)
         return self.surveys[identifier]
+
+    async def update(self, admin, survey, configuration):
+        """Add or update a survey configuration in the database."""
+        identifier = f'{admin}.{survey}'
+        await self.database['configurations'].find_one_and_replace(
+            filter={'_id': identifier},
+            replacement=configuration,
+            upsert=True,
+        )
+        self._cache(configuration)
 
 
 class Survey:
