@@ -1,7 +1,7 @@
 {
     "_id": "fastsurvey.1",
-    "admin": "fastsurvey",
-    "name": "1",
+    "admin_name": "fastsurvey",
+    "survey_name": "1",
     "title": "Test Survey",
     "description": "This is a sample survey used to test backend functionality.",
     "start": 1000000000,

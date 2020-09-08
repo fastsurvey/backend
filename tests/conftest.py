@@ -24,38 +24,34 @@ def event_loop(request):
     loop.close()
 
 
-@pytest.fixture(scope='session', autouse=True)
-async def synchronize():
-    """Synchronize available (in JSON) test surveys to the database."""
+@pytest.fixture(scope='session')
+async def survey_names():
+    """Provide the names of all available test surveys."""
     folder = 'tests/surveys'
-    main.database['configurations'].drop()
-    for file in os.listdir(folder):
-        name, ext = os.path.splitext(file)
-        if ext == '.json':
-            with open(f'{folder}/{file}', 'r') as configuration:
-                await main.manager.update(
-                    'fastsurvey',
-                    name,
-                    json.load(configuration),
-                )
+    return [
+        os.path.splitext(file)[0]
+        for file
+        in os.listdir(folder)
+        if os.path.splitext(file)[1] == '.json'
+    ]
 
 
 @pytest.fixture(scope='function')
-async def survey():
-    """Provide an instant of the test survey."""
-    return await main.manager.get('fastsurvey', 'test')
+async def synchronize(survey_names):
+    """Synchronize available (in JSON) test surveys to the database."""
+    main.database['configurations'].drop()
+    folder = 'tests/surveys'
+    for survey_name in survey_names:
+        with open(f'{folder}/{survey_name}.json', 'r') as configuration:
+            await main.manager.update(json.load(configuration))
 
 
-@pytest.fixture(scope='function', autouse=True)
-async def cleanup(survey):
-    """Clean up database and survey instants after each test."""
+@pytest.fixture(scope='function')
+async def cleanup(survey_names):
+    """Purge survey data locally and from the database after a test."""
     yield
-    idd = {'_id': 'fastsurvey.test'}
-    await survey.pending.drop()
-    await survey.verified.drop()
-    await survey.alligator.results.delete_one(idd)
-    cn = await main.database['configurations'].find_one(idd)
-    main.manager._cache(cn)
+    for survey_name in survey_names:
+        main.manager.delete('fastsurvey', survey_name)
 
 
 @pytest.fixture(scope='function')

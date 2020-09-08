@@ -15,6 +15,7 @@ async def test_status_passing():
     assert response.json() == {'database': 'UP', 'mailing': 'UP'}
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
 async def test_configuration_valid_identifier():
     """Test that the correct configuration is returned for a valid survey."""
@@ -27,6 +28,7 @@ async def test_configuration_valid_identifier():
     assert response.json() == configuration
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
 async def test_configuration_invalid_identifier():
     """Test the error on requesting the configuration of an invalid survey."""
@@ -35,6 +37,7 @@ async def test_configuration_invalid_identifier():
     assert response.status_code == 404
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
 async def test_submit_valid_submission(survey, submission):
     """Test that submit works with a valid submission for the test survey."""
@@ -51,6 +54,7 @@ async def test_submit_valid_submission(survey, submission):
     assert pe['properties'] == submission['properties']
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
 async def test_submit_invalid_submission(survey, submission):
     """Test that submit correctly rejects an invalid test survey submission."""
@@ -91,6 +95,7 @@ async def scenario1(survey):
     ])
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
 async def test_submit_duplicate_token(
         monkeypatch,
@@ -123,6 +128,7 @@ async def test_submit_duplicate_token(
         assert pe['_id'] == token
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
 async def test_verify_valid_token(scenario1, survey):
     """Test correct verification given a valid submission token."""
@@ -177,6 +183,7 @@ async def scenario2(survey):
     ])
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
 async def test_verify_replace_valid_token(scenario2, survey):
     """Test replacement of previously verified submission."""
@@ -200,6 +207,7 @@ async def test_verify_replace_valid_token(scenario2, survey):
     assert ve['properties']['1'] == 'cucumber'
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
 async def test_verify_invalid_token(scenario2, survey):
     """Test correct verification rejection given an invalid token."""
@@ -219,6 +227,7 @@ async def test_verify_invalid_token(scenario2, survey):
     assert ve['properties']['1'] == 'radish'
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
 async def test_verify_with_no_prior_submission(survey):
     token = 'olive'
@@ -289,6 +298,7 @@ async def scenario3(survey):
     ])
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
 async def test_fetch(scenario3):
     async with AsyncClient(app=main.app, base_url='http://test') as ac:

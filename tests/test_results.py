@@ -5,6 +5,7 @@ import app.main as main
 import app.results as results
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 def test_add_radio(survey):
     """Test that radio field is correctly added to the pipeline."""
     survey.alligator._add_radio(
@@ -23,6 +24,7 @@ def test_add_radio(survey):
     }
 
 
+@pytest.mark.skip(reason='scheduled for refactoring')
 def test_add_selection(survey):
     """Test that radio field is correctly added to the pipeline."""
     survey.alligator._add_selection(

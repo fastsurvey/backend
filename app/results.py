@@ -52,9 +52,9 @@ class Alligator:
 
     async def fetch(self):
         """Aggregate and return the results of the survey."""
-        results = await self.results.find_one({
-            '_id': self.configuration['_id']
-        })
+        results = await self.results.find_one(
+            {'_id': self.configuration['_id']},
+        )
         if results:
             return results
         cursor = self.verified.aggregate(
