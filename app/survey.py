@@ -20,41 +20,60 @@ class SurveyManager:
 
     def __init__(self, database, postmark):
         """Initialize this class with empty surveys dictionary."""
-        self.database = database
-        self.postmark = postmark
-        self.surveys = {}
+        self._database = database
+        self._postmark = postmark
+        self._surveys = {}
 
     def _cache(self, configuration):
         """Update local survey cache with config-generated survey object."""
-        self.surveys.update({
+        self._surveys.update({
             configuration['_id']: Survey(
                 configuration,
-                self.database,
-                self.postmark,
+                self._database,
+                self._postmark,
             )
         })
 
-    async def get(self, admin, survey):
-        """Return the survey object corresponding to the given identifiers."""
-        identifier = f'{admin}.{survey}'
-        if identifier not in self.surveys:
-            configuration = await self.database['configurations'].find_one(
-                {'_id': identifier},
-            )
-            if configuration is None:
-                raise HTTPException(404, 'survey not found')
-            self._cache(configuration)
-        return self.surveys[identifier]
-
-    async def update(self, admin, survey, configuration):
-        """Add or update a survey configuration in the database."""
-        identifier = f'{admin}.{survey}'
-        await self.database['configurations'].find_one_and_replace(
+    async def update(self, configuration):
+        """Add or update the survey configuration in the database."""
+        identifier = configuration['_id']
+        await self._database['configurations'].find_one_and_replace(
             filter={'_id': identifier},
             replacement=configuration,
             upsert=True,
         )
         self._cache(configuration)
+
+    async def get(self, admin_name, survey_name):
+        """Return the survey object corresponding to the given identifiers."""
+        identifier = f'{admin_name}.{survey_name}'
+        if identifier not in self._surveys:
+            configuration = await self._database['configurations'].find_one(
+                {'_id': identifier},
+            )
+            if configuration is None:
+                raise HTTPException(404, 'survey not found')
+            self._cache(configuration)
+        return self._surveys[identifier]
+
+    async def clean(self, admin_name, survey_name):
+        """Delete all the submission data of the survey from the database.
+
+        We intentionally do not use self.get() here, as we want to delete
+        the survey entry in self.purge() before calling self.clean()
+
+        """
+        identifier = f'{admin_name}.{survey_name}'
+        await self._database[f'{identifier}.pending'].drop()
+        await self._database[f'{identifier}.verified'].drop()
+
+    async def delete(self, admin_name, survey_name):
+        """Delete the survey and all its data from the database and cache."""
+        identifier = f'{admin_name}.{survey_name}'
+        await self._database['configurations'].delete_one({'_id': identifier})
+        del self._surveys[identifier]
+        await self._database['results'].delete_one({'_id': identifier})
+        await self.clean(admin_name, survey_name)
 
 
 class Survey:
@@ -67,16 +86,17 @@ class Survey:
             postmark,
     ):
         """Create a survey from the given json configuration file."""
-        self.cn = configuration
-        self.admin = self.cn['admin']
-        self.name = self.cn['name']
-        self.start = self.cn['start']
-        self.end = self.cn['end']
-        self.validator = SubmissionValidator.create(self.cn)
-        self.postman = Postman(self.cn, postmark)
-        self.alligator = Alligator(self.cn, database)
-        self.pending = database[f'{self.admin}.{self.name}.pending']
-        self.verified = database[f'{self.admin}.{self.name}.verified']
+        self.configuration = configuration
+        self.admin_name = self.configuration['admin_name']
+        self.survey_name = self.configuration['survey_name']
+        self.identifier = f'{self.admin_name}.{self.survey_name}'
+        self.start = self.configuration['start']
+        self.end = self.configuration['end']
+        self.validator = SubmissionValidator.create(self.configuration)
+        self.postman = Postman(self.configuration, postmark)
+        self.alligator = Alligator(self.configuration, database)
+        self.pending = database[f'{self.identifier}.pending']
+        self.verified = database[f'{self.identifier}.verified']
 
     async def submit(self, submission):
         """Save a user submission in pending entries for verification."""
@@ -129,7 +149,9 @@ class Survey:
             replacement=ve,
             upsert=True,
         )
-        return RedirectResponse(f'{FURL}/{self.admin}/{self.name}/success')
+        return RedirectResponse(
+            f'{FURL}/{self.admin_name}/{self.survey_name}/success'
+        )
 
     async def fetch(self):
         """Query the survey submissions and return aggregated results."""
