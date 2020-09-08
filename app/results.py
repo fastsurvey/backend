@@ -3,8 +3,8 @@ class Alligator:
 
     def __init__(self, configuration, database):
         """Initialize alligator with some pipeline parts already defined."""
-        self.cn = configuration
-        self.verified = database[f"{self.cn['_id']}.verified"]
+        self.configuration = configuration
+        self.verified = database[f"{self.configuration['_id']}.verified"]
         self.results = database['results']
         self.mapping = {
             'Radio': self._add_radio,
@@ -13,7 +13,7 @@ class Alligator:
         }
         self.project = {}
         self.group = {
-            '_id': self.cn['_id'],
+            '_id': self.configuration['_id'],
             'count': {'$sum': 1},
         }
         self.merge = {
@@ -22,7 +22,7 @@ class Alligator:
             'whenMatched': 'replace',
             'whenNotMatched': 'insert',
         }
-   
+
     def _add_radio(self, field, index):
         """Add commands to deal with radio field to results pipeline."""
         subfields = field['properties']['fields']
@@ -41,7 +41,7 @@ class Alligator:
 
     def _build_pipeline(self):
         """Build the aggregation pipeline used in pymongo's aggregate call."""
-        for index, field in enumerate(self.cn['fields']):
+        for index, field in enumerate(self.configuration['fields']):
             self.mapping[field['type']](field, index+1)
         pipeline = []
         if self.project:
@@ -51,14 +51,16 @@ class Alligator:
         return pipeline
 
     async def fetch(self):
-        """Fetch results, aggregating them beforehand on first call."""
-        results = await self.results.find_one(self.cn['_id'])
-        if results is not None:
+        """Aggregate and return the results of the survey."""
+        results = await self.results.find_one({
+            '_id': self.configuration['_id']
+        })
+        if results:
             return results
         cursor = self.verified.aggregate(
             pipeline=self._build_pipeline(),
             allowDiskUse=True,
         )
-        # needed to make sure that aggregation finished
+        # this is needed to make sure that the aggregation finished
         async for _ in cursor: pass
-        return await self.results.find_one(self.cn['_id'])
+        return await self.results.find_one({'_id': self.configuration['_id']})

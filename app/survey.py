@@ -97,6 +97,7 @@ class Survey:
         self.alligator = Alligator(self.configuration, database)
         self.pending = database[f'{self.identifier}.pending']
         self.verified = database[f'{self.identifier}.verified']
+        self.results = None
 
     async def submit(self, submission):
         """Save a user submission in pending entries for verification."""
@@ -153,6 +154,11 @@ class Survey:
             f'{FURL}/{self.admin_name}/{self.survey_name}/success'
         )
 
+
     async def fetch(self):
         """Query the survey submissions and return aggregated results."""
-        return await self.alligator.fetch()
+        timestamp = int(time.time())
+        if timestamp < self.end:
+            raise HTTPException(400, 'survey is still running')
+        self.results = self.results or await self.alligator.fetch()
+        return self.results
