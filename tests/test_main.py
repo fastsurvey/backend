@@ -12,7 +12,7 @@ async def test_status_passing():
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get('/')
     assert response.status_code == 200
-    assert response.json() == {'status': 'all services operational'}
+    assert response.json() == {'database': 'UP', 'mailing': 'UP'}
 
 
 @pytest.mark.asyncio

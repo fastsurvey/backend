@@ -32,13 +32,16 @@ manager = SurveyManager(database, postmark)
 @app.get('/', tags=['status'])
 async def status():
     """Verify if database and mailing services are operational"""
+    status = {'database': 'UP', 'mailing': 'UP'}
     try:
         await motor_client.server_info()
-        # TODO add test for sending emails
     except:
-        return {'status': 'database error'}
-    else:
-        return {'status': 'all services operational'}
+        status['database'] = 'DOWN'
+    try:
+        status['mailing'] = postmark.status.get()['status']
+    except:
+        status['mailing'] = 'DOWN'
+    return status
 
 
 @app.get('/{admin}/{survey}', tags=['survey'])

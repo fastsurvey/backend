@@ -8,7 +8,7 @@ BURL = os.getenv('BURL')
 
 
 class Postman:
-    """It's the postman who delivers the electronic letters!"""
+    """The conscientious fellow that delivers our electronic letters."""
 
     def __init__(
             self,
