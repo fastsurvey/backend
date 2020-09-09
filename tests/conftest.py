@@ -25,7 +25,7 @@ def event_loop(request):
 
 
 @pytest.fixture(scope='session')
-async def survey_names():
+def survey_names():
     """Provide the names of all available test surveys."""
     folder = 'tests/surveys'
     return [
@@ -36,22 +36,30 @@ async def survey_names():
     ]
 
 
-@pytest.fixture(scope='function')
-async def synchronize(survey_names):
-    """Synchronize available (in JSON) test surveys to the database."""
-    main.database['configurations'].drop()
+@pytest.fixture(scope='session')
+def configurations(survey_names):
     folder = 'tests/surveys'
+    configurations = {}
     for survey_name in survey_names:
         with open(f'{folder}/{survey_name}.json', 'r') as configuration:
-            await main.manager.update(json.load(configuration))
+            configurations[survey_name] = json.load(configuration)
+    return configurations
+
+
+@pytest.fixture(scope='function')
+async def synchronize(configurations):
+    """Synchronize local (JSON) test survey configurations to the database."""
+    main.database['configurations'].drop()
+    for configuration in configurations.values():
+        await main.manager.update(configuration)
 
 
 @pytest.fixture(scope='function')
 async def cleanup(survey_names):
-    """Purge survey data locally and from the database after a test."""
+    """Purge all survey data locally and on the database after a test."""
     yield
     for survey_name in survey_names:
-        main.manager.delete('fastsurvey', survey_name)
+        await main.manager.delete('fastsurvey', survey_name)
 
 
 @pytest.fixture(scope='function')

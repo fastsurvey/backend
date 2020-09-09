@@ -49,7 +49,7 @@ class SurveyManager:
         identifier = f'{admin_name}.{survey_name}'
         if identifier not in self._surveys:
             configuration = await self._database['configurations'].find_one(
-                {'_id': identifier},
+                filter={'_id': identifier},
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')

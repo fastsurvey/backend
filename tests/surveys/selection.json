@@ -1,0 +1,37 @@
+{
+    "_id": "fastsurvey.selection",
+    "admin_name": "fastsurvey",
+    "survey_name": "selection",
+    "title": "Selection",
+    "description": "",
+    "start": 1000000000,
+    "end": 2000000000,
+    "fields": [
+        {
+            "type": "Selection",
+            "title": "What's are your favorite ice cream flavors?",
+            "description": "",
+            "properties": {
+                "min_select": 0,
+                "max_select": 2,
+                "fields": [
+                    {
+                        "type": "Option",
+                        "title": "Strawberry",
+                        "description": ""
+                    },
+                    {
+                        "type": "Option",
+                        "title": "Vanilla",
+                        "description": ""
+                    },
+                    {
+                        "type": "Option",
+                        "title": "Chocolate",
+                        "description": ""
+                    }
+                ]
+            }
+        }
+    ]
+}

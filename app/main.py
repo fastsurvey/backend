@@ -57,7 +57,7 @@ async def configure(
     ):
     """Fetch the configuration document of the given survey"""
     survey = await manager.get(admin, survey)
-    return survey.cn
+    return survey.configuration
 
 
 @app.post('/{admin}/{survey}/submit', tags=['survey'])

@@ -15,23 +15,26 @@ async def test_status_passing():
     assert response.json() == {'database': 'UP', 'mailing': 'UP'}
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
-async def test_configuration_valid_identifier():
-    """Test that the correct configuration is returned for a valid survey."""
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get('/fastsurvey/test')
-    configuration = await main.database['configurations'].find_one(
-        filter={'_id': 'fastsurvey.test'},
-    )
-    assert response.status_code == 200
-    assert response.json() == configuration
+async def test_fetching_configuration_with_valid_identifier(
+        configurations,
+        synchronize,
+        cleanup,
+    ):
+    """Using valid survey identifier, test that correct config is returned."""
+    for survey_name, configuration in configurations.items():
+        async with AsyncClient(app=main.app, base_url='http://test') as ac:
+            response = await ac.get(f'/fastsurvey/{survey_name}')
+        assert response.status_code == 200
+        assert response.json() == configuration
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
-async def test_configuration_invalid_identifier():
-    """Test the error on requesting the configuration of an invalid survey."""
+async def test_fetching_configuration_with_invalid_identifier(
+        synchronize,
+        cleanup,
+    ):
+    """Using invalid survey identifier, test that an exception is raised."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get('/fastsurvey/carrot')
     assert response.status_code == 404
