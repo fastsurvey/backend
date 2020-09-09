@@ -71,7 +71,7 @@ class SurveyManager:
         """Delete the survey and all its data from the database and cache."""
         identifier = f'{admin_name}.{survey_name}'
         await self._database['configurations'].delete_one({'_id': identifier})
-        del self._surveys[identifier]
+        self._surveys.pop(identifier, None)  # delete if present
         await self._database['results'].delete_one({'_id': identifier})
         await self.clean(admin_name, survey_name)
 

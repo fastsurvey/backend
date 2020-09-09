@@ -25,20 +25,15 @@ def event_loop(request):
 
 
 @pytest.fixture(scope='session')
-def survey_names():
-    """Provide the names of all available test surveys."""
+def configurations():
+    """Provide a dictionary mapping of test survey names to configurations."""
     folder = 'tests/surveys'
-    return [
+    survey_names = [
         os.path.splitext(file)[0]
         for file
         in os.listdir(folder)
         if os.path.splitext(file)[1] == '.json'
     ]
-
-
-@pytest.fixture(scope='session')
-def configurations(survey_names):
-    folder = 'tests/surveys'
     configurations = {}
     for survey_name in survey_names:
         with open(f'{folder}/{survey_name}.json', 'r') as configuration:
@@ -46,20 +41,26 @@ def configurations(survey_names):
     return configurations
 
 
-@pytest.fixture(scope='function')
-async def synchronize(configurations):
-    """Synchronize local (JSON) test survey configurations to the database."""
-    main.database['configurations'].drop()
+async def reset(configurations):
+    """Purge all survey data locally and remotely and reset configurations."""
+    for survey_name in configurations.keys():
+        await main.manager.delete('fastsurvey', survey_name)
+    await main.database['configurations'].drop()
     for configuration in configurations.values():
         await main.manager.update(configuration)
 
 
+@pytest.fixture(scope='session', autouse=True)
+async def setup(configurations):
+    """Reset survey data and configurations before the first test starts."""
+    await reset(configurations)
+
+
 @pytest.fixture(scope='function')
-async def cleanup(survey_names):
-    """Purge all survey data locally and on the database after a test."""
+async def cleanup(configurations):
+    """Reset survey data and configurations after a single test."""
     yield
-    for survey_name in survey_names:
-        await main.manager.delete('fastsurvey', survey_name)
+    await reset(configurations)
 
 
 @pytest.fixture(scope='function')

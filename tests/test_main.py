@@ -18,7 +18,6 @@ async def test_status_passing():
 @pytest.mark.asyncio
 async def test_fetching_configuration_with_valid_identifier(
         configurations,
-        synchronize,
         cleanup,
     ):
     """Using valid survey identifier, test that correct config is returned."""
@@ -31,7 +30,6 @@ async def test_fetching_configuration_with_valid_identifier(
 
 @pytest.mark.asyncio
 async def test_fetching_configuration_with_invalid_identifier(
-        synchronize,
         cleanup,
     ):
     """Using invalid survey identifier, test that an exception is raised."""
