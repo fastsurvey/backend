@@ -129,7 +129,6 @@ class Survey:
             raise HTTPException(500, 'verification email delivery failure')
         '''
 
-
     async def verify(self, token):
         """Verify user submission and copy it from pending to verified."""
         timestamp = int(time.time())
@@ -153,7 +152,6 @@ class Survey:
         return RedirectResponse(
             f'{FURL}/{self.admin_name}/{self.survey_name}/success'
         )
-
 
     async def fetch(self):
         """Query the survey submissions and return aggregated results."""

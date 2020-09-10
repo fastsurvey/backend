@@ -7,6 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from postmarker.core import PostmarkClient
 
 from app.survey import SurveyManager
+from app.admin import AdminManager
 
 
 # dev / production environment
@@ -26,12 +27,14 @@ database = motor_client[ENV]
 # connect to postmark
 postmark = PostmarkClient(server_token=PMST)
 # instantiate survey manager
-manager = SurveyManager(database, postmark)
+survey_manager = SurveyManager(database, postmark)
+# instantiate admin manager
+admin_manager = AdminManager(database)
 
 
 @app.get('/', tags=['status'])
 async def status():
-    """Verify if database and mailing services are operational"""
+    """Verify if database and mailing services are operational."""
     status = {'database': 'UP', 'mailing': 'UP'}
     try:
         await motor_client.server_info()
@@ -55,8 +58,8 @@ async def configure(
             description='The name of the survey',
         ),
     ):
-    """Fetch the configuration document of the given survey"""
-    survey = await manager.get(admin, survey)
+    """Fetch the configuration document of the given survey."""
+    survey = await survey_manager.get(admin, survey)
     return survey.configuration
 
 
@@ -75,8 +78,8 @@ async def submit(
             description='The user submission for the survey',
         )
     ):
-    """Validate submission and store it under pending submissions"""
-    survey = await manager.get(admin, survey)
+    """Validate submission and store it under pending submissions."""
+    survey = await survey_manager.get(admin, survey)
     return await survey.submit(submission)
 
 
@@ -95,8 +98,8 @@ async def verify(
             description='The verification token',
         ),
     ):
-    """Verify user token and either fail or redirect to success page"""
-    survey = await manager.get(admin, survey)
+    """Verify user token and either fail or redirect to success page."""
+    survey = await survey_manager.get(admin, survey)
     return await survey.verify(token)
 
 
@@ -111,6 +114,56 @@ async def results(
             description='The name of the survey',
         ),
     ):
-    """Fetch the results of the given survey"""
-    survey = await manager.get(admin, survey)
+    """Fetch the results of the given survey."""
+    survey = await survey_manager.get(admin, survey)
     return await survey.fetch()
+
+
+@app.get('/manage', tags=['dashboard'])
+async def manage():
+    """Get overview of all surveys."""
+    pass
+
+
+@app.get('/manage/surveys/{survey}', tags=['dashboard'])
+async def get_survey(
+        survey: str = Path(
+            ...,
+            description='The name of the survey',
+        ),
+    ):
+    """Get configuration and statistics about given survey."""
+    pass
+
+
+@app.post('/manage/surveys/{survey}')
+async def post_survey(
+        survey: str = Path(
+            ...,
+            description='The name of the survey',
+        ),
+    ):
+    """Create new survey with given configuration."""
+    pass
+
+
+@app.put('/manage/surveys/{survey}')
+async def put_survey(
+        survey: str = Path(
+            ...,
+            description='The name of the survey',
+        ),
+    ):
+    """Change configuration of given survey."""
+    pass
+
+
+@app.delete('/manage/surveys/{survey}')
+async def delete_survey(
+        survey: str = Path(
+            ...,
+            description='The name of the survey',
+        ),
+    ):
+    """Delete configuration of given survey."""
+    pass
