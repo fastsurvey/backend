@@ -1,13 +1,10 @@
 import os
-import json
 
 from fastapi import FastAPI, Path, Body, HTTPException
-from enum import Enum
 from motor.motor_asyncio import AsyncIOMotorClient
 from postmarker.core import PostmarkClient
 
 from app.survey import SurveyManager
-from app.admin import AdminManager
 
 
 # dev / production environment
@@ -28,8 +25,6 @@ database = motor_client[ENV]
 postmark = PostmarkClient(server_token=PMST)
 # instantiate survey manager
 survey_manager = SurveyManager(database, postmark)
-# instantiate admin manager
-admin_manager = AdminManager(database)
 
 
 @app.get('/', tags=['status'])
