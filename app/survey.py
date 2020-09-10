@@ -24,7 +24,7 @@ class SurveyManager:
         self._postmark = postmark
         self._surveys = {}
 
-    def _cache(self, configuration):
+    def _remember(self, configuration):
         """Update local survey cache with config-generated survey object."""
         self._surveys.update({
             configuration['_id']: Survey(
@@ -34,6 +34,10 @@ class SurveyManager:
             )
         })
 
+    def _forget(self, admin_name, survey_name):
+        """Remove survey cache, either due to deletion or cache clearing."""
+        raise NotImplementedError
+
     async def update(self, configuration):
         """Create or update the survey configuration in the database."""
         identifier = configuration['_id']
@@ -42,7 +46,7 @@ class SurveyManager:
             replacement=configuration,
             upsert=True,
         )
-        self._cache(configuration)
+        self._remember(configuration)
 
     async def get(self, admin_name, survey_name):
         """Return the survey object corresponding to the given identifiers."""
@@ -53,7 +57,7 @@ class SurveyManager:
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')
-            self._cache(configuration)
+            self._remember(configuration)
         return self._surveys[identifier]
 
     async def clean(self, admin_name, survey_name):
@@ -153,7 +157,7 @@ class Survey:
             f'{FURL}/{self.admin_name}/{self.survey_name}/success'
         )
 
-    async def fetch(self):
+    async def aggregate(self):
         """Query the survey submissions and return aggregated results."""
         timestamp = int(time.time())
         if timestamp < self.end:

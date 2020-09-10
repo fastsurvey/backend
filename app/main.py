@@ -43,7 +43,7 @@ async def status():
 
 
 @app.get('/{admin}/{survey}', tags=['survey'])
-async def configure(
+async def fetch(
         admin: str = Path(
             ...,
             description='The name of the admin',
@@ -99,7 +99,7 @@ async def verify(
 
 
 @app.get('/{admin}/{survey}/results', tags=['survey'])
-async def results(
+async def aggregate(
         admin: str = Path(
             ...,
             description='The name of the admin',
@@ -111,4 +111,4 @@ async def results(
     ):
     """Fetch the results of the given survey."""
     survey = await survey_manager.get(admin, survey)
-    return await survey.fetch()
+    return await survey.aggregate()
