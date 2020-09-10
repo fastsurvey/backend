@@ -5,14 +5,8 @@
 
 service-account.json
 
-/requirements.txt
 __pycache__
-
 .idea
-/admin
-
-test-surveys
-sync-test-surveys.py
 
 # Created by https://www.gitignore.io/api/git,node,react,linux,macos,flask,python,pycharm,windows,intellij,webstorm
 # Edit at https://www.gitignore.io/?templates=git,node,react,linux,macos,flask,python,pycharm,windows,intellij,webstorm

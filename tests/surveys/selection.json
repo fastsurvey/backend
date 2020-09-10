@@ -9,7 +9,7 @@
     "fields": [
         {
             "type": "Selection",
-            "title": "What's are your favorite ice cream flavors?",
+            "title": "What are your favorite ice cream flavors?",
             "description": "",
             "properties": {
                 "min_select": 0,
