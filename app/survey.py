@@ -35,7 +35,7 @@ class SurveyManager:
         })
 
     async def update(self, configuration):
-        """Add or update the survey configuration in the database."""
+        """Create or update the survey configuration in the database."""
         identifier = configuration['_id']
         await self._database['configurations'].find_one_and_replace(
             filter={'_id': identifier},

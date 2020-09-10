@@ -133,10 +133,14 @@ async def get_survey(
         ),
     ):
     """Get configuration and statistics about given survey."""
-    pass
+
+    admin = 'fastsurvey'
+
+    survey = await survey_manager.get(admin, survey)
+    return survey.configuration
 
 
-@app.post('/manage/surveys/{survey}')
+@app.post('/manage/surveys/{survey}', tags=['dashboard'])
 async def post_survey(
         survey: str = Path(
             ...,
@@ -147,7 +151,7 @@ async def post_survey(
     pass
 
 
-@app.put('/manage/surveys/{survey}')
+@app.put('/manage/surveys/{survey}', tags=['dashboard'])
 async def put_survey(
         survey: str = Path(
             ...,
@@ -158,7 +162,7 @@ async def put_survey(
     pass
 
 
-@app.delete('/manage/surveys/{survey}')
+@app.delete('/manage/surveys/{survey}', tags=['dashboard'])
 async def delete_survey(
         survey: str = Path(
             ...,
