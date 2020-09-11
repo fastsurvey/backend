@@ -40,25 +40,25 @@ class SurveyManager:
 
     async def update(self, configuration):
         """Create or update the survey configuration in the database."""
-        identifier = configuration['_id']
+        survey_id = configuration['_id']
         await self._database['configurations'].find_one_and_replace(
-            filter={'_id': identifier},
+            filter={'_id': survey_id},
             replacement=configuration,
             upsert=True,
         )
         self._remember(configuration)
 
-    async def get(self, admin_name, survey_name):
-        """Return the survey object corresponding to the given identifiers."""
-        identifier = f'{admin_name}.{survey_name}'
-        if identifier not in self._surveys:
+    async def fetch(self, admin_name, survey_name):
+        """Return the survey object corresponding to admin and survey name."""
+        survey_id = f'{admin_name}.{survey_name}'
+        if survey_id not in self._surveys:
             configuration = await self._database['configurations'].find_one(
-                filter={'_id': identifier},
+                filter={'_id': survey_id},
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')
             self._remember(configuration)
-        return self._surveys[identifier]
+        return self._surveys[survey_id]
 
     async def clean(self, admin_name, survey_name):
         """Delete all the submission data of the survey from the database.
@@ -67,16 +67,16 @@ class SurveyManager:
         the survey entry in self.purge() before calling self.clean()
 
         """
-        identifier = f'{admin_name}.{survey_name}'
-        await self._database[f'{identifier}.pending'].drop()
-        await self._database[f'{identifier}.verified'].drop()
+        survey_id = f'{admin_name}.{survey_name}'
+        await self._database[f'{survey_id}.pending'].drop()
+        await self._database[f'{survey_id}.verified'].drop()
 
     async def delete(self, admin_name, survey_name):
         """Delete the survey and all its data from the database and cache."""
-        identifier = f'{admin_name}.{survey_name}'
-        await self._database['configurations'].delete_one({'_id': identifier})
-        self._surveys.pop(identifier, None)  # delete if present
-        await self._database['results'].delete_one({'_id': identifier})
+        survey_id = f'{admin_name}.{survey_name}'
+        await self._database['configurations'].delete_one({'_id': survey_id})
+        self._surveys.pop(survey_id, None)  # delete if present
+        await self._database['results'].delete_one({'_id': survey_id})
         await self.clean(admin_name, survey_name)
 
 
@@ -87,20 +87,20 @@ class Survey:
             self,
             configuration,
             database,
-            postmark,
+            email_client,
     ):
         """Create a survey from the given json configuration file."""
         self.configuration = configuration
         self.admin_name = self.configuration['admin_name']
         self.survey_name = self.configuration['survey_name']
-        self.identifier = f'{self.admin_name}.{self.survey_name}'
+        self.survey_id = f'{self.admin_name}.{self.survey_name}'
         self.start = self.configuration['start']
         self.end = self.configuration['end']
         self.validator = SubmissionValidator.create(self.configuration)
-        self.postman = Postman(self.configuration, postmark)
+        self.postman = Postman(self.configuration, email_client)
         self.alligator = Alligator(self.configuration, database)
-        self.pending = database[f'{self.identifier}.pending']
-        self.verified = database[f'{self.identifier}.verified']
+        self.pending = database[f'{self.survey_id}.pending']
+        self.verified = database[f'{self.survey_id}.verified']
         self.results = None
 
     async def submit(self, submission):

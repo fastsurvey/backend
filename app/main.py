@@ -22,9 +22,9 @@ motor_client = AsyncIOMotorClient(MDBCS)
 # get link to dev / production database
 database = motor_client[ENV]
 # connect to postmark
-postmark = PostmarkClient(server_token=PMST)
+email_client = PostmarkClient(server_token=PMST)
 # instantiate survey manager
-survey_manager = SurveyManager(database, postmark)
+survey_manager = SurveyManager(database, email_client)
 
 
 @app.get('/', tags=['status'])
@@ -36,55 +36,55 @@ async def status():
     except:
         status['database'] = 'DOWN'
     try:
-        status['mailing'] = postmark.status.get()['status']
+        status['mailing'] = email_client.status.get()['status']
     except:
         status['mailing'] = 'DOWN'
     return status
 
 
-@app.get('/{admin}/{survey}', tags=['survey'])
+@app.get('/{admin_name}/{survey_name}', tags=['survey'])
 async def fetch(
-        admin: str = Path(
+        admin_name: str = Path(
             ...,
             description='The name of the admin',
         ),
-        survey: str = Path(
+        survey_name: str = Path(
             ...,
             description='The name of the survey',
         ),
     ):
     """Fetch the configuration document of the given survey."""
-    survey = await survey_manager.get(admin, survey)
+    survey = await survey_manager.fetch(admin_name, survey_name)
     return survey.configuration
 
 
-@app.post('/{admin}/{survey}/submit', tags=['survey'])
+@app.post('/{admin_name}/{survey_name}/submit', tags=['survey'])
 async def submit(
-        admin: str = Path(
+        admin_name: str = Path(
             ...,
             description='The name of the admin',
         ),
-        survey: str = Path(
+        survey_name: str = Path(
             ...,
             description='The name of the survey',
         ),
         submission: dict = Body(
             ...,
             description='The user submission for the survey',
-        )
+        ),
     ):
     """Validate submission and store it under pending submissions."""
-    survey = await survey_manager.get(admin, survey)
+    survey = await survey_manager.fetch(admin_name, survey_name)
     return await survey.submit(submission)
 
 
-@app.get('/{admin}/{survey}/verify/{token}', tags=['survey'])
+@app.get('/{admin_name}/{survey_name}/verify/{token}', tags=['survey'])
 async def verify(
-        admin: str = Path(
+        admin_name: str = Path(
             ...,
             description='The name of the admin',
         ),
-        survey: str = Path(
+        survey_name: str = Path(
             ...,
             description='The name of the survey',
         ),
@@ -94,21 +94,21 @@ async def verify(
         ),
     ):
     """Verify user token and either fail or redirect to success page."""
-    survey = await survey_manager.get(admin, survey)
+    survey = await survey_manager.fetch(admin_name, survey_name)
     return await survey.verify(token)
 
 
-@app.get('/{admin}/{survey}/results', tags=['survey'])
+@app.get('/{admin_name}/{survey_name}/results', tags=['survey'])
 async def aggregate(
-        admin: str = Path(
+        admin_name: str = Path(
             ...,
             description='The name of the admin',
         ),
-        survey: str = Path(
+        survey_name: str = Path(
             ...,
             description='The name of the survey',
         ),
     ):
     """Fetch the results of the given survey."""
-    survey = await survey_manager.get(admin, survey)
+    survey = await survey_manager.fetch(admin_name, survey_name)
     return await survey.aggregate()

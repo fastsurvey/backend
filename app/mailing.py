@@ -13,14 +13,14 @@ class Postman:
     def __init__(
             self,
             configuration,
-            postmark,
+            email_client,
         ):
         """Create a mailing client for a survey using its configuration."""
         self.admin_name = configuration['admin_name']
         self.survey_name = configuration['survey_name']
         self.title = configuration['title']
         self.sender = 'noreply@fastsurvey.io'
-        self.postmark = postmark
+        self.email_client = email_client
 
     def _generate_verify_url(self, submission):
         """Generate the url that users need to visit to verify their email."""
@@ -29,7 +29,7 @@ class Postman:
 
     def on_submit(self, submission):
         """Send a confirmation email used to verify a user's email address."""
-        email = self.postmark.emails.Email(
+        email = self.email_client.emails.Email(
             From=self.sender,
             To=(
                 'test@blackhole.postmarkapp.com'
