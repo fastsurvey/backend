@@ -1,0 +1,22 @@
+{
+    "_id": "fastsurvey.email",
+    "admin_name": "fastsurvey",
+    "survey_name": "email",
+    "title": "Email Test",
+    "description": "",
+    "start": 1000000000,
+    "end": 2000000000,
+    "fields": [
+        {
+            "type": "Email",
+            "title": "What is your email address?",
+            "description": "",
+            "properties": {
+                "required": true,
+                "verify": true,
+                "regex": "*",
+                "hint": "Your email address ..."
+            }
+        }
+    ]
+}
