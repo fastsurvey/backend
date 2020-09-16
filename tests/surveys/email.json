@@ -11,12 +11,10 @@
             "type": "Email",
             "title": "What is your email address?",
             "description": "",
-            "properties": {
-                "required": true,
-                "verify": true,
-                "regex": "*",
-                "hint": "Your email address ..."
-            }
+            "hint": "Your email address ...",
+            "verify": true,
+            "required": true,
+            "regex": "*"
         }
     ]
 }

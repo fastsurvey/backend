@@ -11,30 +11,28 @@
             "type": "Radio",
             "title": "What is your favorite fruit?",
             "description": "",
-            "properties": {
-                "fields": [
-                    {
-                        "type": "Option",
-                        "title": "Asparagus",
-                        "description": ""
-                    },
-                    {
-                        "type": "Option",
-                        "title": "Spinach",
-                        "description": ""
-                    },
-                    {
-                        "type": "Option",
-                        "title": "Artichoke",
-                        "description": ""
-                    },
-                    {
-                        "type": "Option",
-                        "title": "None of these is a fruit",
-                        "description": ""
-                    }
-                ]
-            }
+            "fields": [
+                {
+                    "type": "Option",
+                    "title": "Asparagus",
+                    "description": ""
+                },
+                {
+                    "type": "Option",
+                    "title": "Spinach",
+                    "description": ""
+                },
+                {
+                    "type": "Option",
+                    "title": "Artichoke",
+                    "description": ""
+                },
+                {
+                    "type": "Option",
+                    "title": "None of these is a fruit",
+                    "description": ""
+                }
+            ]
         }
     ]
 }

@@ -11,27 +11,25 @@
             "type": "Selection",
             "title": "What are your favorite ice cream flavors?",
             "description": "",
-            "properties": {
-                "min_select": 0,
-                "max_select": 2,
-                "fields": [
-                    {
-                        "type": "Option",
-                        "title": "Strawberry",
-                        "description": ""
-                    },
-                    {
-                        "type": "Option",
-                        "title": "Vanilla",
-                        "description": ""
-                    },
-                    {
-                        "type": "Option",
-                        "title": "Chocolate",
-                        "description": ""
-                    }
-                ]
-            }
+            "min_select": 0,
+            "max_select": 2,
+            "fields": [
+                {
+                    "type": "Option",
+                    "title": "Strawberry",
+                    "description": ""
+                },
+                {
+                    "type": "Option",
+                    "title": "Vanilla",
+                    "description": ""
+                },
+                {
+                    "type": "Option",
+                    "title": "Chocolate",
+                    "description": ""
+                }
+            ]
         }
     ]
 }
