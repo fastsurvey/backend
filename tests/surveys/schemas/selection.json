@@ -1,0 +1,21 @@
+{
+    "1": {
+        "type": "Selection",
+        "min_select": 0,
+        "max_select": 2,
+        "schema": {
+            "1": {
+                "type": "Option",
+                "required": false
+            },
+            "2": {
+                "type": "Option",
+                "required": false
+            },
+            "3": {
+                "type": "Option",
+                "required": false
+            }
+        }
+    }
+}

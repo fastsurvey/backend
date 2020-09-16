@@ -17,17 +17,20 @@
                 {
                     "type": "Option",
                     "title": "Strawberry",
-                    "description": ""
+                    "description": "",
+                    "required": false
                 },
                 {
                     "type": "Option",
                     "title": "Vanilla",
-                    "description": ""
+                    "description": "",
+                    "required": false
                 },
                 {
                     "type": "Option",
                     "title": "Chocolate",
-                    "description": ""
+                    "description": "",
+                    "required": false
                 }
             ]
         }

@@ -9,7 +9,6 @@ def test_generate_schema(configurations, schemas):
     """Test that the schema generation function returns the correct result."""
     for survey_name, configuration in configurations.items():
         schema = validation._generate_schema(configuration)
-        if survey_name != 'radio': continue
         assert schema == schemas[survey_name]
 
 
