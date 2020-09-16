@@ -24,21 +24,33 @@ def event_loop(request):
     loop.close()
 
 
-@pytest.fixture(scope='session')
-def configurations():
-    """Provide a dictionary mapping of test survey names to configurations."""
-    folder = 'tests/surveys'
+def read(folder):
+    """Provide mapping of test survey names to JSON data in given folder."""
     survey_names = [
         os.path.splitext(file)[0]
         for file
         in os.listdir(folder)
         if os.path.splitext(file)[1] == '.json'
     ]
-    configurations = {}
+    xs = {}
     for survey_name in survey_names:
-        with open(f'{folder}/{survey_name}.json', 'r') as configuration:
-            configurations[survey_name] = json.load(configuration)
-    return configurations
+        with open(f'{folder}/{survey_name}.json', 'r') as x:
+            xs[survey_name] = json.load(x)
+    return xs
+
+
+@pytest.fixture(scope='session')
+def configurations():
+    """Provide mapping of test survey names to their configurations."""
+    folder = 'tests/surveys/configurations'
+    return read(folder)
+
+
+@pytest.fixture(scope='session')
+def schemas():
+    """Provide mapping of test survey names to their validation schemas."""
+    folder = 'tests/surveys/schemas'
+    return read(folder)
 
 
 async def reset(configurations):
