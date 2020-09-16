@@ -5,43 +5,12 @@ import app.main as main
 import app.validation as validation
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_generate_schema(survey):
+def test_generate_schema(configurations, schemas):
     """Test that the schema generation function returns the correct result."""
-    schema = validation._generate_schema(survey.cn)
-    assert schema ==  {
-        'email': {
-            'type': 'Email',
-            'regex': r'^[a-z]{2}[0-9]{2}[a-z]{3}@mytum\.de$',
-        },
-        'properties': {
-            'type': 'Properties',
-            'schema': {
-                '1': {
-                    'type': 'Radio',
-                    'schema': {
-                        '1': {'type': 'Option'},
-                        '2': {'type': 'Option'},
-                    },
-                },
-                '2': {
-                    'type': 'Selection',
-                    'min_select': 0,
-                    'max_select': 2,
-                    'schema': {
-                        '1': {'type': 'Option'},
-                        '2': {'type': 'Option'},
-                        '3': {'type': 'Option'},
-                    },
-                },
-                '3': {
-                    'type': 'Text',
-                    'min_chars': 10,
-                    'max_chars': 100,
-                }
-            },
-        },
-    }
+    for survey_name, configuration in configurations.items():
+        schema = validation._generate_schema(configuration)
+        if survey_name != 'radio': continue
+        assert schema == schemas[survey_name]
 
 
 @pytest.mark.skip(reason='scheduled for refactoring')

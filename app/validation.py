@@ -99,9 +99,9 @@ def _generate_schema(configuration):
                 for i, subfield
                 in enumerate(field['fields'])
             }
-        for rule, v in field.items():
+        for rule, value in field.items():
             if rule in rules:
-                fs[rule] = v
+                fs[rule] = value
         return fs
 
     schema = {
