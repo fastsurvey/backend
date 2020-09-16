@@ -25,7 +25,7 @@ class Alligator:
 
     def _add_radio(self, field, index):
         """Add commands to deal with radio field to results pipeline."""
-        subfields = field['properties']['fields']
+        subfields = field['fields']
         for i in range(len(subfields)):
             path = f'properties.{index}.{i+1}'
             self.project[path] = {'$toInt': f'${path}'}
