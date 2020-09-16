@@ -1,0 +1,17 @@
+{
+    "_id": "fastsurvey.option",
+    "admin_name": "fastsurvey",
+    "survey_name": "option",
+    "title": "Option Test",
+    "description": "",
+    "start": 1000000000,
+    "end": 2000000000,
+    "fields": [
+        {
+            "type": "Option",
+            "required": true,
+            "title": "I have read and agree to the terms and conditions",
+            "description": ""
+        }
+    ]
+}
