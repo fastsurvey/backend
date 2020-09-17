@@ -1,12 +1,6 @@
 from cerberus import Validator, TypeDefinition
 
 
-
-# TODO add default max length for text
-# TODO add mandatory rule (how to test if it's a email or option required?)
-
-
-
 class SubmissionValidator(Validator):
     """The cerberus submission validator with added custom validation rules.
 
@@ -39,6 +33,11 @@ class SubmissionValidator(Validator):
             require_all=True,
         )
 
+    def _count_selections(self, value):
+        """Count the number of selected options in a selection field."""
+        count = sum(value.values())
+        return count
+
 
     ### CUSTOM TYPE VALIDATIONS ###
 
@@ -47,8 +46,7 @@ class SubmissionValidator(Validator):
         """Validate the structure of a submission for the Radio field."""
         if type(value) is not dict:
             return False
-        selections = sum(value.values())
-        if selections != 1:
+        if self._count_selections(value) != 1:
             return False
         return True
 
@@ -69,20 +67,6 @@ class SubmissionValidator(Validator):
 
     '''
 
-    def _count_selections(self, value):
-        """Count the number of selected options in a selection field."""
-        count = 0
-        for v in value.values():
-            count += v
-            '''
-            if isinstance(v, bool) and v:  # for option subfields
-                count += 1
-            if isinstance(v, str):  # for list subfields
-                split = set([e.strip() for e in v.split(',') if e.strip()])
-                count += len(split)
-            '''
-        return count
-
     def _validate_min_select(self, min_select, field, value):
         """{'type': 'integer'}"""
         if self._count_selections(value) < min_select:
@@ -93,9 +77,15 @@ class SubmissionValidator(Validator):
         if self._count_selections(value) > max_select:
             self._error(field, f'Must select at most {max_select} options')
 
-    def _validate_mandatory(self, max_select, field, value):
+    def _validate_mandatory(self, mandatory, field, value):
         """{'type': 'boolean'}"""
-        pass
+        if mandatory:
+            if (
+                type(value) is bool and not value
+                or type(value) is str and value == ''
+            ):
+                self._error(field, f'This field is mandatory')
+
 
 
 def _generate_schema(configuration):
