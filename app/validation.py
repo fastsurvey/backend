@@ -2,11 +2,8 @@ from cerberus import Validator, TypeDefinition
 
 
 
-# TODO check that radio has only one selection
-# TODO radio does not fail when only 3 fields are provided in submission
 # TODO add default max length for text
-# TODO add required rule (how to test if it's a email or option required?)
-# TODO add regex rule
+# TODO add mandatory rule (how to test if it's a email or option required?)
 
 
 
@@ -22,10 +19,9 @@ class SubmissionValidator(Validator):
 
     types_mapping = {
         'Email': TypeDefinition('Email', (str,), ()),
-        'Radio': TypeDefinition('Selection', (dict,), ()),
+        #'Radio': TypeDefinition('Selection', (dict,), ()),
         'Selection': TypeDefinition('Selection', (dict,), ()),
         'Option': TypeDefinition('Option', (bool,), ()),
-        'Text': TypeDefinition('Text', (str,), ()),
     }
 
     @classmethod
@@ -43,6 +39,24 @@ class SubmissionValidator(Validator):
             require_all=True,
         )
 
+
+    ### CUSTOM TYPE VALIDATIONS ###
+
+
+    def _validate_type_Radio(self, value):
+        """Validate the structure of a submission for the Radio field."""
+        if type(value) is not dict:
+            return False
+        selections = sum(value.values())
+        if selections != 1:
+            return False
+        return True
+
+
+    ### CUSTOM VALIDATION RULES ###
+
+    '''
+
     def _validate_min_chars(self, min_chars, field, value):
         """{'type': 'integer'}"""
         if len(value) < min_chars:
@@ -52,6 +66,8 @@ class SubmissionValidator(Validator):
         """{'type': 'integer'}"""
         if len(value) > max_chars:
             self._error(field, f'Must be at most {max_chars} characters long')
+
+    '''
 
     def _count_selections(self, value):
         """Count the number of selected options in a selection field."""
