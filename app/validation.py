@@ -24,7 +24,6 @@ class SubmissionValidator(Validator):
         'Email': TypeDefinition('Email', (str,), ()),
         'Radio': TypeDefinition('Selection', (dict,), ()),
         'Selection': TypeDefinition('Selection', (dict,), ()),
-        # 'List': TypeDefinition('List', (str,), ()),
         'Option': TypeDefinition('Option', (bool,), ()),
         'Text': TypeDefinition('Text', (str,), ()),
     }
@@ -46,10 +45,6 @@ class SubmissionValidator(Validator):
 
     def _validate_min_chars(self, min_chars, field, value):
         """{'type': 'integer'}"""
-
-        print('HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEELLLO !!')
-        print(field)
-
         if len(value) < min_chars:
             self._error(field, f'Must be at least {min_chars} characters long')
 
@@ -82,12 +77,8 @@ class SubmissionValidator(Validator):
         if self._count_selections(value) > max_select:
             self._error(field, f'Must select at most {max_select} options')
 
-    def _validate_required(self, max_select, field, value):
+    def _validate_mandatory(self, max_select, field, value):
         """{'type': 'boolean'}"""
-        pass
-
-    def _validate_regex(self, max_select, field, value):
-        """{'type': 'string'}"""
         pass
 
 
@@ -99,7 +90,7 @@ def _generate_schema(configuration):
         'max_chars',
         'min_select',
         'max_select',
-        'required',
+        'mandatory',
         'regex',
     ]
 

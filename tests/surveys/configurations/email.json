@@ -13,8 +13,8 @@
             "description": "",
             "hint": "Your email address ...",
             "verify": false,
-            "required": true,
-            "regex": "*"
+            "mandatory": true,
+            "regex": ".*"
         }
     ]
 }

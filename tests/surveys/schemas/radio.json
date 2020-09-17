@@ -4,19 +4,19 @@
         "schema": {
             "1": {
                 "type": "Option",
-                "required": false
+                "mandatory": false
             },
             "2": {
                 "type": "Option",
-                "required": false
+                "mandatory": false
             },
             "3": {
                 "type": "Option",
-                "required": false
+                "mandatory": false
             },
             "4": {
                 "type": "Option",
-                "required": false
+                "mandatory": false
             }
         }
     }

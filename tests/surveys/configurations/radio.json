@@ -16,25 +16,25 @@
                     "type": "Option",
                     "title": "Asparagus",
                     "description": "",
-                    "required": false
+                    "mandatory": false
                 },
                 {
                     "type": "Option",
                     "title": "Spinach",
                     "description": "",
-                    "required": false
+                    "mandatory": false
                 },
                 {
                     "type": "Option",
                     "title": "Artichoke",
                     "description": "",
-                    "required": false
+                    "mandatory": false
                 },
                 {
                     "type": "Option",
                     "title": "None of these is a fruit",
                     "description": "",
-                    "required": false
+                    "mandatory": false
                 }
             ]
         }

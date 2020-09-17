@@ -18,19 +18,19 @@
                     "type": "Option",
                     "title": "Strawberry",
                     "description": "",
-                    "required": false
+                    "mandatory": false
                 },
                 {
                     "type": "Option",
                     "title": "Vanilla",
                     "description": "",
-                    "required": false
+                    "mandatory": false
                 },
                 {
                     "type": "Option",
                     "title": "Chocolate",
                     "description": "",
-                    "required": false
+                    "mandatory": false
                 }
             ]
         }
