@@ -53,6 +53,13 @@ def schemas():
     return read(folder)
 
 
+@pytest.fixture(scope='session')
+def valid_submissions():
+    """Provide mapping of test survey names to valid submissions."""
+    folder = 'tests/surveys/valid-submissions'
+    return read(folder)
+
+
 async def reset(configurations):
     """Purge all survey data locally and remotely and reset configurations."""
     for survey_name in configurations.keys():
@@ -73,23 +80,3 @@ async def cleanup(configurations):
     """Reset survey data and configurations after a single test."""
     yield
     await reset(configurations)
-
-
-@pytest.fixture(scope='function')
-def submission():
-    """Provide a correct sample submission for the test survey."""
-    return {
-        'email': 'aa00aaa@mytum.de',
-        'properties': {
-            '1': {
-                '1': True,
-                '2': False,
-            },
-            '2': {
-                '1': True,
-                '2': True,
-                '3': False,
-            },
-            '3': 'hello world!',
-        }
-    }

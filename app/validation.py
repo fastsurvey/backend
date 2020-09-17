@@ -3,6 +3,7 @@ from cerberus import Validator, TypeDefinition
 
 
 # TODO check that radio has only one selection
+# TODO radio does not fail when only 3 fields are provided in submission
 # TODO add default max length for text
 # TODO add required rule (how to test if it's a email or option required?)
 # TODO add regex rule
@@ -45,6 +46,10 @@ class SubmissionValidator(Validator):
 
     def _validate_min_chars(self, min_chars, field, value):
         """{'type': 'integer'}"""
+
+        print('HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEELLLO !!')
+        print(field)
+
         if len(value) < min_chars:
             self._error(field, f'Must be at least {min_chars} characters long')
 
@@ -76,6 +81,14 @@ class SubmissionValidator(Validator):
         """{'type': 'integer'}"""
         if self._count_selections(value) > max_select:
             self._error(field, f'Must select at most {max_select} options')
+
+    def _validate_required(self, max_select, field, value):
+        """{'type': 'boolean'}"""
+        pass
+
+    def _validate_regex(self, max_select, field, value):
+        """{'type': 'string'}"""
+        pass
 
 
 def _generate_schema(configuration):

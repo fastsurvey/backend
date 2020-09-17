@@ -114,9 +114,8 @@ class Survey:
             raise HTTPException(400, 'invalid submission')
         submission = {
             '_id': secrets.token_hex(32),
-            'email': submission['email'],
             'timestamp': timestamp,
-            'properties': submission['properties'],
+            'properties': submission,
         }
         while True:
             try:

@@ -12,7 +12,7 @@
             "title": "What is your email address?",
             "description": "",
             "hint": "Your email address ...",
-            "verify": true,
+            "verify": false,
             "required": true,
             "regex": "*"
         }
