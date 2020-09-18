@@ -10,7 +10,7 @@ import app.main as main
 async def test_status_passing():
     """Test that status function returns that all services are operational."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get('/')
+        response = await ac.get('/status')
     assert response.status_code == 200
     assert response.json() == {'database': 'UP', 'mailing': 'UP'}
 
@@ -39,7 +39,7 @@ async def test_submit_valid_submission(valid_submissions, cleanup):
     for survey_name, submission in valid_submissions.items():
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
             response = await ac.post(
-                url=f'/fastsurvey/{survey_name}/submit',
+                url=f'/fastsurvey/{survey_name}/submission',
                 json=submission,
             )
         survey = await main.survey_manager.fetch('fastsurvey', survey_name)

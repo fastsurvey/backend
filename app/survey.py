@@ -123,7 +123,7 @@ class Survey:
                 break
             except DuplicateKeyError:
                 submission['_id'] = secrets.token_hex(32)
-        status = self.letterbox.verify_email(
+        status = await self.letterbox.verify_email(
             self.admin_name,
             self.survey_name,
             self.title,

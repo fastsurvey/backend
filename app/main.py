@@ -30,7 +30,7 @@ survey_manager = SurveyManager(database, letterbox)
 @app.get('/status', tags=['status'])
 async def status():
     """Verify if database and mailing services are operational."""
-    status = {'database': 'UP', 'mailing': 'UNKNOWN'}
+    status = {'database': 'UP', 'mailing': 'UP'}
     try:
         await motor_client.server_info()
     except:
@@ -60,7 +60,7 @@ async def fetch(
     return survey.configuration
 
 
-@app.post('/{admin_name}/{survey_name}', tags=['sujvey'])
+@app.post('/{admin_name}/{survey_name}/submission', tags=['sujvey'])
 async def submit(
         admin_name: str = Path(
             ...,

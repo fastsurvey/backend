@@ -31,7 +31,7 @@ class Letterbox:
         # verification url used to verify the users email
         vu = f'{BURL}/{admin_name}/{survey_name}/verification/{token}'
         html = (
-            '<p>Hey there, we received your submission!</p>'
+            '<p>Hi there, we received your submission!</p>'
             + f'<p>Survey: <strong>{title}</strong></p>'
             + f'<p>Please verify your submission by <a href="{vu}" target="_blank">clicking here</a></p>'
             + '<p>Your FastSurvey team</p>'
@@ -43,5 +43,5 @@ class Letterbox:
             'html': html,
             # 'o:testmode': ENV == 'development',
         }
-        response = await httpx.post('/messages', data=data)
+        response = await self.client.post('/messages', data=data)
         return response.status_code

@@ -24,7 +24,7 @@ def event_loop(request):
     loop.close()
 
 
-def read(folder):
+def load(folder):
     """Provide mapping of test survey names to JSON data in given folder."""
     survey_names = [
         os.path.splitext(file)[0]
@@ -43,21 +43,21 @@ def read(folder):
 def configurations():
     """Provide mapping of test survey names to their configurations."""
     folder = 'tests/surveys/configurations'
-    return read(folder)
+    return load(folder)
 
 
 @pytest.fixture(scope='session')
 def schemas():
     """Provide mapping of test survey names to their validation schemas."""
     folder = 'tests/surveys/schemas'
-    return read(folder)
+    return load(folder)
 
 
 @pytest.fixture(scope='session')
 def valid_submissions():
     """Provide mapping of test survey names to valid submissions."""
     folder = 'tests/surveys/valid-submissions'
-    return read(folder)
+    return load(folder)
 
 
 async def reset(configurations):
