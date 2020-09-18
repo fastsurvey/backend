@@ -25,23 +25,6 @@ letterbox = Letterbox()
 survey_manager = SurveyManager(database, letterbox)
 
 
-@app.get('/status', tags=['status'])
-async def status():
-    """Verify if database and mailing services are operational."""
-    status = {'database': 'UP', 'mailing': 'UP'}
-    try:
-        await motor_client.server_info()
-    except:
-        status['database'] = 'DOWN'
-    '''
-    try:
-        status['mailing'] = email_client.status.get()['status']
-    except:
-        status['mailing'] = 'DOWN'
-    '''
-    return status
-
-
 @app.get('/{admin_name}/{survey_name}', tags=['survey'])
 async def fetch(
         admin_name: str = Path(
@@ -58,7 +41,7 @@ async def fetch(
     return survey.configuration
 
 
-@app.post('/{admin_name}/{survey_name}/submission', tags=['sujvey'])
+@app.post('/{admin_name}/{survey_name}/submission', tags=['survey'])
 async def submit(
         admin_name: str = Path(
             ...,

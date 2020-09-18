@@ -7,15 +7,6 @@ import app.main as main
 
 
 @pytest.mark.asyncio
-async def test_status_passing():
-    """Test that status function returns that all services are operational."""
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get('/status')
-    assert response.status_code == 200
-    assert response.json() == {'database': 'UP', 'mailing': 'UP'}
-
-
-@pytest.mark.asyncio
 async def test_fetching_configuration_with_valid_identifier(configurations):
     """Using valid survey identifier, test that correct config is returned."""
     for survey_name, configuration in configurations.items():

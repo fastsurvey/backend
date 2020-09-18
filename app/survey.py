@@ -21,11 +21,11 @@ class SurveyManager:
         """Initialize this class with empty surveys dictionary."""
         self._database = database
         self._letterbox = letterbox
-        self._surveys = {}
+        self._cache = {}
 
     def _remember(self, configuration):
         """Update local survey cache with config-generated survey object."""
-        self._surveys.update({
+        self._cache.update({
             configuration['_id']: Survey(
                 configuration,
                 self._database,
@@ -50,14 +50,14 @@ class SurveyManager:
     async def fetch(self, admin_name, survey_name):
         """Return the survey object corresponding to admin and survey name."""
         survey_id = f'{admin_name}.{survey_name}'
-        if survey_id not in self._surveys:
+        if survey_id not in self._cache:
             configuration = await self._database['configurations'].find_one(
                 filter={'_id': survey_id},
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')
             self._remember(configuration)
-        return self._surveys[survey_id]
+        return self._cache[survey_id]
 
     async def clean(self, admin_name, survey_name):
         """Delete all the submission data of the survey from the database.
@@ -74,7 +74,7 @@ class SurveyManager:
         """Delete the survey and all its data from the database and cache."""
         survey_id = f'{admin_name}.{survey_name}'
         await self._database['configurations'].delete_one({'_id': survey_id})
-        self._surveys.pop(survey_id, None)  # delete if present
+        self._cache.pop(survey_id, None)  # delete if present
         await self._database['results'].delete_one({'_id': survey_id})
         await self.clean(admin_name, survey_name)
 
@@ -161,6 +161,6 @@ class Survey:
         """Query the survey submissions and return aggregated results."""
         timestamp = int(time.time())
         if timestamp < self.end:
-            raise HTTPException(400, 'survey is still running')
+            raise HTTPException(400, 'survey is not yet closed')
         self.results = self.results or await self.alligator.fetch()
         return self.results

@@ -33,16 +33,18 @@ class Letterbox:
             'subject': 'Please verify your submission',
             'html': html,
             # 'o:testmode': ENV == 'development',
+            'o:tag': 'testing' if ENV == 'development' else 'transactional'
         }
         response = await self.client.post('/messages', data=data)
+        # print(response.text)
         return response.status_code
 
     async def verify_email(
             self,
-            receiver,
             admin_name,
             survey_name,
             title,
+            receiver,
             token,
         ):
         """Send confirmation email in order to verify an email address."""
@@ -54,4 +56,4 @@ class Letterbox:
             + f'<p>Please verify your submission by <a href="{vu}" target="_blank">clicking here</a></p>'
             + '<p>Your FastSurvey team</p>'
         )
-        self.send(receiver, html)
+        return await self.send(receiver, html)
