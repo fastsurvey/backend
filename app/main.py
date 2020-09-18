@@ -12,7 +12,7 @@ ENV = os.getenv('ENV')
 # MongoDB connection string
 MDBCS = os.getenv('MDBCS')
 # Postmark dev / production server token
-PMST = os.getenv('DPMST' if ENV == 'development' else 'PPMST')
+# PMST = os.getenv('DPMST' if ENV == 'development' else 'PPMST')
 
 
 # create fastapi app
@@ -22,23 +22,25 @@ motor_client = AsyncIOMotorClient(MDBCS)
 # get link to dev / production database
 database = motor_client[ENV]
 # connect to postmark
-email_client = PostmarkClient(server_token=PMST)
+# email_client = PostmarkClient(server_token=PMST)
 # instantiate survey manager
-survey_manager = SurveyManager(database, email_client)
+survey_manager = SurveyManager(database, None)
 
 
-@app.get('/', tags=['status'])
+@app.get('/status', tags=['status'])
 async def status():
     """Verify if database and mailing services are operational."""
-    status = {'database': 'UP', 'mailing': 'UP'}
+    status = {'database': 'UP', 'mailing': 'UNKNOWN'}
     try:
         await motor_client.server_info()
     except:
         status['database'] = 'DOWN'
+    '''
     try:
         status['mailing'] = email_client.status.get()['status']
     except:
         status['mailing'] = 'DOWN'
+    '''
     return status
 
 
@@ -58,7 +60,7 @@ async def fetch(
     return survey.configuration
 
 
-@app.post('/{admin_name}/{survey_name}/submit', tags=['survey'])
+@app.post('/{admin_name}/{survey_name}', tags=['sujvey'])
 async def submit(
         admin_name: str = Path(
             ...,
@@ -78,7 +80,7 @@ async def submit(
     return await survey.submit(submission)
 
 
-@app.get('/{admin_name}/{survey_name}/verify/{token}', tags=['survey'])
+@app.get('/{admin_name}/{survey_name}/verification/{token}', tags=['survey'])
 async def verify(
         admin_name: str = Path(
             ...,
