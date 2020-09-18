@@ -25,17 +25,8 @@ class Letterbox:
         self.auth = ('api', MGKEY)
         self.client = httpx.AsyncClient(auth=self.auth, base_url=self.endpoint)
 
-    async def verify_email(self, admin_name, survey_name, title, receiver, token):
-        """Send confirmation email in order to verify an email address."""
-
-        # verification url used to verify the users email
-        vu = f'{BURL}/{admin_name}/{survey_name}/verification/{token}'
-        html = (
-            '<p>Hi there, we received your submission!</p>'
-            + f'<p>Survey: <strong>{title}</strong></p>'
-            + f'<p>Please verify your submission by <a href="{vu}" target="_blank">clicking here</a></p>'
-            + '<p>Your FastSurvey team</p>'
-        )
+    async def send(self, receiver, html):
+        """Send an email to the given receiver."""
         data = {
             'from': self.sender,
             'to': receiver,
@@ -45,3 +36,22 @@ class Letterbox:
         }
         response = await self.client.post('/messages', data=data)
         return response.status_code
+
+    async def verify_email(
+            self,
+            receiver,
+            admin_name,
+            survey_name,
+            title,
+            token,
+        ):
+        """Send confirmation email in order to verify an email address."""
+        # verification url
+        vu = f'{BURL}/{admin_name}/{survey_name}/verification/{token}'
+        html = (
+            '<p>Hi there, we received your submission!</p>'
+            + f'<p>Survey: <strong>{title}</strong></p>'
+            + f'<p>Please verify your submission by <a href="{vu}" target="_blank">clicking here</a></p>'
+            + '<p>Your FastSurvey team</p>'
+        )
+        self.send(receiver, html)

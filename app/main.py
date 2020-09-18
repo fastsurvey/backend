@@ -11,8 +11,6 @@ from app.survey import SurveyManager
 ENV = os.getenv('ENV')
 # MongoDB connection string
 MDBCS = os.getenv('MDBCS')
-# Postmark dev / production server token
-# PMST = os.getenv('DPMST' if ENV == 'development' else 'PPMST')
 
 
 # create fastapi app
