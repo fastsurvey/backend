@@ -2,8 +2,8 @@ import os
 
 from fastapi import FastAPI, Path, Body, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
-from postmarker.core import PostmarkClient
 
+from app.mailing import Letterbox
 from app.survey import SurveyManager
 
 
@@ -21,10 +21,10 @@ app = FastAPI()
 motor_client = AsyncIOMotorClient(MDBCS)
 # get link to dev / production database
 database = motor_client[ENV]
-# connect to postmark
-# email_client = PostmarkClient(server_token=PMST)
+# create email client
+letterbox = Letterbox()
 # instantiate survey manager
-survey_manager = SurveyManager(database, None)
+survey_manager = SurveyManager(database, letterbox)
 
 
 @app.get('/status', tags=['status'])

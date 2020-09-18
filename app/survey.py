@@ -7,7 +7,6 @@ from starlette.responses import RedirectResponse
 from pymongo.errors import DuplicateKeyError
 
 from app.validation import SubmissionValidator
-from app.mailing import Postman
 from app.results import Alligator
 
 
@@ -18,10 +17,10 @@ FURL = os.getenv('FURL')
 class SurveyManager:
     """The manager manages creating, updating and deleting survey objects."""
 
-    def __init__(self, database, postmark):
+    def __init__(self, database, letterbox):
         """Initialize this class with empty surveys dictionary."""
         self._database = database
-        self._postmark = postmark
+        self._letterbox = letterbox
         self._surveys = {}
 
     def _remember(self, configuration):
@@ -30,7 +29,7 @@ class SurveyManager:
             configuration['_id']: Survey(
                 configuration,
                 self._database,
-                self._postmark,
+                self._letterbox,
             )
         })
 
@@ -87,17 +86,18 @@ class Survey:
             self,
             configuration,
             database,
-            email_client,
+            letterbox,
     ):
         """Create a survey from the given json configuration file."""
         self.configuration = configuration
         self.admin_name = self.configuration['admin_name']
         self.survey_name = self.configuration['survey_name']
         self.survey_id = f'{self.admin_name}.{self.survey_name}'
+        self.title = self.configuration['title']
         self.start = self.configuration['start']
         self.end = self.configuration['end']
         self.validator = SubmissionValidator.create(self.configuration)
-        self.postman = Postman(self.configuration, email_client)
+        self.letterbox = letterbox
         self.alligator = Alligator(self.configuration, database)
         self.pending = database[f'{self.survey_id}.pending']
         self.verified = database[f'{self.survey_id}.verified']
@@ -123,14 +123,15 @@ class Survey:
                 break
             except DuplicateKeyError:
                 submission['_id'] = secrets.token_hex(32)
-
-        '''
-        try:
-            self.postman.on_submit(submission)
-        except Exception as e:
-            print(e)
+        status = self.letterbox.verify_email(
+            self.admin_name,
+            self.survey_name,
+            self.title,
+            'felix@felixboehm.dev',
+            submission['_id'],
+        )
+        if status != 200:
             raise HTTPException(500, 'verification email delivery failure')
-        '''
 
     async def verify(self, token):
         """Verify user submission and copy it from pending to verified."""
