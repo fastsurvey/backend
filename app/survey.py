@@ -108,12 +108,10 @@ class Survey:
     @classmethod
     def _get_email_field_index(cls, configuration):
         """Find the index of the email field in the survey configuration."""
-        index = None
-        for i, field in enumerate(configuration['fields']):
+        for index, field in enumerate(configuration['fields']):
             if field['type'] == 'Email':
-                index = i + 1
-                break
-        return index
+                return index
+        return None
 
     async def submit(self, submission):
         """Save a user submission in the submissions collection."""
