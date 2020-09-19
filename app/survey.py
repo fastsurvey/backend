@@ -25,26 +25,28 @@ class SurveyManager:
 
     def _remember(self, configuration):
         """Update local survey cache with config-generated survey object."""
+        admin_name = configuration['admin_name']
+        survey_name = configuration['survey_name']
+        survey_id = f'{admin_name}.{survey_name}'
         self._cache.update({
-            configuration['_id']: Survey(
-                configuration,
-                self._database,
-                self._letterbox,
-            )
+            survey_id: Survey(configuration, self._database, self._letterbox)
         })
 
     def _forget(self, admin_name, survey_name):
-        """Remove survey cache, either due to deletion or cache clearing."""
+        """Remove survey from cache, due to deletion or cache clearing."""
         raise NotImplementedError
 
     async def update(self, configuration):
-        """Create or update the survey configuration in the database."""
-        survey_id = configuration['_id']
+        """Create or update survey configuration in database and cache."""
+        admin_name = configuration['admin_name']
+        survey_name = configuration['survey_name']
+        configuration['_id'] = f'{admin_name}.{survey_name}'
         await self._database['configurations'].find_one_and_replace(
-            filter={'_id': survey_id},
+            filter={'_id': configuration['_id']},
             replacement=configuration,
             upsert=True,
         )
+        del configuration['_id']
         self._remember(configuration)
 
     async def fetch(self, admin_name, survey_name):
@@ -56,19 +58,20 @@ class SurveyManager:
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')
+            del configuration['_id']
             self._remember(configuration)
         return self._cache[survey_id]
 
     async def clean(self, admin_name, survey_name):
         """Delete all the submission data of the survey from the database.
 
-        We intentionally do not use self.get() here, as we want to delete
+        We intentionally do not use self.fetch() here, as we want to delete
         the survey entry in self.purge() before calling self.clean()
 
         """
         survey_id = f'{admin_name}.{survey_name}'
-        await self._database[f'{survey_id}.pending'].drop()
-        await self._database[f'{survey_id}.verified'].drop()
+        await self._database[f'surveys.{survey_id}.submissions'].drop()
+        await self._database[f'surveys.{survey_id}.verified-submissions'].drop()
 
     async def delete(self, admin_name, survey_name):
         """Delete the survey and all its data from the database and cache."""
