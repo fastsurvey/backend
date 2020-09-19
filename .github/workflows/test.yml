@@ -24,8 +24,7 @@ jobs:
         FURL: ${{ secrets.FURL }}
         BURL: ${{ secrets.BURL }}
         MDBCS: ${{ secrets.MDBCS }}
-        DPMST: ${{ secrets.DPMST }}
-        PPMST: ${{ secrets.PPMST }}
+        MGKEY: ${{ secrets.MGKEY }}
     - name:  Push Coverage Report to CodeClimate
       uses: paambaati/codeclimate-action@v2.3.0
       env:
