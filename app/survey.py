@@ -8,6 +8,7 @@ from pymongo.errors import DuplicateKeyError
 
 from app.validation import SubmissionValidator
 from app.results import Alligator
+from app.utils import identify
 
 
 # frontend url
@@ -25,11 +26,12 @@ class SurveyManager:
 
     def _remember(self, configuration):
         """Update local survey cache with config-generated survey object."""
-        admin_name = configuration['admin_name']
-        survey_name = configuration['survey_name']
-        survey_id = f'{admin_name}.{survey_name}'
         self._cache.update({
-            survey_id: Survey(configuration, self._database, self._letterbox)
+            identify(configuration): Survey(
+                configuration,
+                self._database,
+                self._letterbox,
+            )
         })
 
     def _forget(self, admin_name, survey_name):
@@ -38,9 +40,7 @@ class SurveyManager:
 
     async def update(self, configuration):
         """Create or update survey configuration in database and cache."""
-        admin_name = configuration['admin_name']
-        survey_name = configuration['survey_name']
-        configuration['_id'] = f'{admin_name}.{survey_name}'
+        configuration['_id'] = identify(configuration)
         await self._database['configurations'].find_one_and_replace(
             filter={'_id': configuration['_id']},
             replacement=configuration,
@@ -55,10 +55,10 @@ class SurveyManager:
         if survey_id not in self._cache:
             configuration = await self._database['configurations'].find_one(
                 filter={'_id': survey_id},
+                projection={'_id': False},
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')
-            del configuration['_id']
             self._remember(configuration)
         return self._cache[survey_id]
 
@@ -95,7 +95,7 @@ class Survey:
         self.configuration = configuration
         self.admin_name = self.configuration['admin_name']
         self.survey_name = self.configuration['survey_name']
-        self.survey_id = f'{self.admin_name}.{self.survey_name}'
+        self.survey_id = identify(configuration)
         self.title = self.configuration['title']
         self.start = self.configuration['start']
         self.end = self.configuration['end']
@@ -134,7 +134,7 @@ class Survey:
             await self.submissions.insert_one(submission)
         # using email address
         if self.mode == 1:
-            submission['_id'] = secrets.token_hex(32),
+            submission['_id'] = secrets.token_hex(32)
             while True:
                 try:
                     await self.submissions.insert_one(submission)

@@ -26,7 +26,7 @@ async def test_fetching_configuration_with_invalid_identifier():
 
 @pytest.mark.asyncio
 async def test_submit_valid_submission(valid_submissions, cleanup):
-    """Test that submit works with a valid submission for the test survey."""
+    """Test that submit works with valid submissions for test surveys."""
     for survey_name, submission in valid_submissions.items():
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
             response = await ac.post(
@@ -34,9 +34,9 @@ async def test_submit_valid_submission(valid_submissions, cleanup):
                 json=submission,
             )
         survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-        entry = await survey.pending.find_one()
+        entry = await survey.submissions.find_one()
         assert response.status_code == 200
-        assert entry['properties'] == submission
+        assert entry['data'] == submission
 
 
 @pytest.mark.skip(reason='scheduled for refactoring')

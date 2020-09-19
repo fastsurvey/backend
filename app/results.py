@@ -1,10 +1,18 @@
+from app.utils import identify
+
+
 class Alligator:
     """Does it aggregate ... or does it alligate ... ?"""
 
     def __init__(self, configuration, database):
         """Initialize alligator with some pipeline parts already defined."""
         self.configuration = configuration
-        self.verified = database[f"{self.configuration['_id']}.verified"]
+        self.survey_id = identify(configuration)
+        self.collection = (
+            database[f'surveys.{self.survey_id}.submissions']
+            if self.configuration['mode'] == 0
+            else database[f'surveys.{self.survey_id}.verified-submissions']
+        )
         self.results = database['results']
         self.mapping = {
             'Radio': self._add_radio,
@@ -13,7 +21,7 @@ class Alligator:
         }
         self.project = {}
         self.group = {
-            '_id': self.configuration['_id'],
+            '_id': self.survey_id,
             'count': {'$sum': 1},
         }
         self.merge = {
@@ -53,7 +61,7 @@ class Alligator:
     async def fetch(self):
         """Aggregate and return the results of the survey."""
         results = await self.results.find_one(
-            filter={'_id': self.configuration['_id']},
+            filter={'_id': self.survey_id},
         )
         if results:
             return results
@@ -63,4 +71,4 @@ class Alligator:
         )
         # this is needed to make sure that the aggregation finished
         async for _ in cursor: pass
-        return await self.results.find_one({'_id': self.configuration['_id']})
+        return await self.results.find_one({'_id': self.survey_id})

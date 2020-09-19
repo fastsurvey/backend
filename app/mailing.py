@@ -32,7 +32,7 @@ class Letterbox:
             'to': receiver,
             'subject': 'Please verify your submission',
             'html': html,
-            # 'o:testmode': ENV == 'development',
+            'o:testmode': ENV == 'development',
             'o:tag': 'testing' if ENV == 'development' else 'transactional'
         }
         response = await self.client.post('/messages', data=data)

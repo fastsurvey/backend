@@ -1,7 +1,6 @@
 {
     "1": {
         "type": "Email",
-        "mandatory": true,
         "regex": ".*"
     }
 }
