@@ -6,14 +6,13 @@
     "description": "",
     "start": 1000000000,
     "end": 2000000000,
+    "mode": 1,
     "fields": [
         {
             "type": "Email",
             "title": "What is your email address?",
             "description": "",
             "hint": "Your email address ...",
-            "verify": false,
-            "mandatory": true,
             "regex": ".*"
         }
     ]

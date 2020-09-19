@@ -96,15 +96,27 @@ class Survey:
         self.title = self.configuration['title']
         self.start = self.configuration['start']
         self.end = self.configuration['end']
+        self.mode = self.configuration['mode']
+        self.ei = Survey._get_email_field_index(self.configuration)
         self.validator = SubmissionValidator.create(self.configuration)
         self.letterbox = letterbox
         self.alligator = Alligator(self.configuration, database)
-        self.pending = database[f'{self.survey_id}.pending']
-        self.verified = database[f'{self.survey_id}.verified']
+        self.submissions = database[f'surveys.{self.survey_id}.submissions']
+        self.vss = database[f'surveys.{self.survey_id}.verified-submissions']
         self.results = None
 
+    @classmethod
+    def _get_email_field_index(cls, configuration):
+        """Find the index of the email field in the survey configuration."""
+        index = None
+        for i, field in enumerate(configuration['fields']):
+            if field['type'] == 'Email':
+                index = i + 1
+                break
+        return index
+
     async def submit(self, submission):
-        """Save a user submission in pending entries for verification."""
+        """Save a user submission in the submissions collection."""
         timestamp = int(time.time())
         if timestamp < self.start:
             raise HTTPException(400, 'survey is not open yet')
@@ -113,44 +125,48 @@ class Survey:
         if not self.validator.validate(submission):
             raise HTTPException(400, 'invalid submission')
         submission = {
-            '_id': secrets.token_hex(32),
-            'timestamp': timestamp,
-            'properties': submission,
+            'submission-time': timestamp,
+            'data': submission,
         }
-        while True:
-            try:
-                await self.pending.insert_one(submission)
-                break
-            except DuplicateKeyError:
-                submission['_id'] = secrets.token_hex(32)
-        status = await self.letterbox.verify_email(
-            self.admin_name,
-            self.survey_name,
-            self.title,
-            'felix@felixboehm.dev',
-            submission['_id'],
-        )
-        if status != 200:
-            raise HTTPException(500, 'verification email delivery failure')
+        # without identifier
+        if self.mode == 0:
+            await self.submissions.insert_one(submission)
+        # using email address
+        if self.mode == 1:
+            submission['_id'] = secrets.token_hex(32),
+            while True:
+                try:
+                    await self.submissions.insert_one(submission)
+                    break
+                except DuplicateKeyError:
+                    submission['_id'] = secrets.token_hex(32)
+            status = await self.letterbox.verify_email(
+                self.admin_name,
+                self.survey_name,
+                self.title,
+                submission['data'][str(self.ei + 1)],
+                submission['_id'],
+            )
+            if status != 200:
+                raise HTTPException(500, 'email delivery failure')
 
     async def verify(self, token):
-        """Verify user submission and copy it from pending to verified."""
+        """Verify the user's email address and save submission as verified."""
         timestamp = int(time.time())
+        if self.mode != 1:
+            raise HTTPException(400, 'survey does not support verification')
         if timestamp < self.start:
             raise HTTPException(400, 'survey is not open yet')
         if timestamp >= self.end:
             raise HTTPException(400, 'survey is closed')
-        pe = await self.pending.find_one({'_id': token})
-        if pe is None:
+        submission = await self.submissions.find_one({'_id': token})
+        if submission is None:
             raise HTTPException(401, 'invalid token')
-        ve = {
-            '_id': pe['email'],
-            'timestamp': timestamp,  # time is verify time, not submit time
-            'properties': pe['properties'],
-        }
-        await self.verified.find_one_and_replace(
-            filter={'_id': pe['email']},
-            replacement=ve,
+        submission['verification-time'] = timestamp
+        submission['_id'] = submission['data'][str(self.ei + 1)],
+        await self.vss.find_one_and_replace(
+            filter={'_id': submission['_id']},
+            replacement=submission,
             upsert=True,
         )
         return RedirectResponse(
