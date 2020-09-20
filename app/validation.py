@@ -13,9 +13,9 @@ class SubmissionValidator(Validator):
 
     types_mapping = {
         'Email': TypeDefinition('Email', (str,), ()),
-        #'Radio': TypeDefinition('Selection', (dict,), ()),
-        'Selection': TypeDefinition('Selection', (dict,), ()),
         'Option': TypeDefinition('Option', (bool,), ()),
+        'Selection': TypeDefinition('Selection', (dict,), ()),
+        'Text': TypeDefinition('Text', (str,), ()),
     }
 
     @classmethod
@@ -53,8 +53,6 @@ class SubmissionValidator(Validator):
 
     ### CUSTOM VALIDATION RULES ###
 
-    '''
-
     def _validate_min_chars(self, min_chars, field, value):
         """{'type': 'integer'}"""
         if len(value) < min_chars:
@@ -64,8 +62,6 @@ class SubmissionValidator(Validator):
         """{'type': 'integer'}"""
         if len(value) > max_chars:
             self._error(field, f'Must be at most {max_chars} characters long')
-
-    '''
 
     def _validate_min_select(self, min_select, field, value):
         """{'type': 'integer'}"""

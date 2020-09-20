@@ -17,9 +17,9 @@ class Letterbox:
         """Create a general email client to be used by all surveys."""
 
         # self.domain = 'email.fastsurvey.io'
-        # self.endpoint = f'https://api.eu.mailgun.net/v3/{domain}'
+        # self.endpoint = f'https://api.eu.mailgun.net/v3/{self.domain}'
 
-        self.domain = 'sandboxef6ceb5ba442440191d0ec08141f43c0.mailgun.org'
+        self.domain = 'sandboxef6ceb5ba442440191d0ec08141f43c0.mailgun.org'  # TODO change
         self.endpoint = f'https://api.mailgun.net/v3/{self.domain}'
         self.sender = f'FastSurvey <noreply@{self.domain}>'
         self.auth = ('api', MGKEY)
@@ -29,7 +29,7 @@ class Letterbox:
         """Send an email to the given receiver."""
         data = {
             'from': self.sender,
-            'to': receiver,
+            'to': 'felix@felixboehm.dev' if ENV == 'development' else receiver,  # TODO change
             'subject': 'Please verify your submission',
             'html': html,
             'o:testmode': ENV == 'development',

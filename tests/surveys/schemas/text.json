@@ -1,0 +1,7 @@
+{
+    "1": {
+        "type": "Text",
+        "min_chars": 10,
+        "max_chars": 1000
+    }
+}

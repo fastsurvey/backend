@@ -11,8 +11,8 @@
             "type": "Email",
             "title": "What is your email address?",
             "description": "",
-            "hint": "Your email address ...",
-            "regex": ".*"
+            "regex": ".*",
+            "hint": "Your email address ..."
         }
     ]
 }

@@ -1,0 +1,18 @@
+{
+    "admin_name": "fastsurvey",
+    "survey_name": "text",
+    "title": "Text Test",
+    "description": "",
+    "start": 1000000000,
+    "end": 2000000000,
+    "mode": 0,
+    "fields": [
+        {
+            "type": "Text",
+            "title": "Why do you like ice cream?",
+            "description": "",
+            "min_chars": 10,
+            "max_chars": 1000
+        }
+    ]
+}
