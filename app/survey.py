@@ -16,10 +16,10 @@ FURL = os.getenv('FURL')
 
 
 class SurveyManager:
-    """The manager manages creating, updating and deleting survey objects."""
+    """The manager manages creating, updating and deleting surveys."""
 
     def __init__(self, database, letterbox):
-        """Initialize this class with empty surveys dictionary."""
+        """Initialize a survey manager instance."""
         self._database = database
         self._letterbox = letterbox
         self._cache = {}
@@ -38,17 +38,6 @@ class SurveyManager:
         """Remove survey from cache, due to deletion or cache clearing."""
         raise NotImplementedError
 
-    async def update(self, configuration):
-        """Create or update survey configuration in database and cache."""
-        configuration['_id'] = identify(configuration)
-        await self._database['configurations'].find_one_and_replace(
-            filter={'_id': configuration['_id']},
-            replacement=configuration,
-            upsert=True,
-        )
-        del configuration['_id']
-        self._remember(configuration)
-
     async def fetch(self, admin_name, survey_name):
         """Return the survey object corresponding to admin and survey name."""
         survey_id = f'{admin_name}.{survey_name}'
@@ -61,6 +50,17 @@ class SurveyManager:
                 raise HTTPException(404, 'survey not found')
             self._remember(configuration)
         return self._cache[survey_id]
+
+    async def update(self, configuration):
+        """Create or update survey configuration in database and cache."""
+        configuration['_id'] = identify(configuration)
+        await self._database['configurations'].find_one_and_replace(
+            filter={'_id': configuration['_id']},
+            replacement=configuration,
+            upsert=True,
+        )
+        del configuration['_id']
+        self._remember(configuration)
 
     async def clean(self, admin_name, survey_name):
         """Delete all the submission data of the survey from the database.

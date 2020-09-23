@@ -4,6 +4,7 @@ from fastapi import FastAPI, Path, Body, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from app.mailing import Letterbox
+from app.admin import AdminManager
 from app.survey import SurveyManager
 
 
@@ -21,6 +22,8 @@ motor_client = AsyncIOMotorClient(MDBCS)
 database = motor_client[ENV]
 # create email client
 letterbox = Letterbox()
+# instantiate admin manager
+survey_manager = AdminManager(database)
 # instantiate survey manager
 survey_manager = SurveyManager(database, letterbox)
 
