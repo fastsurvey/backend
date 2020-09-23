@@ -23,7 +23,7 @@ database = motor_client[ENV]
 # create email client
 letterbox = Letterbox()
 # instantiate admin manager
-survey_manager = AdminManager(database)
+admin_manager = AdminManager(database)
 # instantiate survey manager
 survey_manager = SurveyManager(database, letterbox)
 
@@ -36,7 +36,7 @@ async def get_admin(
         ),
     ):
     """Fetch data about the given admin."""
-    raise HTTPException(501, 'not implemented')
+    return await admin_manager.fetch(admin_name)
 
 
 @app.get('/{admin_name}/{survey_name}')

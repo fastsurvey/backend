@@ -1,4 +1,4 @@
-
+from fastapi import HTTPException
 
 
 class AdminManager:
@@ -9,13 +9,19 @@ class AdminManager:
         self._database = database
 
     async def fetch(self, admin_name):
-        """Return admin settings corresponding to given admin name."""
-        raise NotImplementedError
+        """Return admin account data corresponding to given admin name."""
+        account = await self._database['accounts'].find_one(
+            filter={'_id': admin_name},
+            projection={'_id': False},
+        )
+        if account is None:
+            raise HTTPException(404, 'admin not found')
+        return account
 
     async def update(self, settings):
-        """Create or update admin settings in the database."""
-        raise NotImplementedError
+        """Create or update admin account in the database."""
+        raise HTTPException(501, 'not implemented')
 
     async def delete(self, admin_name):
         """Delete the admin from the database."""
-        raise NotImplementedError
+        raise HTTPException(501, 'not implemented')
