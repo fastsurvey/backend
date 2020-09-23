@@ -25,8 +25,19 @@ letterbox = Letterbox()
 survey_manager = SurveyManager(database, letterbox)
 
 
-@app.get('/{admin_name}/{survey_name}', tags=['survey'])
-async def fetch(
+@app.get('/{admin_name}')
+async def get_admin(
+        admin_name: str = Path(
+            ...,
+            description='The name of the admin',
+        ),
+    ):
+    """Fetch data about the given admin."""
+    raise HTTPException(501, 'not implemented')
+
+
+@app.get('/{admin_name}/{survey_name}')
+async def get_survey(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
@@ -41,7 +52,41 @@ async def fetch(
     return survey.configuration
 
 
-@app.post('/{admin_name}/{survey_name}/submission', tags=['survey'])
+@app.post('/{admin_name}/{survey_name}')
+async def post_survey(
+        admin_name: str = Path(
+            ...,
+            description='The name of the admin',
+        ),
+        survey_name: str = Path(
+            ...,
+            description='The name of the survey',
+        ),
+        configuration: dict = Body(
+            ...,
+            description='The configuration for the new survey',
+        ),
+    ):
+    """Create new survey with given configuration."""
+    raise HTTPException(501, 'not implemented')
+
+
+@app.delete('/{admin_name}/{survey_name}')
+async def delete_survey(
+        admin_name: str = Path(
+            ...,
+            description='The name of the admin',
+        ),
+        survey_name: str = Path(
+            ...,
+            description='The name of the survey',
+        ),
+    ):
+    """Delete given survey and all its data (submissions, results, ...)."""
+    raise HTTPException(501, 'not implemented')
+
+
+@app.post('/{admin_name}/{survey_name}/submission')
 async def submit(
         admin_name: str = Path(
             ...,
@@ -61,7 +106,7 @@ async def submit(
     return await survey.submit(submission)
 
 
-@app.get('/{admin_name}/{survey_name}/verification/{token}', tags=['survey'])
+@app.get('/{admin_name}/{survey_name}/verification/{token}')
 async def verify(
         admin_name: str = Path(
             ...,
@@ -81,7 +126,7 @@ async def verify(
     return await survey.verify(token)
 
 
-@app.get('/{admin_name}/{survey_name}/results', tags=['survey'])
+@app.get('/{admin_name}/{survey_name}/results')
 async def aggregate(
         admin_name: str = Path(
             ...,
