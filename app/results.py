@@ -15,6 +15,7 @@ class Alligator:
         )
         self.results = database['results']
         self.mapping = {
+            'Option': self._add_option,
             'Radio': self._add_radio,
             'Selection': self._add_selection,
             'Text': self._add_text,
@@ -30,6 +31,12 @@ class Alligator:
             'whenMatched': 'replace',
             'whenNotMatched': 'insert',
         }
+
+    def _add_option(self, field, index):
+        """Add commands to deal with option field to results pipeline."""
+        path = f'properties.{index}'
+        self.project[path] = {'$toInt': f'${path}'}
+        self.group[str(index)] = {'$sum': f'${path}'}
 
     def _add_radio(self, field, index):
         """Add commands to deal with radio field to results pipeline."""
@@ -65,7 +72,7 @@ class Alligator:
         )
         if results:
             return results
-        cursor = self.verified.aggregate(
+        cursor = self.collection.aggregate(
             pipeline=self._build_pipeline(),
             allowDiskUse=True,
         )
