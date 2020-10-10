@@ -12,38 +12,45 @@ def test_generate_schema(configurations, schemas):
         assert schema == schemas[survey_name]
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_min_chars_passing(survey):
+@pytest.fixture(scope='session')
+def validator(configurations):
+    """Provide validator for configuration-independent rule testing."""
+    configuration = configurations['email']  # generic configuration
+    return validation.SubmissionValidator.create(configuration)
+
+
+def test_validate_min_chars_passing(validator):
     """Test that min_chars rule works correctly for some valid values."""
-    assert survey.validator._validate_min_chars(2, 'test', 'aa') is None
-    assert survey.validator._validate_min_chars(5, 'test', '       ') is None
-    assert survey.validator._validate_min_chars(0, 'test', '') is None
+    assert validator._validate_min_chars(2, 'test', 'aa') is None
+    assert validator._validate_min_chars(5, 'test', '       ') is None
+    assert validator._validate_min_chars(0, 'test', '') is None
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_min_chars_failing(survey):
+def test_validate_min_chars_failing(validator):
     """Test that min_chars rule works correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        survey.validator._validate_min_chars(1, 'test', '')
+        validator._validate_min_chars(1, 'test', '')
     with pytest.raises(AttributeError):
-        survey.validator._validate_min_chars(1000000, 'test', 'hello!')
+        validator._validate_min_chars(1000000, 'test', 'hello!')
+    with pytest.raises(AttributeError):
+        validator._validate_min_chars(9, 'test', '12345678')
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_max_chars_passing(survey):
+def test_validate_max_chars_passing(validator):
     """Test that max_chars rule works correctly for some valid values."""
-    assert survey.validator._validate_max_chars(2, 'test', 'aa') is None
-    assert survey.validator._validate_max_chars(100000, 'test', '   ') is None
-    assert survey.validator._validate_max_chars(0, 'test', '') is None
+    assert validator._validate_max_chars(2, 'test', 'aa') is None
+    assert validator._validate_max_chars(100000, 'test', '   ') is None
+    assert validator._validate_max_chars(0, 'test', '') is None
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_max_chars_failing(survey):
+def test_validate_max_chars_failing(validator):
     """Test that max_chars rule works correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        survey.validator._validate_max_chars(0, 'test', ' ')
+        validator._validate_max_chars(0, 'test', ' ')
     with pytest.raises(AttributeError):
-        survey.validator._validate_max_chars(9999, 'test', 'a' * 10000)
+        validator._validate_max_chars(9999, 'test', 'a' * 10000)
+    with pytest.raises(AttributeError):
+        validator._validate_max_chars(1, 'test', 'apple juice')
 
 
 @pytest.fixture(scope='module')
