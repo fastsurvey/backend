@@ -19,8 +19,9 @@ class Letterbox:
         # self.domain = 'sandboxef6ceb5ba442440191d0ec08141f43c0.mailgun.org'
         # self.endpoint = f'https://api.mailgun.net/v3/{self.domain}'
 
-        self.domain = 'email.fastsurvey.io'
-        self.endpoint = f'https://api.eu.mailgun.net/v3/{self.domain}'
+        self.domain = 'fastsurvey.io'
+        self.subdomain = f'email.{self.domain}'
+        self.endpoint = f'https://api.eu.mailgun.net/v3/{self.subdomain}'
         self.sender = f'FastSurvey <noreply@{self.domain}>'
         self.auth = ('api', MGKEY)
         self.client = httpx.AsyncClient(auth=self.auth, base_url=self.endpoint)
