@@ -74,6 +74,7 @@ class Alligator:
         """Aggregate and return the results of the survey."""
         results = await self.results.find_one(
             filter={'_id': self.survey_id},
+            projection={'_id': False},
         )
         if results:
             return results
@@ -81,6 +82,9 @@ class Alligator:
             pipeline=self._build_pipeline(),
             allowDiskUse=True,
         )
-        # this is needed to make sure that the aggregation finished
-        async for _ in cursor: pass
-        return await self.results.find_one({'_id': self.survey_id})
+        async for _ in cursor: pass  # make sure that the aggregation finished
+        results = await self.results.find_one(
+            filter={'_id': self.survey_id},
+            projection={'_id': False},
+        )
+        return results

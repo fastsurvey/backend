@@ -291,15 +291,17 @@ async def scenario3(survey):
 async def test_aggregate(test_surveys, cleanup):
     """Test that aggregation of test submissions returns the correct result."""
     for survey_name, parameters in test_surveys.items():
-        # manually close surveys
-        survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-        survey.end = 0
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
+            # push test submissions
             for submission in parameters['submissions']['valid']:
-                await ac.post(
+                response = await ac.post(
                     url=f'/fastsurvey/{survey_name}/submission',
                     json=submission,
                 )
+            # manually close surveys
+            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+            survey.end = 0
+            # fetch results
             response = await ac.get(
                 url=f'/fastsurvey/{survey_name}/results',
                 allow_redirects=False,
