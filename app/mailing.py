@@ -16,11 +16,11 @@ class Letterbox:
     def __init__(self):
         """Create a general email client to be used by all surveys."""
 
-        # self.domain = 'email.fastsurvey.io'
-        # self.endpoint = f'https://api.eu.mailgun.net/v3/{self.domain}'
+        # self.domain = 'sandboxef6ceb5ba442440191d0ec08141f43c0.mailgun.org'
+        # self.endpoint = f'https://api.mailgun.net/v3/{self.domain}'
 
-        self.domain = 'sandboxef6ceb5ba442440191d0ec08141f43c0.mailgun.org'  # TODO change
-        self.endpoint = f'https://api.mailgun.net/v3/{self.domain}'
+        self.domain = 'email.fastsurvey.io'
+        self.endpoint = f'https://api.eu.mailgun.net/v3/{self.domain}'
         self.sender = f'FastSurvey <noreply@{self.domain}>'
         self.auth = ('api', MGKEY)
         self.client = httpx.AsyncClient(auth=self.auth, base_url=self.endpoint)
@@ -29,14 +29,13 @@ class Letterbox:
         """Send an email to the given receiver."""
         data = {
             'from': self.sender,
-            'to': 'felix@felixboehm.dev' if ENV == 'development' else receiver,  # TODO change
+            'to': 'test@fastsurvey.io' if ENV == 'development' else receiver,
             'subject': 'Please verify your submission',
             'html': html,
             'o:testmode': ENV == 'development',
             'o:tag': [f'{ENV} transactional'],
         }
         response = await self.client.post('/messages', data=data)
-        # print(response.text)
         return response.status_code
 
     async def verify_email(
