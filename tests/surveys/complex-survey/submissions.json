@@ -1,0 +1,38 @@
+{
+    "valid": [
+        {
+            "1": "noreply@fastsurvey.io",
+            "2": true,
+            "3": {
+                "1": false,
+                "2": false,
+                "3": false,
+                "4": true
+            },
+            "4": {
+                "1": true,
+                "2": false,
+                "3": true
+            },
+            "5": "It keeps my head cool while I answer tricky surveys."
+        }
+    ],
+    "invalid": [
+        {
+            "1": "noreply@fastsurvey.io",
+            "2": true,
+            "3": {
+                "1": false,
+                "2": false,
+                "3": false,
+                "4": true
+            },
+            "4": {
+                "1": 3.1415,
+                "2": false,
+                "3": true
+            },
+            "5": "It keeps my head cool while I answer tricky surveys."
+        }
+    ]
+}

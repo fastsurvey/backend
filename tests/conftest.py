@@ -25,78 +25,43 @@ def event_loop(request):
 
 
 @pytest.fixture(scope='session')
-def parameters():
+def test_surveys():
     """Provide mapping of test survey names to their testing parameters."""
     folder = 'tests/surveys'
-    survey_names = os.listdir(folder)
-    ps = {}
+    survey_names = [e for e in os.listdir(folder) if e[0] != '.']
+    ts = {}
     for survey_name in survey_names:
-        for file in os.listdir(f'{folder}/{survey_name}'):
-            with open(f'{folder}/{survey_name}/{file}', 'r') as x:
-                ps[survey_name][os.path.splitext(file)[0]] = json.load(x)
-    return ps
+        subfolder = f'{folder}/{survey_name}'
+        parameter_names = [
+            os.path.splitext(e)[0]
+            for e
+            in os.listdir(subfolder)
+            if os.path.splitext(e)[1] == '.json'
+        ]
+        ts[survey_name] = dict()
+        for parameter_name in parameter_names:
+            with open(f'{subfolder}/{parameter_name}.json', 'r') as e:
+                ts[survey_name][parameter_name] = json.load(e)
+    return ts
 
 
-def load(folder):
-    """Provide mapping of test survey names to JSON data in given folder."""
-    survey_names = [
-        os.path.splitext(file)[0]
-        for file
-        in os.listdir(folder)
-        if os.path.splitext(file)[1] == '.json'
-    ]
-    xs = {}
-    for survey_name in survey_names:
-        with open(f'{folder}/{survey_name}.json', 'r') as x:
-            xs[survey_name] = json.load(x)
-    return xs
-
-
-@pytest.fixture(scope='session')
-def configurations():
-    """Provide mapping of test survey names to their configurations."""
-    folder = 'tests/surveys/configurations'
-    return load(folder)
-
-
-@pytest.fixture(scope='session')
-def schemas():
-    """Provide mapping of test survey names to their validation schemas."""
-    folder = 'tests/surveys/schemas'
-    return load(folder)
-
-
-@pytest.fixture(scope='session')
-def valid_submissions():
-    """Provide mapping of test survey names to valid submissions."""
-    folder = 'tests/surveys/valid-submissions'
-    return load(folder)
-
-
-@pytest.fixture(scope='session')
-def invalid_submissions():
-    """Provide mapping of test survey names to invalid submissions."""
-    folder = 'tests/surveys/invalid-submissions'
-    return load(folder)
-
-
-async def reset(configurations):
+async def reset(test_surveys):
     """Purge all survey data locally and remotely and reset configurations."""
-    for survey_name in configurations.keys():
+    for survey_name in test_surveys.keys():
         await main.survey_manager.delete('fastsurvey', survey_name)
     await main.database['configurations'].drop()
-    for configuration in configurations.values():
-        await main.survey_manager.update(configuration)
+    for parameters in test_surveys.values():
+        await main.survey_manager.update(parameters['configuration'])
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def setup(configurations):
+async def setup(test_surveys):
     """Reset survey data and configurations before the first test starts."""
-    await reset(configurations)
+    await reset(test_surveys)
 
 
 @pytest.fixture(scope='function')
-async def cleanup(configurations):
+async def cleanup(test_surveys):
     """Reset survey data and configurations after a single test."""
     yield
-    await reset(configurations)
+    await reset(test_surveys)

@@ -1,0 +1,12 @@
+{
+    "valid": [
+        {
+            "1": "noreply@fastsurvey.io"
+        }
+    ],
+    "invalid": [
+        {
+            "1": 42
+        }
+    ]
+}

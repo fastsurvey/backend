@@ -5,17 +5,17 @@ import app.main as main
 import app.validation as validation
 
 
-def test_generate_schema(configurations, schemas):
+def test_generate_schema(test_surveys):
     """Test that the schema generation function returns the correct result."""
-    for survey_name, configuration in configurations.items():
-        schema = validation._generate_schema(configuration)
-        assert schema == schemas[survey_name]
+    for parameters in test_surveys.values():
+        schema = validation._generate_schema(parameters['configuration'])
+        assert schema == parameters['schema']
 
 
 @pytest.fixture(scope='module')
-def validator(configurations):
+def validator(test_surveys):
     """Provide validator for configuration-independent rule testing."""
-    configuration = configurations['email']  # generic configuration
+    configuration = test_surveys['email']['configuration']  # generic configuration
     return validation.SubmissionValidator.create(configuration)
 
 

@@ -2,9 +2,9 @@ import app.main as main
 import app.results as results
 
 
-def test_adding_option_to_aggregation_pipeline(configurations):
+def test_adding_option_to_aggregation_pipeline(test_surveys):
     """Test adding an option field to the aggregation pipeline."""
-    configuration = configurations['option']
+    configuration = test_surveys['option']['configuration']
     alligator = results.Alligator(configuration, main.database)
     alligator._add_option(
         field=configuration['fields'][0],
@@ -20,9 +20,9 @@ def test_adding_option_to_aggregation_pipeline(configurations):
     }
 
 
-def test_adding_radio_to_aggregation_pipeline(configurations):
+def test_adding_radio_to_aggregation_pipeline(test_surveys):
     """Test adding a radio field to the aggregation pipeline."""
-    configuration = configurations['radio']
+    configuration = test_surveys['radio']['configuration']
     alligator = results.Alligator(configuration, main.database)
     alligator._add_radio(
         field=configuration['fields'][0],
@@ -44,9 +44,9 @@ def test_adding_radio_to_aggregation_pipeline(configurations):
     }
 
 
-def test_adding_selection_to_aggregation_pipeline(configurations):
+def test_adding_selection_to_aggregation_pipeline(test_surveys):
     """Test adding a selection field to the aggregation pipeline."""
-    configuration = configurations['selection']
+    configuration = test_surveys['selection']['configuration']
     alligator = results.Alligator(configuration, main.database)
     alligator._add_radio(
         field=configuration['fields'][0],

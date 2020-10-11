@@ -7,13 +7,13 @@ import app.main as main
 
 
 @pytest.mark.asyncio
-async def test_fetching_configuration_with_valid_identifier(configurations):
+async def test_fetching_configuration_with_valid_identifier(test_surveys):
     """Using valid survey identifier, test that correct config is returned."""
-    for survey_name, configuration in configurations.items():
+    for survey_name, parameters in test_surveys.items():
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
             response = await ac.get(f'/fastsurvey/{survey_name}')
         assert response.status_code == 200
-        assert response.json() == configuration
+        assert response.json() == parameters['configuration']
 
 
 @pytest.mark.asyncio
@@ -25,35 +25,35 @@ async def test_fetching_configuration_with_invalid_identifier():
 
 
 @pytest.mark.asyncio
-async def test_submit_valid_submission(valid_submissions, cleanup):
+async def test_submit_valid_submission(test_surveys, cleanup):
     """Test that submit works with valid submissions for test surveys."""
-    for survey_name, submission in valid_submissions.items():
-        async with AsyncClient(app=main.app, base_url='http://test') as ac:
-            response = await ac.post(
-                url=f'/fastsurvey/{survey_name}/submission',
-                json=submission,
-            )
-        survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-        entry = await survey.submissions.find_one()
-        assert response.status_code == 200
-        assert entry['data'] == submission
+    for survey_name, parameters in test_surveys.items():
+        for submission in parameters['submissions']['valid']:
+            async with AsyncClient(app=main.app, base_url='http://test') as ac:
+                response = await ac.post(
+                    url=f'/fastsurvey/{survey_name}/submission',
+                    json=submission,
+                )
+            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+            entry = await survey.submissions.find_one()
+            assert response.status_code == 200
+            assert entry['data'] == submission
 
 
 @pytest.mark.asyncio
-async def test_submit_invalid_submission(invalid_submissions, cleanup):
+async def test_submit_invalid_submission(test_surveys, cleanup):
     """Test that submit correctly fails for invalid test survey submissions."""
-
-
-    for survey_name, submission in invalid_submissions.items():
-        async with AsyncClient(app=main.app, base_url='http://test') as ac:
-            response = await ac.post(
-                url=f'/fastsurvey/{survey_name}/submission',
-                json=submission,
-            )
-        survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-        entry = await survey.submissions.find_one()
-        assert response.status_code == 400
-        assert entry is None
+    for survey_name, parameters in test_surveys.items():
+        for submission in parameters['submissions']['invalid']:
+            async with AsyncClient(app=main.app, base_url='http://test') as ac:
+                response = await ac.post(
+                    url=f'/fastsurvey/{survey_name}/submission',
+                    json=submission,
+                )
+            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+            entry = await survey.submissions.find_one()
+            assert response.status_code == 400
+            assert entry is None
 
 
 @pytest.fixture(scope='function')
