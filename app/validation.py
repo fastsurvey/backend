@@ -14,7 +14,6 @@ class SubmissionValidator(Validator):
     types_mapping = {
         'Email': TypeDefinition('Email', (str,), ()),
         'Option': TypeDefinition('Option', (bool,), ()),
-        'Selection': TypeDefinition('Selection', (dict,), ()),
         'Text': TypeDefinition('Text', (str,), ()),
     }
 
@@ -34,7 +33,7 @@ class SubmissionValidator(Validator):
         )
 
     def _count_selections(self, value):
-        """Count the number of selected options in a selection field."""
+        """Count the number of selected options in a Selection field."""
         count = sum(value.values())
         return count
 
@@ -42,9 +41,18 @@ class SubmissionValidator(Validator):
     ### CUSTOM TYPE VALIDATIONS ###
 
 
+    def _validate_type_Selection(self, value):
+        """Validate the structure of a submission for the Selection field."""
+        if type(value) is not dict:
+            return False
+        for e in value.values():
+            if type(e) is not bool:
+                return False
+        return True
+
     def _validate_type_Radio(self, value):
         """Validate the structure of a submission for the Radio field."""
-        if type(value) is not dict:
+        if not self._validate_type_Selection(value):
             return False
         if self._count_selections(value) != 1:
             return False
@@ -52,6 +60,7 @@ class SubmissionValidator(Validator):
 
 
     ### CUSTOM VALIDATION RULES ###
+
 
     def _validate_min_chars(self, min_chars, field, value):
         """{'type': 'integer'}"""
