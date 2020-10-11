@@ -60,6 +60,13 @@ def valid_submissions():
     return load(folder)
 
 
+@pytest.fixture(scope='session')
+def invalid_submissions():
+    """Provide mapping of test survey names to invalid submissions."""
+    folder = 'tests/surveys/invalid-submissions'
+    return load(folder)
+
+
 async def reset(configurations):
     """Purge all survey data locally and remotely and reset configurations."""
     for survey_name in configurations.keys():

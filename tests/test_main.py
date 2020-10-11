@@ -39,19 +39,21 @@ async def test_submit_valid_submission(valid_submissions, cleanup):
         assert entry['data'] == submission
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
-async def test_submit_invalid_submission(survey, submission):
-    """Test that submit correctly rejects an invalid test survey submission."""
-    submission['properties']['1']['1'] = 5  # should be boolean
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.post(
-            url='/fastsurvey/test/submit',
-            json=submission,
-        )
-    pe = await survey.pending.find_one()
-    assert response.status_code == 400
-    assert pe is None
+async def test_submit_invalid_submission(invalid_submissions, cleanup):
+    """Test that submit correctly fails for invalid test survey submissions."""
+
+
+    for survey_name, submission in invalid_submissions.items():
+        async with AsyncClient(app=main.app, base_url='http://test') as ac:
+            response = await ac.post(
+                url=f'/fastsurvey/{survey_name}/submission',
+                json=submission,
+            )
+        survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+        entry = await survey.submissions.find_one()
+        assert response.status_code == 400
+        assert entry is None
 
 
 @pytest.fixture(scope='function')
