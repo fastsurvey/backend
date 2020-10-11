@@ -24,6 +24,19 @@ def event_loop(request):
     loop.close()
 
 
+@pytest.fixture(scope='session')
+def parameters():
+    """Provide mapping of test survey names to their testing parameters."""
+    folder = 'tests/surveys'
+    survey_names = os.listdir(folder)
+    ps = {}
+    for survey_name in survey_names:
+        for file in os.listdir(f'{folder}/{survey_name}'):
+            with open(f'{folder}/{survey_name}/{file}', 'r') as x:
+                ps[survey_name][os.path.splitext(file)[0]] = json.load(x)
+    return ps
+
+
 def load(folder):
     """Provide mapping of test survey names to JSON data in given folder."""
     survey_names = [
