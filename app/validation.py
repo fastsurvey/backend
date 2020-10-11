@@ -83,7 +83,6 @@ class SubmissionValidator(Validator):
                 self._error(field, f'This field is mandatory')
 
 
-
 def _generate_schema(configuration):
     """Generate the cerberus validation schema from a survey configuration."""
 

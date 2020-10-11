@@ -27,7 +27,7 @@ def test_validate_min_chars_passing(validator):
 
 
 def test_validate_min_chars_failing(validator):
-    """Test that min_chars rule works correctly for some invalid values."""
+    """Test that min_chars rule fails correctly for some invalid values."""
     with pytest.raises(AttributeError):
         validator._validate_min_chars(1, 'test', '')
     with pytest.raises(AttributeError):
@@ -44,7 +44,7 @@ def test_validate_max_chars_passing(validator):
 
 
 def test_validate_max_chars_failing(validator):
-    """Test that max_chars rule works correctly for some invalid values."""
+    """Test that max_chars rule fails correctly for some invalid values."""
     with pytest.raises(AttributeError):
         validator._validate_max_chars(0, 'test', ' ')
     with pytest.raises(AttributeError):
@@ -72,7 +72,7 @@ def test_validate_min_select_passing(validator, selection):
 
 
 def test_validate_min_select_failing(validator, selection):
-    """Test that min_select rule works correctly for some invalid values."""
+    """Test that min_select rule fails correctly for some invalid values."""
     with pytest.raises(AttributeError):
         validator._validate_min_select(4, 'test', selection)
     with pytest.raises(AttributeError):
@@ -86,8 +86,26 @@ def test_validate_max_select_passing(validator, selection):
 
 
 def test_validate_max_select_failing(validator, selection):
-    """Test that max_select rule works correctly for some invalid values."""
+    """Test that max_select rule fails correctly for some invalid values."""
     with pytest.raises(AttributeError):
         validator._validate_max_select(2, 'test', selection)
     with pytest.raises(AttributeError):
         validator._validate_max_select(0, 'test', selection)
+
+
+def test_validate_mandatory_passing(validator):
+    """Test that mandatory rule works correctly for some valid values."""
+    assert validator._validate_mandatory(True, 'test', True) is None
+    assert validator._validate_mandatory(False, 'test', True) is None
+    assert validator._validate_mandatory(False, 'test', False) is None
+    assert validator._validate_mandatory(True, 'test', 'chicken') is None
+    assert validator._validate_mandatory(False, 'test', '') is None
+    assert validator._validate_mandatory(False, 'test', 'duck') is None
+
+
+def test_validate_mandatory_failing(validator):
+    """Test that mandatory rule fails correctly for some invalid values."""
+    with pytest.raises(AttributeError):
+        validator._validate_mandatory(True, 'test', False)
+    with pytest.raises(AttributeError):
+        validator._validate_mandatory(True, 'test', '')
