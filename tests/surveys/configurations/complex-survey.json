@@ -1,0 +1,89 @@
+{
+    "admin_name": "fastsurvey",
+    "survey_name": "complex-survey",
+    "title": "Complex Survey Test",
+    "description": "",
+    "start": 1000000000,
+    "end": 2000000000,
+    "mode": 1,
+    "fields": [
+        {
+            "type": "Email",
+            "title": "What is your email address?",
+            "description": "",
+            "regex": ".*",
+            "hint": "Your email address ..."
+        },
+        {
+            "type": "Option",
+            "title": "I have read and agree to the terms and conditions",
+            "description": "",
+            "mandatory": true
+        },
+        {
+            "type": "Radio",
+            "title": "What is your favorite fruit?",
+            "description": "",
+            "fields": [
+                {
+                    "type": "Option",
+                    "title": "Asparagus",
+                    "description": "",
+                    "mandatory": false
+                },
+                {
+                    "type": "Option",
+                    "title": "Spinach",
+                    "description": "",
+                    "mandatory": false
+                },
+                {
+                    "type": "Option",
+                    "title": "Artichoke",
+                    "description": "",
+                    "mandatory": false
+                },
+                {
+                    "type": "Option",
+                    "title": "None of these is a fruit",
+                    "description": "",
+                    "mandatory": false
+                }
+            ]
+        },
+        {
+            "type": "Selection",
+            "title": "What are your favorite ice cream flavors?",
+            "description": "",
+            "min_select": 0,
+            "max_select": 2,
+            "fields": [
+                {
+                    "type": "Option",
+                    "title": "Strawberry",
+                    "description": "",
+                    "mandatory": false
+                },
+                {
+                    "type": "Option",
+                    "title": "Vanilla",
+                    "description": "",
+                    "mandatory": false
+                },
+                {
+                    "type": "Option",
+                    "title": "Chocolate",
+                    "description": "",
+                    "mandatory": false
+                }
+            ]
+        },
+        {
+            "type": "Text",
+            "title": "Why do you like ice cream?",
+            "description": "",
+            "min_chars": 10,
+            "max_chars": 1000
+        }
+    ]
+}
