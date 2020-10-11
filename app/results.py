@@ -15,6 +15,7 @@ class Alligator:
         )
         self.results = database['results']
         self.mapping = {
+            'Email': self._add_email,
             'Option': self._add_option,
             'Radio': self._add_radio,
             'Selection': self._add_selection,
@@ -31,6 +32,10 @@ class Alligator:
             'whenMatched': 'replace',
             'whenNotMatched': 'insert',
         }
+
+    def _add_email(self, field, index):
+        """Add commands to deal with email field to results pipeline."""
+        pass
 
     def _add_option(self, field, index):
         """Add commands to deal with option field to results pipeline."""

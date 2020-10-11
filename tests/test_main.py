@@ -24,6 +24,7 @@ async def test_fetching_configuration_with_invalid_identifier():
     assert response.status_code == 404
 
 
+# TODO how to adjust this for multiple submissions?
 @pytest.mark.asyncio
 async def test_submit_valid_submission(test_surveys, cleanup):
     """Test that submit works with valid submissions for test surveys."""
@@ -40,6 +41,7 @@ async def test_submit_valid_submission(test_surveys, cleanup):
             assert entry['data'] == submission
 
 
+# TODO how to adjust this for multiple submissions?
 @pytest.mark.asyncio
 async def test_submit_invalid_submission(test_surveys, cleanup):
     """Test that submit correctly fails for invalid test survey submissions."""
@@ -285,21 +287,23 @@ async def scenario3(survey):
     ])
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
-async def test_fetch(scenario3):
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get(
-            url=f'/fastsurvey/test/results',
-            allow_redirects=False,
-        )
-    assert response.status_code == 200
-    assert response.json() == {
-        '_id': 'fastsurvey.test',
-        'count': 3,
-        '1-1': 2,
-        '1-2': 1,
-        '2-1': 2,
-        '2-2': 2,
-        '2-3': 0,
-    }
+async def test_aggregate(test_surveys, cleanup):
+    """Test that aggregation of test submissions returns the correct result."""
+    for survey_name, parameters in test_surveys.items():
+        # manually close surveys
+        survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+        survey.end = 0
+        async with AsyncClient(app=main.app, base_url='http://test') as ac:
+            for submission in parameters['submissions']['valid']:
+                await ac.post(
+                    url=f'/fastsurvey/{survey_name}/submission',
+                    json=submission,
+                )
+            response = await ac.get(
+                url=f'/fastsurvey/{survey_name}/results',
+                allow_redirects=False,
+            )
+        assert response.status_code == 200
+        if 'results' in parameters:  # TODO remove
+            assert response.json() == parameters['results']

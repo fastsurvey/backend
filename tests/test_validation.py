@@ -15,7 +15,7 @@ def test_generate_schema(test_surveys):
 @pytest.fixture(scope='module')
 def validator(test_surveys):
     """Provide validator for configuration-independent rule testing."""
-    configuration = test_surveys['email']['configuration']  # generic configuration
+    configuration = test_surveys['option']['configuration']  # generic configuration
     return validation.SubmissionValidator.create(configuration)
 
 
