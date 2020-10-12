@@ -232,63 +232,8 @@ async def test_verify_with_no_prior_submission(survey):
     assert ve is None
 
 
-@pytest.fixture(scope='function')
-async def scenario3(survey):
-    """Load some predefined entries into the database for testing."""
-    await survey.verified.insert_many([
-        {
-            '_id': 'aa01aaa@mytum.de',
-            'timestamp': 1590228136,
-            'properties': {
-                '1': {
-                    '1': True,
-                    '2': False,
-                },
-                '2': {
-                    '1': True,
-                    '2': True,
-                    '3': False,
-                },
-                '3': 'tomato! tomato! tomato!',
-            },
-        },
-        {
-            '_id': 'aa02aaa@mytum.de',
-            'timestamp': 1590228136,
-            'properties': {
-                '1': {
-                    '1': True,
-                    '2': False,
-                },
-                '2': {
-                    '1': True,
-                    '2': False,
-                    '3': False,
-                },
-                '3': 'apple! apple! apple!',
-            },
-        },
-        {
-            '_id': 'aa03aaa@mytum.de',
-            'timestamp': 1590228136,
-            'properties': {
-                '1': {
-                    '1': False,
-                    '2': True,
-                },
-                '2': {
-                    '1': False,
-                    '2': True,
-                    '3': False,
-                },
-                '3': 'cabbage! cabbage! cabbage!',
-            },
-        },
-    ])
-
-
 @pytest.mark.asyncio
-async def test_aggregate(test_surveys, cleanup):
+async def test_aggregate(test_surveys):
     """Test that aggregation of test submissions returns the correct result."""
     for survey_name, parameters in test_surveys.items():
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -298,10 +243,10 @@ async def test_aggregate(test_surveys, cleanup):
                     url=f'/fastsurvey/{survey_name}/submission',
                     json=submission,
                 )
-            # manually close surveys
+            # manually close surveys so that we can aggregate
             survey = await main.survey_manager.fetch('fastsurvey', survey_name)
             survey.end = 0
-            # fetch results
+            # aggregate and fetch results
             response = await ac.get(
                 url=f'/fastsurvey/{survey_name}/results',
                 allow_redirects=False,

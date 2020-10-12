@@ -39,7 +39,7 @@ class Alligator:
 
     def _add_option(self, field, index):
         """Add commands to deal with option field to results pipeline."""
-        path = f'properties+{index}'
+        path = f'data.{index}'
         self.project[path] = {'$toInt': f'${path}'}
         self.group[str(index)] = {'$sum': f'${path}'}
 
@@ -47,7 +47,7 @@ class Alligator:
         """Add commands to deal with radio field to results pipeline."""
         subfields = field['fields']
         for i in range(len(subfields)):
-            path = f'properties+{index}+{i+1}'
+            path = f'data.{index}.{i+1}'
             self.project[path] = {'$toInt': f'${path}'}
             self.group[f'{index}+{i+1}'] = {'$sum': f'${path}'}
 
