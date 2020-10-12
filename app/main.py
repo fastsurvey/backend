@@ -18,7 +18,7 @@ MDBCS = os.getenv('MDBCS')
 app = FastAPI()
 # connect to mongodb via pymongo and motor
 motor_client = AsyncIOMotorClient(MDBCS)
-# get link to dev / production database
+# get link to development / production / testing database
 database = motor_client[ENV]
 # create email client
 letterbox = Letterbox()
@@ -36,7 +36,7 @@ async def get_admin(
         ),
     ):
     """Fetch data about the given admin."""
-    # TODO check authentification
+    # TODO check authentication
     return await admin_manager.fetch(admin_name)
 
 
@@ -72,7 +72,7 @@ async def post_survey(
         ),
     ):
     """Create new survey with given configuration."""
-    # TODO check authentification
+    # TODO check authentication
     raise HTTPException(501, 'not implemented')
 
 
@@ -88,7 +88,7 @@ async def delete_survey(
         ),
     ):
     """Delete given survey and all its data (submissions, results, ...)."""
-    # TODO check authentification
+    # TODO check authentication
     raise HTTPException(501, 'not implemented')
 
 
