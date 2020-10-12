@@ -8,7 +8,7 @@ from app.admin import AdminManager
 from app.survey import SurveyManager
 
 
-# dev / production environment
+# development / production / testing environment
 ENV = os.getenv('ENV')
 # MongoDB connection string
 MDBCS = os.getenv('MDBCS')
