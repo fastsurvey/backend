@@ -236,21 +236,20 @@ async def test_verify_with_no_prior_submission(survey):
 async def test_aggregate(test_surveys, cleanup):
     """Test that aggregation of test submissions returns the correct result."""
     for survey_name, parameters in test_surveys.items():
+        # push test submissions
+        survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+        await survey.alligator.collection.insert_many(
+            {'data': submission}
+            for submission
+            in parameters['submissions']['valid']
+        )
+        # manually close surveys so that we can aggregate
+        survey.end = 0
+        # aggregate and fetch results
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
-            # push test submissions
-            for submission in parameters['submissions']['valid']:
-                response = await ac.post(
-                    url=f'/fastsurvey/{survey_name}/submission',
-                    json=submission,
-                )
-            # manually close surveys so that we can aggregate
-            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-            survey.end = 0
-            # aggregate and fetch results
             response = await ac.get(
                 url=f'/fastsurvey/{survey_name}/results',
                 allow_redirects=False,
             )
         assert response.status_code == 200
-        if 'results' in parameters:  # TODO remove
-            assert response.json() == parameters['results']
+        assert response.json() == parameters['results']

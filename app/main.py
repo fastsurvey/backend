@@ -18,7 +18,7 @@ MDBCS = os.getenv('MDBCS')
 app = FastAPI()
 # connect to mongodb via pymongo and motor
 motor_client = AsyncIOMotorClient(MDBCS)
-# get link to dev / production database
+# get link to development / production / testing database
 database = motor_client[ENV]
 # create email client
 letterbox = Letterbox()
