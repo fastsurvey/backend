@@ -2,7 +2,7 @@ import os
 import httpx
 
 
-# dev / production environment
+# develeopment / production / testing environment
 ENV = os.getenv('ENV')
 # backend url
 BURL = os.getenv('BURL')
@@ -30,10 +30,10 @@ class Letterbox:
         """Send an email to the given receiver."""
         data = {
             'from': self.sender,
-            'to': 'test@fastsurvey.io' if ENV == 'development' else receiver,
+            'to': 'test@fastsurvey.io' if ENV != 'production' else receiver,
             'subject': 'Please verify your submission',
             'html': html,
-            'o:testmode': ENV == 'development',
+            'o:testmode': ENV == 'testing',
             'o:tag': [f'{ENV} transactional'],
         }
         response = await self.client.post('/messages', data=data)
