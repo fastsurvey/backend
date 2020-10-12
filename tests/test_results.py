@@ -2,6 +2,21 @@ import app.main as main
 import app.results as results
 
 
+def test_adding_email_to_aggregation_pipeline(test_surveys):
+    """Test adding an email field to the aggregation pipeline."""
+    configuration = test_surveys['email']['configuration']
+    alligator = results.Alligator(configuration, main.database)
+    alligator._add_email(
+        field=configuration['fields'][0],
+        index=1,
+    )
+    assert alligator.project == {}
+    assert alligator.group == {
+        '_id': 'fastsurvey.email',
+        'count': {'$sum': 1},
+    }
+
+
 def test_adding_option_to_aggregation_pipeline(test_surveys):
     """Test adding an option field to the aggregation pipeline."""
     configuration = test_surveys['option']['configuration']
@@ -63,4 +78,19 @@ def test_adding_selection_to_aggregation_pipeline(test_surveys):
         '2+1': {'$sum': '$data.2.1'},
         '2+2': {'$sum': '$data.2.2'},
         '2+3': {'$sum': '$data.2.3'},
+    }
+
+
+def test_adding_text_to_aggregation_pipeline(test_surveys):
+    """Test adding a text field to the aggregation pipeline."""
+    configuration = test_surveys['text']['configuration']
+    alligator = results.Alligator(configuration, main.database)
+    alligator._add_text(
+        field=configuration['fields'][0],
+        index=1,
+    )
+    assert alligator.project == {}
+    assert alligator.group == {
+        '_id': 'fastsurvey.text',
+        'count': {'$sum': 1},
     }
