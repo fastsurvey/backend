@@ -5,50 +5,57 @@ import app.main as main
 import app.validation as validation
 
 
-def test_generate_schema(configurations, schemas):
+def test_generate_schema(test_surveys):
     """Test that the schema generation function returns the correct result."""
-    for survey_name, configuration in configurations.items():
-        schema = validation._generate_schema(configuration)
-        assert schema == schemas[survey_name]
+    for parameters in test_surveys.values():
+        schema = validation._generate_schema(parameters['configuration'])
+        assert schema == parameters['schema']
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_min_chars_passing(survey):
+@pytest.fixture(scope='module')
+def validator(test_surveys):
+    """Provide validator for configuration-independent rule testing."""
+    configuration = test_surveys['option']['configuration']  # generic configuration
+    return validation.SubmissionValidator.create(configuration)
+
+
+def test_validate_min_chars_passing(validator):
     """Test that min_chars rule works correctly for some valid values."""
-    assert survey.validator._validate_min_chars(2, 'test', 'aa') is None
-    assert survey.validator._validate_min_chars(5, 'test', '       ') is None
-    assert survey.validator._validate_min_chars(0, 'test', '') is None
+    assert validator._validate_min_chars(2, 'test', 'aa') is None
+    assert validator._validate_min_chars(5, 'test', '       ') is None
+    assert validator._validate_min_chars(0, 'test', '') is None
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_min_chars_failing(survey):
-    """Test that min_chars rule works correctly for some invalid values."""
+def test_validate_min_chars_failing(validator):
+    """Test that min_chars rule fails correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        survey.validator._validate_min_chars(1, 'test', '')
+        validator._validate_min_chars(1, 'test', '')
     with pytest.raises(AttributeError):
-        survey.validator._validate_min_chars(1000000, 'test', 'hello!')
+        validator._validate_min_chars(1000000, 'test', 'hello!')
+    with pytest.raises(AttributeError):
+        validator._validate_min_chars(9, 'test', '12345678')
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_max_chars_passing(survey):
+def test_validate_max_chars_passing(validator):
     """Test that max_chars rule works correctly for some valid values."""
-    assert survey.validator._validate_max_chars(2, 'test', 'aa') is None
-    assert survey.validator._validate_max_chars(100000, 'test', '   ') is None
-    assert survey.validator._validate_max_chars(0, 'test', '') is None
+    assert validator._validate_max_chars(2, 'test', 'aa') is None
+    assert validator._validate_max_chars(100000, 'test', '   ') is None
+    assert validator._validate_max_chars(0, 'test', '') is None
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_max_chars_failing(survey):
-    """Test that max_chars rule works correctly for some invalid values."""
+def test_validate_max_chars_failing(validator):
+    """Test that max_chars rule fails correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        survey.validator._validate_max_chars(0, 'test', ' ')
+        validator._validate_max_chars(0, 'test', ' ')
     with pytest.raises(AttributeError):
-        survey.validator._validate_max_chars(9999, 'test', 'a' * 10000)
+        validator._validate_max_chars(9999, 'test', 'a' * 10000)
+    with pytest.raises(AttributeError):
+        validator._validate_max_chars(1, 'test', 'apple juice')
 
 
 @pytest.fixture(scope='module')
 def selection():
-    """Provide a correct sample selection field for the test survey."""
+    """Provide a sample selection field submission value."""
     return {
         '1': False,
         '2': True,
@@ -58,81 +65,47 @@ def selection():
     }
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_min_select_passing(survey, selection):
+def test_validate_min_select_passing(validator, selection):
     """Test that min_select rule works correctly for some valid values."""
-    assert survey.validator._validate_min_select(3, 'test', selection) is None
-    assert survey.validator._validate_min_select(0, 'test', selection) is None
+    assert validator._validate_min_select(3, 'test', selection) is None
+    assert validator._validate_min_select(0, 'test', selection) is None
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_min_select_failing(survey, selection):
-    """Test that min_select rule works correctly for some invalid values."""
+def test_validate_min_select_failing(validator, selection):
+    """Test that min_select rule fails correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        survey.validator._validate_min_select(4, 'test', selection)
+        validator._validate_min_select(4, 'test', selection)
     with pytest.raises(AttributeError):
-        survey.validator._validate_min_select(99999, 'test', selection)
+        validator._validate_min_select(99999, 'test', selection)
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_max_select_passing(survey, selection):
+def test_validate_max_select_passing(validator, selection):
     """Test that max_select rule works correctly for some valid values."""
-    assert survey.validator._validate_max_select(3, 'test', selection) is None
-    assert survey.validator._validate_max_select(99, 'test', selection) is None
+    assert validator._validate_max_select(3, 'test', selection) is None
+    assert validator._validate_max_select(99, 'test', selection) is None
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validate_max_select_failing(survey, selection):
-    """Test that max_select rule works correctly for some invalid values."""
+def test_validate_max_select_failing(validator, selection):
+    """Test that max_select rule fails correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        survey.validator._validate_max_select(2, 'test', selection)
+        validator._validate_max_select(2, 'test', selection)
     with pytest.raises(AttributeError):
-        survey.validator._validate_max_select(0, 'test', selection)
+        validator._validate_max_select(0, 'test', selection)
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_validator_passing(survey, submission):
-    """Check that the generated validator lets a valid submissions pass."""
-    assert survey.validator.validate(submission)
+def test_validate_mandatory_passing(validator):
+    """Test that mandatory rule works correctly for some valid values."""
+    assert validator._validate_mandatory(True, 'test', True) is None
+    assert validator._validate_mandatory(False, 'test', True) is None
+    assert validator._validate_mandatory(False, 'test', False) is None
+    assert validator._validate_mandatory(True, 'test', 'chicken') is None
+    assert validator._validate_mandatory(False, 'test', '') is None
+    assert validator._validate_mandatory(False, 'test', 'duck') is None
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_email_passing(survey, submission):
-    """Check that the validator lets some valid email addresses pass."""
-    emails = [
-        'aa00aaa@mytum.de',
-        'ia72ihd@mytum.de',
-    ]
-    submission = copy.deepcopy(submission)
-    for email in emails:
-        submission['email'] = email
-        assert survey.validator.validate(submission)
-
-
-@pytest.mark.skip(reason='scheduled for refactoring')
-def test_email_failing(survey, submission):
-    """Check that the validator rejects some invalid email addresses."""
-    emails = [
-        8,
-        None,
-        {},
-        True,
-        '',
-        'sadfj',
-        'FFFFFFF@mytum.de',
-        'tt00est@mytum.de ',
-        'a123adf@mytum.de',
-        'ab82eee@mytum8de',
-        'a12 93ad@mytum.de',
-        'a123   @mytum.de',
-        'a444+00@mytum.de',
-        'tt00est@gmail.com',
-        '123@mytum.de@mytum.de',
-        'tt00est@mytum:de',
-        'tT00est@mytum.de',
-        'tt00eSt@mytum.de',
-    ]
-    submission = copy.deepcopy(submission)
-    for email in emails:
-        submission['email'] = email
-        assert not survey.validator.validate(submission)
+def test_validate_mandatory_failing(validator):
+    """Test that mandatory rule fails correctly for some invalid values."""
+    with pytest.raises(AttributeError):
+        validator._validate_mandatory(True, 'test', False)
+    with pytest.raises(AttributeError):
+        validator._validate_mandatory(True, 'test', '')

@@ -7,13 +7,13 @@ import app.main as main
 
 
 @pytest.mark.asyncio
-async def test_fetching_configuration_with_valid_identifier(configurations):
+async def test_fetching_configuration_with_valid_identifier(test_surveys):
     """Using valid survey identifier, test that correct config is returned."""
-    for survey_name, configuration in configurations.items():
+    for survey_name, parameters in test_surveys.items():
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
             response = await ac.get(f'/fastsurvey/{survey_name}')
         assert response.status_code == 200
-        assert response.json() == configuration
+        assert response.json() == parameters['configuration']
 
 
 @pytest.mark.asyncio
@@ -24,34 +24,38 @@ async def test_fetching_configuration_with_invalid_identifier():
     assert response.status_code == 404
 
 
+# TODO how to adjust this for multiple submissions?
 @pytest.mark.asyncio
-async def test_submit_valid_submission(valid_submissions, cleanup):
+async def test_submit_valid_submission(test_surveys, cleanup):
     """Test that submit works with valid submissions for test surveys."""
-    for survey_name, submission in valid_submissions.items():
-        async with AsyncClient(app=main.app, base_url='http://test') as ac:
-            response = await ac.post(
-                url=f'/fastsurvey/{survey_name}/submission',
-                json=submission,
-            )
-        survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-        entry = await survey.submissions.find_one()
-        assert response.status_code == 200
-        assert entry['data'] == submission
+    for survey_name, parameters in test_surveys.items():
+        for submission in parameters['submissions']['valid']:
+            async with AsyncClient(app=main.app, base_url='http://test') as ac:
+                response = await ac.post(
+                    url=f'/fastsurvey/{survey_name}/submission',
+                    json=submission,
+                )
+            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+            entry = await survey.submissions.find_one()
+            assert response.status_code == 200
+            assert entry['data'] == submission
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
+# TODO how to adjust this for multiple submissions?
 @pytest.mark.asyncio
-async def test_submit_invalid_submission(survey, submission):
-    """Test that submit correctly rejects an invalid test survey submission."""
-    submission['properties']['1']['1'] = 5  # should be boolean
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.post(
-            url='/fastsurvey/test/submit',
-            json=submission,
-        )
-    pe = await survey.pending.find_one()
-    assert response.status_code == 400
-    assert pe is None
+async def test_submit_invalid_submission(test_surveys, cleanup):
+    """Test that submit correctly fails for invalid test survey submissions."""
+    for survey_name, parameters in test_surveys.items():
+        for submission in parameters['submissions']['invalid']:
+            async with AsyncClient(app=main.app, base_url='http://test') as ac:
+                response = await ac.post(
+                    url=f'/fastsurvey/{survey_name}/submission',
+                    json=submission,
+                )
+            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+            entry = await survey.submissions.find_one()
+            assert response.status_code == 400
+            assert entry is None
 
 
 @pytest.fixture(scope='function')
@@ -228,76 +232,25 @@ async def test_verify_with_no_prior_submission(survey):
     assert ve is None
 
 
-@pytest.fixture(scope='function')
-async def scenario3(survey):
-    """Load some predefined entries into the database for testing."""
-    await survey.verified.insert_many([
-        {
-            '_id': 'aa01aaa@mytum.de',
-            'timestamp': 1590228136,
-            'properties': {
-                '1': {
-                    '1': True,
-                    '2': False,
-                },
-                '2': {
-                    '1': True,
-                    '2': True,
-                    '3': False,
-                },
-                '3': 'tomato! tomato! tomato!',
-            },
-        },
-        {
-            '_id': 'aa02aaa@mytum.de',
-            'timestamp': 1590228136,
-            'properties': {
-                '1': {
-                    '1': True,
-                    '2': False,
-                },
-                '2': {
-                    '1': True,
-                    '2': False,
-                    '3': False,
-                },
-                '3': 'apple! apple! apple!',
-            },
-        },
-        {
-            '_id': 'aa03aaa@mytum.de',
-            'timestamp': 1590228136,
-            'properties': {
-                '1': {
-                    '1': False,
-                    '2': True,
-                },
-                '2': {
-                    '1': False,
-                    '2': True,
-                    '3': False,
-                },
-                '3': 'cabbage! cabbage! cabbage!',
-            },
-        },
-    ])
-
-
-@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
-async def test_fetch(scenario3):
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get(
-            url=f'/fastsurvey/test/results',
-            allow_redirects=False,
-        )
-    assert response.status_code == 200
-    assert response.json() == {
-        '_id': 'fastsurvey.test',
-        'count': 3,
-        '1-1': 2,
-        '1-2': 1,
-        '2-1': 2,
-        '2-2': 2,
-        '2-3': 0,
-    }
+async def test_aggregate(test_surveys):
+    """Test that aggregation of test submissions returns the correct result."""
+    for survey_name, parameters in test_surveys.items():
+        async with AsyncClient(app=main.app, base_url='http://test') as ac:
+            # push test submissions
+            for submission in parameters['submissions']['valid']:
+                response = await ac.post(
+                    url=f'/fastsurvey/{survey_name}/submission',
+                    json=submission,
+                )
+            # manually close surveys so that we can aggregate
+            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+            survey.end = 0
+            # aggregate and fetch results
+            response = await ac.get(
+                url=f'/fastsurvey/{survey_name}/results',
+                allow_redirects=False,
+            )
+        assert response.status_code == 200
+        if 'results' in parameters:  # TODO remove
+            assert response.json() == parameters['results']

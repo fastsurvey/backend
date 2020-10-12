@@ -1,0 +1,55 @@
+{
+    "1": {
+        "type": "Email",
+        "regex": ".*"
+    },
+    "2": {
+        "type": "Option",
+        "mandatory": true
+    },
+    "3": {
+        "type": "Radio",
+        "schema": {
+            "1": {
+                "type": "Option",
+                "mandatory": false
+            },
+            "2": {
+                "type": "Option",
+                "mandatory": false
+            },
+            "3": {
+                "type": "Option",
+                "mandatory": false
+            },
+            "4": {
+                "type": "Option",
+                "mandatory": false
+            }
+        }
+    },
+    "4": {
+        "type": "Selection",
+        "min_select": 0,
+        "max_select": 2,
+        "schema": {
+            "1": {
+                "type": "Option",
+                "mandatory": false
+            },
+            "2": {
+                "type": "Option",
+                "mandatory": false
+            },
+            "3": {
+                "type": "Option",
+                "mandatory": false
+            }
+        }
+    },
+    "5": {
+        "type": "Text",
+        "min_chars": 10,
+        "max_chars": 1000
+    }
+}
