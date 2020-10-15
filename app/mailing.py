@@ -2,7 +2,7 @@ import os
 import httpx
 
 
-# develeopment / production / testing environment
+# development / production / testing environment
 ENV = os.getenv('ENV')
 # backend url
 BURL = os.getenv('BURL')
@@ -15,16 +15,12 @@ class Letterbox:
 
     def __init__(self):
         """Create a general email client to be used by all surveys."""
-
-        # self.domain = 'sandboxef6ceb5ba442440191d0ec08141f43c0.mailgun.org'
-        # self.endpoint = f'https://api.mailgun.net/v3/{self.domain}'
-
         self.domain = 'fastsurvey.io'
-        self.subdomain = f'email.{self.domain}'
-        self.endpoint = f'https://api.eu.mailgun.net/v3/{self.subdomain}'
         self.sender = f'FastSurvey <noreply@{self.domain}>'
-        self.auth = ('api', MGKEY)
-        self.client = httpx.AsyncClient(auth=self.auth, base_url=self.endpoint)
+        self.client = httpx.AsyncClient(
+            auth=('api', MGKEY),
+            base_url=f'https://api.eu.mailgun.net/v3/email.{self.domain}',
+        )
 
     async def send(self, receiver, html):
         """Send an email to the given receiver."""
@@ -39,7 +35,7 @@ class Letterbox:
         response = await self.client.post('/messages', data=data)
         return response.status_code
 
-    async def verify_email(
+    async def send_verification_email(
             self,
             admin_name,
             survey_name,
