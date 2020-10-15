@@ -22,12 +22,12 @@ class Letterbox:
             base_url=f'https://api.eu.mailgun.net/v3/email.{self.domain}',
         )
 
-    async def send(self, receiver, html):
+    async def send(self, receiver, subject, html):
         """Send an email to the given receiver."""
         data = {
             'from': self.sender,
-            'to': 'test@fastsurvey.io' if ENV != 'production' else receiver,
-            'subject': 'Please verify your submission',
+            'to': f'test@{self.domain}' if ENV != 'production' else receiver,
+            'subject': subject,
             'html': html,
             'o:testmode': ENV == 'testing',
             'o:tag': [f'{ENV} transactional'],
@@ -45,6 +45,7 @@ class Letterbox:
         ):
         """Send confirmation email in order to verify an email address."""
         # verification url
+        subject = 'Please verify your submission'
         vu = f'{BURL}/{admin_name}/{survey_name}/verification/{token}'
         html = (
             '<p>Hi there, we received your submission!</p>'
@@ -52,4 +53,4 @@ class Letterbox:
             + f'<p>Please verify your submission by <a href="{vu}" target="_blank">clicking here</a></p>'
             + '<p>Your FastSurvey team</p>'
         )
-        return await self.send(receiver, html)
+        return await self.send(receiver, subject, html)
