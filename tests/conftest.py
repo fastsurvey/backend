@@ -49,9 +49,12 @@ async def reset(test_surveys):
     """Purge all survey data locally and remotely and reset configurations."""
     for survey_name in test_surveys.keys():
         await main.survey_manager.delete('fastsurvey', survey_name)
-    await main.database['configurations'].drop()
-    for parameters in test_surveys.values():
-        await main.survey_manager.update(parameters['configuration'])
+    for survey_name, parameters in test_surveys.items():
+        await main.survey_manager.update(
+            'fastsurvey',
+            survey_name,
+            parameters['configuration'],
+        )
 
 
 @pytest.fixture(scope='session', autouse=True)
