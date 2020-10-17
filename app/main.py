@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI, Path, Body, HTTPException
+from fastapi import FastAPI, Path, Query, Body, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from app.mailing import Letterbox
@@ -34,10 +34,18 @@ async def get_admin(
             ...,
             description='The name of the admin',
         ),
+        start: int = Query(
+            0,
+            description='The index of the first configuration to be fetched',
+        ),
+        end: int = Query(
+            0,
+            description='The index of the last configuration plus one',
+        )
     ):
-    """Fetch data about the given admin."""
+    """Fetch data about the given admin and optionally her configurations."""
     # TODO check authentication
-    return await admin_manager.fetch(admin_name)
+    return await admin_manager.fetch(admin_name, start, end)
 
 
 @app.get('/{admin_name}/{survey_name}')

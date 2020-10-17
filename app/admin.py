@@ -8,8 +8,14 @@ class AdminManager:
         """Initialize an admin manager instance."""
         self._database = database
 
-    async def fetch(self, admin_name):
+    async def fetch(self, admin_name, start, end):
         """Return admin account data corresponding to given admin name."""
+
+
+        if start is not None or end is not None:
+            raise HTTPException(501, 'not implemented')
+
+
         account = await self._database['accounts'].find_one(
             filter={'_id': admin_name},
             projection={'_id': False},
