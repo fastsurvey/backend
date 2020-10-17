@@ -136,7 +136,7 @@ async def create_survey(
     ):
     """Create new survey with given configuration."""
     # TODO check authentication
-    raise HTTPException(501, 'not implemented')
+    await survey_manager.update(admin_name, survey_name, configuration)
 
 
 @app.put('/{admin_name}/{survey_name}')
@@ -156,7 +156,7 @@ async def update_survey(
     ):
     """Update survey with given configuration."""
     # TODO check authentication
-    raise HTTPException(501, 'not implemented')
+    await survey_manager.update(admin_name, survey_name, configuration)
 
 
 @app.delete('/{admin_name}/{survey_name}')

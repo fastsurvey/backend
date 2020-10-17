@@ -51,8 +51,12 @@ class SurveyManager:
             self._remember(configuration)
         return self._cache[survey_id]
 
-    async def update(self, configuration):
+    async def update(self, admin_name, survey_name, configuration):
         """Create or update survey configuration in database and cache."""
+        if admin_name != configuration['admin_name']:
+            raise HTTPException(400, 'route/configuration admin names differ')
+        if survey_name != configuration['survey_name']:
+            raise HTTPException(400, 'route/configuration survey names differ')
         configuration['_id'] = identify(configuration)
         await self._database['configurations'].find_one_and_replace(
             filter={'_id': configuration['_id']},
@@ -110,7 +114,7 @@ class Survey:
 
     @classmethod
     def _get_email_field_index(cls, configuration):
-        """Find the index of the email field in the survey configuration."""
+        """Find the index of the email field in a survey configuration."""
         for index, field in enumerate(configuration['fields']):
             if field['type'] == 'Email':
                 return index
