@@ -29,7 +29,7 @@ survey_manager = SurveyManager(database, letterbox)
 
 
 @app.get('/{admin_name}')
-async def fetch_admin_account_data(
+async def fetch_admin_account(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
@@ -37,7 +37,50 @@ async def fetch_admin_account_data(
     ):
     """Fetch the given admin's account data."""
     # TODO check authentication
-    return await admin_manager.fetch_account_data(admin_name)
+    return await admin_manager.fetch_account(admin_name)
+
+
+@app.post('/{admin_name}')
+async def create_admin_account(
+        admin_name: str = Path(
+            ...,
+            description='The name of the admin',
+        ),
+        account_data: dict = Body(
+            ...,
+            description='The settings and other account data',
+        ),
+    ):
+    """Create a new admin with given account data."""
+    raise HTTPException(501, 'not implemented')
+
+
+@app.put('/{admin_name}')
+async def update_admin_account(
+        admin_name: str = Path(
+            ...,
+            description='The name of the admin',
+        ),
+        account_data: dict = Body(
+            ...,
+            description='The updated account data',
+        ),
+    ):
+    """Update the given admin's account data."""
+    # TODO check authentication
+    raise HTTPException(501, 'not implemented')
+
+
+@app.delete('/{admin_name}')
+async def delete_admin_account(
+        admin_name: str = Path(
+            ...,
+            description='The name of the admin',
+        ),
+    ):
+    """Delete the admin and all her surveys from the database."""
+    # TODO check authentication
+    raise HTTPException(501, 'not implemented')
 
 
 @app.get('/{admin_name}/configurations')
@@ -92,6 +135,26 @@ async def create_survey(
         ),
     ):
     """Create new survey with given configuration."""
+    # TODO check authentication
+    raise HTTPException(501, 'not implemented')
+
+
+@app.put('/{admin_name}/{survey_name}')
+async def update_survey(
+        admin_name: str = Path(
+            ...,
+            description='The name of the admin',
+        ),
+        survey_name: str = Path(
+            ...,
+            description='The name of the survey',
+        ),
+        configuration: dict = Body(
+            ...,
+            description='The updated configuration',
+        ),
+    ):
+    """Update survey with given configuration."""
     # TODO check authentication
     raise HTTPException(501, 'not implemented')
 
