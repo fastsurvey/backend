@@ -172,7 +172,7 @@ async def delete_survey(
     ):
     """Delete given survey and all its data (submissions, results, ...)."""
     # TODO check authentication
-    raise HTTPException(501, 'not implemented')
+    await survey_manager.delete(admin_name, survey_name)
 
 
 @app.post('/{admin_name}/{survey_name}/submission')
@@ -227,5 +227,6 @@ async def aggregate(
         ),
     ):
     """Fetch the results of the given survey."""
+    # TODO adapt result following authentication
     survey = await survey_manager.fetch(admin_name, survey_name)
     return await survey.aggregate()

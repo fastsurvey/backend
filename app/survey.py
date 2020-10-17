@@ -66,24 +66,29 @@ class SurveyManager:
         del configuration['_id']
         self._remember(configuration)
 
-    async def clean(self, admin_name, survey_name):
+    async def sweep(self, admin_name, survey_name):
         """Delete all the submission data of the survey from the database.
 
         We intentionally do not use self.fetch() here, as we want to delete
-        the survey entry in self.purge() before calling self.clean()
+        the survey entry in self.delete() before calling self.sweep()
 
         """
         survey_id = f'{admin_name}.{survey_name}'
         await self._database[f'surveys.{survey_id}.submissions'].drop()
         await self._database[f'surveys.{survey_id}.verified-submissions'].drop()
 
+    async def reset(self, admin_name, survey_name):
+        """Delete all submission data including the results of a survey."""
+        survey_id = f'{admin_name}.{survey_name}'
+        await self._database['results'].delete_one({'_id': survey_id})
+        await self.sweep(admin_name, survey_name)
+
     async def delete(self, admin_name, survey_name):
         """Delete the survey and all its data from the database and cache."""
         survey_id = f'{admin_name}.{survey_name}'
         await self._database['configurations'].delete_one({'_id': survey_id})
         self._cache.pop(survey_id, None)  # delete if present
-        await self._database['results'].delete_one({'_id': survey_id})
-        await self.clean(admin_name, survey_name)
+        await self.reset(admin_name, survey_name)
 
 
 class Survey:
