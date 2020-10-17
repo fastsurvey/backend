@@ -34,18 +34,30 @@ async def get_admin(
             ...,
             description='The name of the admin',
         ),
-        start: int = Query(
+    ):
+    """Fetch data about the given admin."""
+    # TODO check authentication
+    return await admin_manager.fetch_account_data(admin_name)
+
+
+@app.get('/{admin_name}/configurations')
+async def get_configurations(
+        admin_name: str = Path(
+            ...,
+            description='The name of the admin',
+        ),
+        skip: int = Query(
             0,
             description='The index of the first configuration to be fetched',
         ),
-        end: int = Query(
-            0,
-            description='The index of the last configuration plus one',
+        limit: int = Query(
+            10,
+            description='The maximum number of results, or 0 for no limit',
         )
     ):
-    """Fetch data about the given admin and optionally her configurations."""
+    """Fetch the admin's configurations sorted by the start date."""
     # TODO check authentication
-    return await admin_manager.fetch(admin_name, start, end)
+    return await admin_manager.fetch_configurations(admin_name, skip, limit)
 
 
 @app.get('/{admin_name}/{survey_name}')
