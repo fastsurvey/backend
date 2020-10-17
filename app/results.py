@@ -88,21 +88,21 @@ class Alligator:
             filter={'_id': self.survey_id},
             projection={'_id': False},
         )
-        if results:
-            return self._restructure(results)
+        if results is None:
 
 
-        # TODO do something if there are no submissions
-        if await self.collection.count_documents({}) == 0: return {}
+            # TODO do something if there are no submissions
+            # maybe it's better to simply check if the collection exists?
+            if await self.collection.count_documents({}) == 0: return {}
 
 
-        cursor = self.collection.aggregate(
-            pipeline=self._build_pipeline(),
-            allowDiskUse=True,
-        )
-        async for _ in cursor: pass  # make sure that the aggregation finished
-        results = await self.results.find_one(
-            filter={'_id': self.survey_id},
-            projection={'_id': False},
-        )
+            cursor = self.collection.aggregate(
+                pipeline=self._build_pipeline(),
+                allowDiskUse=True,
+            )
+            async for _ in cursor: pass  # make sure that the aggregation finished
+            results = await self.results.find_one(
+                filter={'_id': self.survey_id},
+                projection={'_id': False},
+            )
         return self._restructure(results)
