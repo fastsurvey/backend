@@ -29,19 +29,19 @@ survey_manager = SurveyManager(database, letterbox)
 
 
 @app.get('/{admin_name}')
-async def get_admin(
+async def fetch_admin_account_data(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
         ),
     ):
-    """Fetch data about the given admin."""
+    """Fetch the given admin's account data."""
     # TODO check authentication
     return await admin_manager.fetch_account_data(admin_name)
 
 
 @app.get('/{admin_name}/configurations')
-async def get_configurations(
+async def fetch_admin_configurations(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
@@ -61,7 +61,7 @@ async def get_configurations(
 
 
 @app.get('/{admin_name}/{survey_name}')
-async def get_survey(
+async def fetch_survey(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
@@ -77,7 +77,7 @@ async def get_survey(
 
 
 @app.post('/{admin_name}/{survey_name}')
-async def post_survey(
+async def create_survey(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
