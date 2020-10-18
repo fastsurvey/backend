@@ -24,7 +24,6 @@ async def test_fetching_configuration_with_invalid_identifier():
     assert response.status_code == 404
 
 
-# TODO how to adjust this for multiple submissions?
 @pytest.mark.asyncio
 async def test_submit_valid_submission(test_surveys, cleanup):
     """Test that submit works with valid submissions for test surveys."""
@@ -36,12 +35,11 @@ async def test_submit_valid_submission(test_surveys, cleanup):
                     json=submission,
                 )
             survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-            entry = await survey.submissions.find_one()
+            entry = await survey.submissions.find_one({'data': submission})
             assert response.status_code == 200
-            assert entry['data'] == submission
+            assert entry is not None
 
 
-# TODO how to adjust this for multiple submissions?
 @pytest.mark.asyncio
 async def test_submit_invalid_submission(test_surveys, cleanup):
     """Test that submit correctly fails for invalid test survey submissions."""
@@ -238,11 +236,11 @@ async def test_aggregate(test_surveys, cleanup):
     for survey_name, parameters in test_surveys.items():
         # push test submissions
         survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-        await survey.alligator.collection.insert_many(
+        await survey.alligator.collection.insert_many([
             {'data': submission}
             for submission
             in parameters['submissions']['valid']
-        )
+        ])
         # manually close surveys so that we can aggregate
         survey.end = 0
         # aggregate and fetch results
