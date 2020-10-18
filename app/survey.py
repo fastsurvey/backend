@@ -173,7 +173,7 @@ class Survey:
         if submission is None:
             raise HTTPException(401, 'invalid token')
         submission['verification-time'] = timestamp
-        submission['_id'] = submission['data'][str(self.ei + 1)],
+        submission['_id'] = submission['data'][str(self.ei + 1)]
         await self.vss.find_one_and_replace(
             filter={'_id': submission['_id']},
             replacement=submission,

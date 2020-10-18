@@ -115,28 +115,35 @@ async def test_submit_duplicate_token(
         assert pe['_id'] == token
 
 
-@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
-async def test_verify_valid_token(scenario1, survey):
+async def test_verify_valid_token(monkeypatch, test_surveys, cleanup):
     """Test correct verification given a valid submission token."""
-    token = 'tomato'
+    survey_name = 'complex-survey'
+    survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+    tokens = []
+
+    def token(length):
+        """Return predefined tokens in order to test token token validation."""
+        tokens.append(str(len(tokens)))
+        return tokens[-1]
+
+    monkeypatch.setattr(secrets, 'token_hex', token)  # token generation mock
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get(
-            url=f'/fastsurvey/test/verify/{token}',
-            allow_redirects=False,
-        )
-    pe = await survey.pending.find_one(
-        filter={'_id': 'tomato'},
-    )
-    ve = await survey.verified.find_one(
-        filter={'_id': 'aa00aaa@mytum.de'},
-    )
-    keys = {'_id', 'timestamp', 'properties'}
-    assert response.status_code == 307
-    assert pe is not None  # entry is still unchanged in pending entries
-    assert ve is not None  # entry is now in verified entries
-    assert set(ve.keys()) == keys
-    assert ve['properties']['1'] == 'cucumber'
+        for submission in test_surveys[survey_name]['submissions']['valid']:
+            await ac.post(
+                url=f'/fastsurvey/{survey_name}/submission',
+                json=submission,
+            )
+        for i, token in enumerate(tokens):
+            response = await ac.get(
+                url=f'/fastsurvey/{survey_name}/verification/{token}',
+                allow_redirects=False,
+            )
+            assert response.status_code == 307
+            pe = await survey.submissions.find_one({'_id': token})
+            ve = await survey.vss.find_one({'_id': f'test+{i}@fastsurvey.io'})
+            assert pe is not None  # entry still unchanged in submissions
+            assert ve is not None  # entry now also in verified submissions
 
 
 @pytest.fixture(scope='function')
