@@ -52,7 +52,8 @@ async def create_admin_account(
         ),
     ):
     """Create a new admin with given account data."""
-    raise HTTPException(501, 'not implemented')
+    # TODO check authentication
+    return await admin_manager.update_account(admin_name, account_data)
 
 
 @app.put('/{admin_name}')
@@ -68,7 +69,7 @@ async def update_admin_account(
     ):
     """Update the given admin's account data."""
     # TODO check authentication
-    raise HTTPException(501, 'not implemented')
+    return await admin_manager.update_account(admin_name, account_data)
 
 
 @app.delete('/{admin_name}')
@@ -80,7 +81,7 @@ async def delete_admin_account(
     ):
     """Delete the admin and all her surveys from the database."""
     # TODO check authentication
-    raise HTTPException(501, 'not implemented')
+    return await admin_manager.delete_account(admin_name)
 
 
 @app.get('/{admin_name}/configurations')

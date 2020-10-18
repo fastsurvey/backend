@@ -19,7 +19,7 @@ class AdminManager:
             raise HTTPException(404, 'admin not found')
         return account
 
-    async def update_account(self, account_data):
+    async def update_account(self, admin_name, account_data):
         """Create or update admin account data in the database."""
         raise HTTPException(501, 'not implemented')
 
