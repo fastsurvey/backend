@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+docker tag backend gcr.io/fastsurvey-infrastructure/backend
+docker push gcr.io/fastsurvey-infrastructure/backend
+docker rmi gcr.io/fastsurvey-infrastructure/backend
