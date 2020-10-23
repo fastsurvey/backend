@@ -28,8 +28,8 @@ admin_manager = AdminManager(database)
 survey_manager = SurveyManager(database, letterbox)
 
 
-@app.get('/{admin_name}')
-async def fetch_admin_account(
+@app.get('/admins/{admin_name}')
+async def fetch_admin(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
@@ -40,8 +40,8 @@ async def fetch_admin_account(
     return await admin_manager.fetch_account(admin_name)
 
 
-@app.post('/{admin_name}')
-async def create_admin_account(
+@app.post('/admins/{admin_name}')
+async def create_admin(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
@@ -56,8 +56,8 @@ async def create_admin_account(
     return await admin_manager.update_account(admin_name, account_data)
 
 
-@app.put('/{admin_name}')
-async def update_admin_account(
+@app.put('/admins/{admin_name}')
+async def update_admin(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
@@ -72,8 +72,8 @@ async def update_admin_account(
     return await admin_manager.update_account(admin_name, account_data)
 
 
-@app.delete('/{admin_name}')
-async def delete_admin_account(
+@app.delete('/admins/{admin_name}')
+async def delete_admin(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
@@ -84,8 +84,8 @@ async def delete_admin_account(
     return await admin_manager.delete_account(admin_name)
 
 
-@app.get('/{admin_name}/configurations')
-async def fetch_admin_configurations(
+@app.get('/admins/{admin_name}/surveys')
+async def fetch_surveys(
         admin_name: str = Path(
             ...,
             description='The name of the admin',
@@ -104,7 +104,7 @@ async def fetch_admin_configurations(
     return await admin_manager.fetch_configurations(admin_name, skip, limit)
 
 
-@app.get('/{admin_name}/{survey_name}')
+@app.get('/admins/{admin_name}/surveys/{survey_name}')
 async def fetch_survey(
         admin_name: str = Path(
             ...,
@@ -120,7 +120,7 @@ async def fetch_survey(
     return survey.configuration
 
 
-@app.post('/{admin_name}/{survey_name}')
+@app.post('/admins/{admin_name}/surveys/{survey_name}')
 async def create_survey(
         admin_name: str = Path(
             ...,
@@ -140,7 +140,7 @@ async def create_survey(
     await survey_manager.update(admin_name, survey_name, configuration)
 
 
-@app.put('/{admin_name}/{survey_name}')
+@app.put('/admins/{admin_name}/surveys/{survey_name}')
 async def update_survey(
         admin_name: str = Path(
             ...,
@@ -160,7 +160,7 @@ async def update_survey(
     await survey_manager.update(admin_name, survey_name, configuration)
 
 
-@app.delete('/{admin_name}/{survey_name}')
+@app.delete('/admins/{admin_name}/surveys/{survey_name}')
 async def delete_survey(
         admin_name: str = Path(
             ...,
@@ -176,7 +176,7 @@ async def delete_survey(
     await survey_manager.delete(admin_name, survey_name)
 
 
-@app.post('/{admin_name}/{survey_name}/submission')
+@app.post('/admins/{admin_name}/surveys/{survey_name}/submission')
 async def submit(
         admin_name: str = Path(
             ...,
@@ -196,7 +196,7 @@ async def submit(
     return await survey.submit(submission)
 
 
-@app.get('/{admin_name}/{survey_name}/verification/{token}')
+@app.get('/admins/{admin_name}/surveys/{survey_name}/verification/{token}')
 async def verify(
         admin_name: str = Path(
             ...,
@@ -216,7 +216,7 @@ async def verify(
     return await survey.verify(token)
 
 
-@app.get('/{admin_name}/{survey_name}/results')
+@app.get('/admins/{admin_name}/surveys/{survey_name}/results')
 async def aggregate(
         admin_name: str = Path(
             ...,
