@@ -11,7 +11,7 @@ async def test_fetching_configuration_with_valid_identifier(test_surveys):
     """Using valid survey identifier, test that correct config is returned."""
     for survey_name, parameters in test_surveys.items():
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
-            response = await ac.get(f'/fastsurvey/{survey_name}')
+            response = await ac.get(f'/admins/fastsurvey/surveys/{survey_name}')
         assert response.status_code == 200
         assert response.json() == parameters['configuration']
 
@@ -20,7 +20,7 @@ async def test_fetching_configuration_with_valid_identifier(test_surveys):
 async def test_fetching_configuration_with_invalid_identifier():
     """Using invalid survey identifier, test that an exception is raised."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get('/fastsurvey/carrot')
+        response = await ac.get('admins/fastsurvey/surveys/carrot')
     assert response.status_code == 404
 
 
@@ -31,7 +31,7 @@ async def test_submit_valid_submission(test_surveys, cleanup):
         for submission in parameters['submissions']['valid']:
             async with AsyncClient(app=main.app, base_url='http://test') as ac:
                 response = await ac.post(
-                    url=f'/fastsurvey/{survey_name}/submission',
+                    url=f'/admins/fastsurvey/surveys/{survey_name}/submission',
                     json=submission,
                 )
             survey = await main.survey_manager.fetch('fastsurvey', survey_name)
@@ -47,7 +47,7 @@ async def test_submit_invalid_submission(test_surveys, cleanup):
         for submission in parameters['submissions']['invalid']:
             async with AsyncClient(app=main.app, base_url='http://test') as ac:
                 response = await ac.post(
-                    url=f'/fastsurvey/{survey_name}/submission',
+                    url=f'/admins/fastsurvey/surveys/{survey_name}/submission',
                     json=submission,
                 )
             survey = await main.survey_manager.fetch('fastsurvey', survey_name)
@@ -105,7 +105,7 @@ async def test_submit_duplicate_token(
 
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.post(
-            url='/fastsurvey/test/submit',
+            url='/admins/fastsurvey/surveys/test/submission',
             json=submission,
         )
     pes = await survey.pending.find().to_list(10)
@@ -120,6 +120,7 @@ async def test_verify_valid_token(monkeypatch, test_surveys, cleanup):
     """Test correct verification given a valid submission token."""
     survey_name = 'complex-survey'
     survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+    base = f'/admins/fastsurvey/surveys/{survey_name}'
     tokens = []
 
     def token(length):
@@ -131,12 +132,12 @@ async def test_verify_valid_token(monkeypatch, test_surveys, cleanup):
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         for submission in test_surveys[survey_name]['submissions']['valid']:
             await ac.post(
-                url=f'/fastsurvey/{survey_name}/submission',
+                url=f'{base}/submission',
                 json=submission,
             )
         for i, token in enumerate(tokens):
             response = await ac.get(
-                url=f'/fastsurvey/{survey_name}/verification/{token}',
+                url=f'{base}/verification/{token}',
                 allow_redirects=False,
             )
             assert response.status_code == 307
@@ -253,7 +254,7 @@ async def test_aggregate(test_surveys, cleanup):
         # aggregate and fetch results
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
             response = await ac.get(
-                url=f'/fastsurvey/{survey_name}/results',
+                url=f'/admins/fastsurvey/surveys/{survey_name}/results',
                 allow_redirects=False,
             )
         assert response.status_code == 200
