@@ -3,8 +3,8 @@
 
 - install dependencies via `poetry install`
 - specify your environment variables in an `.env` file
-- test via `./scripts/test.sh`
-- build with docker via `./scripts/build.sh`
-- run locally with docker via `./scripts/run.sh`
+- test via `./scripts/test`
+- build with docker via `./scripts/build`
+- run locally with docker via `./scripts/run`
 - Swagger and ReDoc API documentations lie at `localhost:8000/docs` and `localhost:8000/redoc`
 - more documentation is available at [docs.fastsurvey.io](https://docs.fastsurvey.io/)
