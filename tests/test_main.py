@@ -25,23 +25,53 @@ async def test_fetching_configuration_with_invalid_identifier():
 
 
 @pytest.mark.asyncio
-async def test_submit_valid_submission(test_surveys, cleanup):
-    """Test that submit works with valid submissions for test surveys."""
-    for survey_name, parameters in test_surveys.items():
-        for submission in parameters['submissions']['valid']:
-            async with AsyncClient(app=main.app, base_url='http://test') as ac:
+async def test_submitting_valid_submission(test_surveys, cleanup):
+    """Test that submission works with valid submissions for test surveys."""
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        for survey_name, parameters in test_surveys.items():
+            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+            for submission in parameters['submissions']['valid']:
                 response = await ac.post(
                     url=f'/admins/fastsurvey/surveys/{survey_name}/submission',
                     json=submission,
                 )
-            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-            entry = await survey.submissions.find_one({'data': submission})
-            assert response.status_code == 200
-            assert entry is not None
+                entry = await survey.submissions.find_one({'data': submission})
+                assert response.status_code == 200
+                assert entry is not None
 
 
 @pytest.mark.asyncio
-async def test_submit_invalid_submission(test_surveys, cleanup):
+async def test_submitting_valid_submission_with_duplicate_validation_token(
+        monkeypatch,
+        test_surveys,
+        cleanup,
+    ):
+    """Test that duplicate tokens in submissions are correctly resolved."""
+    survey_name = 'complex-survey'
+    survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+    submissions = test_surveys[survey_name]['submissions']['valid']
+    tokens = []
+
+    def token(length):
+        """Return predefined tokens in order to test token validation."""
+        tokens.append(str(len(tokens) // 3))
+        return tokens[-1]
+
+    monkeypatch.setattr(secrets, 'token_hex', token)  # token generation mock
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        for i, submission in enumerate(submissions):
+            response = await ac.post(
+                url=f'/admins/fastsurvey/surveys/{survey_name}/submission',
+                json=submission,
+            )
+            entry = await survey.submissions.find_one({'data': submission})
+            assert response.status_code == 200
+            assert entry is not None
+            assert entry['_id'] == str(i)
+
+
+@pytest.mark.asyncio
+async def test_submitting_invalid_submission(test_surveys, cleanup):
     """Test that submit correctly fails for invalid test survey submissions."""
     for survey_name, parameters in test_surveys.items():
         for submission in parameters['submissions']['invalid']:
@@ -56,67 +86,8 @@ async def test_submit_invalid_submission(test_surveys, cleanup):
             assert entry is None
 
 
-@pytest.fixture(scope='function')
-async def scenario1(survey):
-    """Load some predefined entries into the database for testing."""
-    await survey.pending.insert_many([
-        {
-            '_id': 'tomato',
-            'email': 'aa00aaa@mytum.de',
-            'timestamp': 1590228251,
-            'properties': {'1': 'cucumber'},
-        },
-        {
-            '_id': 'carrot',
-            'email': 'aa00aaa@mytum.de',
-            'timestamp': 1590228461,
-            'properties': {'1': 'salad'},
-        },
-    ])
-    await survey.verified.insert_many([
-        {
-            '_id': 'aa02aaa@mytum.de',
-            'timestamp': 1590228136,
-            'properties': {'1': 'cabbage'},
-        },
-    ])
-
-
-@pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
-async def test_submit_duplicate_token(
-        monkeypatch,
-        scenario1,
-        survey,
-        submission,
-    ):
-    """Test that duplicate tokens in submissions are correctly resolved."""
-    i = 0
-    tokens = ['tomato', 'carrot', 'cucumber']
-
-    def token(length):
-        """Return predefined tokens in order to test token collisions."""
-        nonlocal i
-        i += 1
-        return tokens[i-1]
-
-    # set up mocking for token generation
-    monkeypatch.setattr(secrets, 'token_hex', token)
-
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.post(
-            url='/admins/fastsurvey/surveys/test/submission',
-            json=submission,
-        )
-    pes = await survey.pending.find().to_list(10)
-    assert response.status_code == 200
-    assert len(pes) == len(tokens)
-    for token, pe in zip(tokens, pes):
-        assert pe['_id'] == token
-
-
-@pytest.mark.asyncio
-async def test_verify_valid_token(monkeypatch, test_surveys, cleanup):
+async def test_verifying_valid_token(monkeypatch, test_surveys, cleanup):
     """Test correct verification given a valid submission token."""
     survey_name = 'complex-survey'
     survey = await main.survey_manager.fetch('fastsurvey', survey_name)
@@ -124,7 +95,7 @@ async def test_verify_valid_token(monkeypatch, test_surveys, cleanup):
     tokens = []
 
     def token(length):
-        """Return predefined tokens in order to test token token validation."""
+        """Return predefined tokens in order to test token validation."""
         tokens.append(str(len(tokens)))
         return tokens[-1]
 
@@ -141,10 +112,10 @@ async def test_verify_valid_token(monkeypatch, test_surveys, cleanup):
                 allow_redirects=False,
             )
             assert response.status_code == 307
-            pe = await survey.submissions.find_one({'_id': token})
+            entry = await survey.submissions.find_one({'_id': token})
             ve = await survey.vss.find_one({'_id': f'test+{i}@fastsurvey.io'})
-            assert pe is not None  # entry still unchanged in submissions
-            assert ve is not None  # entry now also in verified submissions
+            assert entry is not None  # still unchanged in submissions
+            assert ve is not None  # now also in verified submissions
 
 
 @pytest.fixture(scope='function')
@@ -180,7 +151,7 @@ async def scenario2(survey):
 
 @pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
-async def test_verify_replace_valid_token(scenario2, survey):
+async def test_verifying_replace_valid_token(scenario2, survey):
     """Test replacement of previously verified submission."""
     token = 'tomato'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -204,7 +175,7 @@ async def test_verify_replace_valid_token(scenario2, survey):
 
 @pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
-async def test_verify_invalid_token(scenario2, survey):
+async def test_verifying_invalid_token(scenario2, survey):
     """Test correct verification rejection given an invalid token."""
     token = 'peach'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
@@ -224,7 +195,7 @@ async def test_verify_invalid_token(scenario2, survey):
 
 @pytest.mark.skip(reason='scheduled for refactoring')
 @pytest.mark.asyncio
-async def test_verify_with_no_prior_submission(survey):
+async def test_verifying_with_no_prior_submission(survey):
     token = 'olive'
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         response = await ac.get(
@@ -239,7 +210,7 @@ async def test_verify_with_no_prior_submission(survey):
 
 
 @pytest.mark.asyncio
-async def test_aggregate(test_surveys, cleanup):
+async def test_aggregating(test_surveys, cleanup):
     """Test that aggregation of test submissions returns the correct result."""
     for survey_name, parameters in test_surveys.items():
         # push test submissions

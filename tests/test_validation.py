@@ -5,7 +5,7 @@ import app.main as main
 import app.validation as validation
 
 
-def test_generate_schema(test_surveys):
+def test_generating_schema(test_surveys):
     """Test that the schema generation function returns the correct result."""
     for parameters in test_surveys.values():
         schema = validation._generate_schema(parameters['configuration'])
