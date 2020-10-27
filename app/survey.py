@@ -159,6 +159,9 @@ class Survey:
             )
             if status != 200:
                 raise HTTPException(500, 'email delivery failure')
+        # using invitations
+        if self.mode == 2:
+            raise HTTPException(501, 'not implemented')
 
     async def verify(self, token):
         """Verify the user's email address and save submission as verified."""
