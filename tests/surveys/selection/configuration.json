@@ -8,26 +8,26 @@
     "mode": 0,
     "fields": [
         {
-            "type": "Selection",
+            "type": "selection",
             "title": "What are your favorite ice cream flavors?",
             "description": "",
             "min_select": 0,
             "max_select": 2,
             "fields": [
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Strawberry",
                     "description": "",
                     "mandatory": false
                 },
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Vanilla",
                     "description": "",
                     "mandatory": false
                 },
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Chocolate",
                     "description": "",
                     "mandatory": false

@@ -8,43 +8,43 @@
     "mode": 1,
     "fields": [
         {
-            "type": "Email",
+            "type": "email",
             "title": "What is your email address?",
             "description": "",
             "regex": ".*",
             "hint": "Your email address ..."
         },
         {
-            "type": "Option",
+            "type": "option",
             "title": "I have read and agree to the terms and conditions",
             "description": "",
             "mandatory": true
         },
         {
-            "type": "Radio",
+            "type": "radio",
             "title": "What is your favorite fruit?",
             "description": "",
             "fields": [
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Asparagus",
                     "description": "",
                     "mandatory": false
                 },
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Spinach",
                     "description": "",
                     "mandatory": false
                 },
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Artichoke",
                     "description": "",
                     "mandatory": false
                 },
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "None of these is a fruit",
                     "description": "",
                     "mandatory": false
@@ -52,26 +52,26 @@
             ]
         },
         {
-            "type": "Selection",
+            "type": "selection",
             "title": "What are your favorite ice cream flavors?",
             "description": "",
             "min_select": 0,
             "max_select": 2,
             "fields": [
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Strawberry",
                     "description": "",
                     "mandatory": false
                 },
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Vanilla",
                     "description": "",
                     "mandatory": false
                 },
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Chocolate",
                     "description": "",
                     "mandatory": false
@@ -79,7 +79,7 @@
             ]
         },
         {
-            "type": "Text",
+            "type": "text",
             "title": "Why do you like ice cream?",
             "description": "",
             "min_chars": 10,

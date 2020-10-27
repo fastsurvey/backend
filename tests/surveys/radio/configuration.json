@@ -8,30 +8,30 @@
     "mode": 0,
     "fields": [
         {
-            "type": "Radio",
+            "type": "radio",
             "title": "What is your favorite fruit?",
             "description": "",
             "fields": [
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Asparagus",
                     "description": "",
                     "mandatory": false
                 },
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Spinach",
                     "description": "",
                     "mandatory": false
                 },
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "Artichoke",
                     "description": "",
                     "mandatory": false
                 },
                 {
-                    "type": "Option",
+                    "type": "option",
                     "title": "None of these is a fruit",
                     "description": "",
                     "mandatory": false

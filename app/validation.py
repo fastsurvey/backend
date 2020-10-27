@@ -30,7 +30,6 @@ class ConfigurationValidator(Validator):
                 'hint': HINT_SCHEMA,
             },
         }
-
         OPTION_FIELD_SCHEMA = {
             'type': 'dict',
             'schema': {
@@ -40,7 +39,6 @@ class ConfigurationValidator(Validator):
                 'mandatory': MANDATORY_SCHEMA,
             },
         }
-
         RADIO_FIELD_SCHEMA = {
             'type': 'dict',
             'schema': {
@@ -50,7 +48,6 @@ class ConfigurationValidator(Validator):
                 'fields': {'type': 'list', 'schema': OPTION_FIELD_SCHEMA},
             },
         }
-
         SELECTION_FIELD_SCHEMA = {
             'type': 'dict',
             'schema': {
@@ -62,7 +59,6 @@ class ConfigurationValidator(Validator):
                 'fields': {'type': 'list', 'schema': OPTION_FIELD_SCHEMA},
             },
         }
-
         TEXT_FIELD_SCHEMA = {
             'type': 'dict',
             'schema': {
@@ -110,9 +106,9 @@ class SubmissionValidator(Validator):
     """
 
     types_mapping = {
-        'Email': TypeDefinition('Email', (str,), ()),
-        'Option': TypeDefinition('Option', (bool,), ()),
-        'Text': TypeDefinition('Text', (str,), ()),
+        'email': TypeDefinition('email', (str,), ()),
+        'option': TypeDefinition('option', (bool,), ()),
+        'text': TypeDefinition('text', (str,), ()),
     }
 
     @classmethod
@@ -139,8 +135,8 @@ class SubmissionValidator(Validator):
     ### CUSTOM TYPE VALIDATIONS ###
 
 
-    def _validate_type_Selection(self, value):
-        """Validate the structure of a submission for the Selection field."""
+    def _validate_type_selection(self, value):
+        """Validate the structure of a submission for the selection field."""
         if type(value) is not dict:
             return False
         for e in value.values():
@@ -148,8 +144,8 @@ class SubmissionValidator(Validator):
                 return False
         return True
 
-    def _validate_type_Radio(self, value):
-        """Validate the structure of a submission for the Radio field."""
+    def _validate_type_radio(self, value):
+        """Validate the structure of a submission for the radio field."""
         if not self._validate_type_Selection(value):
             return False
         if self._count_selections(value) != 1:
