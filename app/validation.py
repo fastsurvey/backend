@@ -6,15 +6,30 @@ class ConfigurationValidator(Validator):
     @classmethod
     def create(cls):
 
+        TITLE = {'type': 'string', 'maxlength': 100}
+        DESCRIPTION = {'type': 'string', 'maxlength': 1000}
+        MANDATORY = {'type': 'boolean'}
+
         schema = {
             'admin_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
             'survey_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
-            'title': {'type': 'string', 'maxlength': 100},
-            'description': {'type': 'string', 'maxlength': 1000},
+            'title': TITLE,
+            'description': DESCRIPTION,
             'start': {'type': 'integer', 'min': 0},
             'end': {'type': 'integer', 'min': 0},
             'mode': {'type': 'integer', 'allowed': [0, 1, 2]},
-            'fields': {'type': 'dict'},
+            'fields': {
+                'type': 'list',
+                'schema': {
+                    'type': 'dict',
+                    'schema': {
+                        'type': {'type': 'string', 'allowed': ['Option']},
+                        'title': TITLE,
+                        'description': DESCRIPTION,
+                        'mandatory': MANDATORY,
+                    },
+                },
+            },
         }
 
         return cls(schema, require_all=True)
