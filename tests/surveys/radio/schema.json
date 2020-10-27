@@ -1,21 +1,21 @@
 {
     "1": {
-        "type": "Radio",
+        "type": "radio",
         "schema": {
             "1": {
-                "type": "Option",
+                "type": "option",
                 "mandatory": false
             },
             "2": {
-                "type": "Option",
+                "type": "option",
                 "mandatory": false
             },
             "3": {
-                "type": "Option",
+                "type": "option",
                 "mandatory": false
             },
             "4": {
-                "type": "Option",
+                "type": "option",
                 "mandatory": false
             }
         }

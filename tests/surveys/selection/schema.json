@@ -1,19 +1,19 @@
 {
     "1": {
-        "type": "Selection",
+        "type": "selection",
         "min_select": 0,
         "max_select": 2,
         "schema": {
             "1": {
-                "type": "Option",
+                "type": "option",
                 "mandatory": false
             },
             "2": {
-                "type": "Option",
+                "type": "option",
                 "mandatory": false
             },
             "3": {
-                "type": "Option",
+                "type": "option",
                 "mandatory": false
             }
         }

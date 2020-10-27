@@ -1,6 +1,6 @@
 {
     "1": {
-        "type": "Email",
+        "type": "email",
         "regex": ".*"
     }
 }

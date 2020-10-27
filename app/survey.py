@@ -6,8 +6,8 @@ from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 from pymongo.errors import DuplicateKeyError
 
-from app.validation import SubmissionValidator
-from app.results import Alligator
+from app.validation import SubmissionValidator, ConfigurationValidator
+from app.aggregation import Alligator
 from app.utils import identify
 
 
@@ -121,7 +121,7 @@ class Survey:
     def _get_email_field_index(cls, configuration):
         """Find the index of the email field in a survey configuration."""
         for index, field in enumerate(configuration['fields']):
-            if field['type'] == 'Email':
+            if field['type'] == 'email':
                 return index
         return None
 

@@ -15,11 +15,11 @@ class Alligator:
         )
         self.results = database['results']
         self.mapping = {
-            'Email': self._add_email,
-            'Option': self._add_option,
-            'Radio': self._add_radio,
-            'Selection': self._add_selection,
-            'Text': self._add_text,
+            'email': self._add_email,
+            'option': self._add_option,
+            'radio': self._add_radio,
+            'selection': self._add_selection,
+            'text': self._add_text,
         }
         self.project = {}
         self.group = {

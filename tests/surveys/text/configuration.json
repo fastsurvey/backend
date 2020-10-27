@@ -8,7 +8,7 @@
     "mode": 0,
     "fields": [
         {
-            "type": "Text",
+            "type": "text",
             "title": "Why do you like ice cream?",
             "description": "",
             "min_chars": 10,

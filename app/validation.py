@@ -156,7 +156,7 @@ class SubmissionValidator(Validator):
 
     @staticmethod
     def _generate_schema(configuration):
-        """Generate the cerberus validation schema from a survey configuration."""
+        """Generate cerberus validation schema from a survey configuration."""
 
         rules = [
             'min_chars',
@@ -189,7 +189,7 @@ class SubmissionValidator(Validator):
         return schema
 
     def _count_selections(self, value):
-        """Count the number of selected options in a Selection field."""
+        """Count the number of selected options in a selection field."""
         count = sum(value.values())
         return count
 
@@ -208,7 +208,7 @@ class SubmissionValidator(Validator):
 
     def _validate_type_radio(self, value):
         """Validate the structure of a submission for the radio field."""
-        if not self._validate_type_Selection(value):
+        if not self._validate_type_selection(value):
             return False
         if self._count_selections(value) != 1:
             return False

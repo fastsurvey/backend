@@ -1,6 +1,6 @@
 {
     "1": {
-        "type": "Option",
+        "type": "option",
         "mandatory": true
     }
 }
