@@ -1,3 +1,5 @@
+import re
+
 from cerberus import Validator, TypeDefinition
 
 
@@ -6,33 +8,95 @@ class ConfigurationValidator(Validator):
     @classmethod
     def create(cls):
 
-        TITLE = {'type': 'string', 'maxlength': 100}
-        DESCRIPTION = {'type': 'string', 'maxlength': 1000}
-        MANDATORY = {'type': 'boolean'}
+        TITLE_SCHEMA = {'type': 'string', 'maxlength': 100}
+        DESCRIPTION_SCHEMA = {'type': 'string', 'maxlength': 1000}
+        HINT_SCHEMA = TITLE_SCHEMA
+        MANDATORY_SCHEMA = {'type': 'boolean'}
 
-        schema = {
+        def isregex(field, value, error):
+            """Check if a given string is a valid regular expression."""
+            try:
+                re.compile(value)
+            except re.error:
+                error(field, 'not a valid regular expression')
+
+        EMAIL_FIELD_SCHEMA = {
+            'type': 'dict',
+            'schema': {
+                'type': {'type': 'string', 'allowed': ['Email']},
+                'title': TITLE_SCHEMA,
+                'description': DESCRIPTION_SCHEMA,
+                'regex': {'type': 'string', 'check_with': isregex},
+                'hint': HINT_SCHEMA,
+            },
+        }
+
+        OPTION_FIELD_SCHEMA = {
+            'type': 'dict',
+            'schema': {
+                'type': {'type': 'string', 'allowed': ['Option']},
+                'title': TITLE_SCHEMA,
+                'description': DESCRIPTION_SCHEMA,
+                'mandatory': MANDATORY_SCHEMA,
+            },
+        }
+
+        RADIO_FIELD_SCHEMA = {
+            'type': 'dict',
+            'schema': {
+                'type': {'type': 'string', 'allowed': ['Radio']},
+                'title': TITLE_SCHEMA,
+                'description': DESCRIPTION_SCHEMA,
+                'fields': {'type': 'list', 'schema': OPTION_FIELD_SCHEMA},
+            },
+        }
+
+        SELECTION_FIELD_SCHEMA = {
+            'type': 'dict',
+            'schema': {
+                'type': {'type': 'string', 'allowed': ['Selection']},
+                'title': TITLE_SCHEMA,
+                'description': DESCRIPTION_SCHEMA,
+                'min_select': {'type': 'integer', 'min': 0},
+                'max_select': {'type': 'integer', 'min': 0},
+                'fields': {'type': 'list', 'schema': OPTION_FIELD_SCHEMA},
+            },
+        }
+
+        TEXT_FIELD_SCHEMA = {
+            'type': 'dict',
+            'schema': {
+                'type': {'type': 'string', 'allowed': ['Text']},
+                'title': TITLE_SCHEMA,
+                'description': DESCRIPTION_SCHEMA,
+                'min_chars': {'type': 'integer', 'min': 0, 'max': 10000},
+                'max_chars': {'type': 'integer', 'min': 0, 'max': 10000},
+            },
+        }
+
+        CONFIGURATION_SCHEMA = {
             'admin_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
             'survey_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
-            'title': TITLE,
-            'description': DESCRIPTION,
+            'title': TITLE_SCHEMA,
+            'description': DESCRIPTION_SCHEMA,
             'start': {'type': 'integer', 'min': 0},
             'end': {'type': 'integer', 'min': 0},
             'mode': {'type': 'integer', 'allowed': [0, 1, 2]},
             'fields': {
                 'type': 'list',
                 'schema': {
-                    'type': 'dict',
-                    'schema': {
-                        'type': {'type': 'string', 'allowed': ['Option']},
-                        'title': TITLE,
-                        'description': DESCRIPTION,
-                        'mandatory': MANDATORY,
-                    },
+                    'oneof': [
+                        EMAIL_FIELD_SCHEMA,
+                        OPTION_FIELD_SCHEMA,
+                        RADIO_FIELD_SCHEMA,
+                        SELECTION_FIELD_SCHEMA,
+                        TEXT_FIELD_SCHEMA,
+                    ],
                 },
             },
         }
 
-        return cls(schema, require_all=True)
+        return cls(CONFIGURATION_SCHEMA, require_all=True)
 
 
 class SubmissionValidator(Validator):
