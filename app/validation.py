@@ -1,6 +1,25 @@
 from cerberus import Validator, TypeDefinition
 
 
+class ConfigurationValidator(Validator):
+
+    @classmethod
+    def create(cls):
+
+        schema = {
+            'admin_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
+            'survey_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
+            'title': {'type': 'string', 'maxlength': 100},
+            'description': {'type': 'string', 'maxlength': 1000},
+            'start': {'type': 'integer', 'min': 0},
+            'end': {'type': 'integer', 'min': 0},
+            'mode': {'type': 'integer', 'allowed': [0, 1, 2]},
+            'fields': {'type': 'dict'},
+        }
+
+        return cls(schema, require_all=True)
+
+
 class SubmissionValidator(Validator):
     """The cerberus submission validator with added custom validation rules.
 
