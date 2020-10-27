@@ -13,7 +13,7 @@ class ConfigurationValidator(Validator):
     EMAIL_FIELD_SCHEMA = {
         'type': 'dict',
         'schema': {
-            'type': {'type': 'string', 'allowed': ['Email']},
+            'type': {'type': 'string', 'equals': 'Email'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'regex': {'type': 'regex'},
@@ -23,7 +23,7 @@ class ConfigurationValidator(Validator):
     OPTION_FIELD_SCHEMA = {
         'type': 'dict',
         'schema': {
-            'type': {'type': 'string', 'allowed': ['Option']},
+            'type': {'type': 'string', 'equals': 'Option'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'mandatory': MANDATORY_SCHEMA,
@@ -32,7 +32,7 @@ class ConfigurationValidator(Validator):
     RADIO_FIELD_SCHEMA = {
         'type': 'dict',
         'schema': {
-            'type': {'type': 'string', 'allowed': ['Radio']},
+            'type': {'type': 'string', 'equals': 'Radio'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'fields': {'type': 'list', 'schema': OPTION_FIELD_SCHEMA},
@@ -41,7 +41,7 @@ class ConfigurationValidator(Validator):
     SELECTION_FIELD_SCHEMA = {
         'type': 'dict',
         'schema': {
-            'type': {'type': 'string', 'allowed': ['Selection']},
+            'type': {'type': 'string', 'equals': 'Selection'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'min_select': {'type': 'integer', 'min': 0},
@@ -52,7 +52,7 @@ class ConfigurationValidator(Validator):
     TEXT_FIELD_SCHEMA = {
         'type': 'dict',
         'schema': {
-            'type': {'type': 'string', 'allowed': ['Text']},
+            'type': {'type': 'string', 'equals': 'Text'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'min_chars': {'type': 'integer', 'min': 0, 'max': 10000},
@@ -105,6 +105,15 @@ class ConfigurationValidator(Validator):
             return True
         except:
             return False
+
+
+    ### CUSTOM VALIDATION RULES ###
+
+
+    def _validate_equals(self, equals, field, value):
+        """{'type': 'string'}"""
+        if value != equals:
+            self._error(field, f'must be equal to {equals}')
 
 
 class SubmissionValidator(Validator):
@@ -205,22 +214,22 @@ class SubmissionValidator(Validator):
     def _validate_min_chars(self, min_chars, field, value):
         """{'type': 'integer'}"""
         if len(value) < min_chars:
-            self._error(field, f'Must be at least {min_chars} characters long')
+            self._error(field, f'must be at least {min_chars} characters long')
 
     def _validate_max_chars(self, max_chars, field, value):
         """{'type': 'integer'}"""
         if len(value) > max_chars:
-            self._error(field, f'Must be at most {max_chars} characters long')
+            self._error(field, f'must be at most {max_chars} characters long')
 
     def _validate_min_select(self, min_select, field, value):
         """{'type': 'integer'}"""
         if self._count_selections(value) < min_select:
-            self._error(field, f'Must select at least {min_select} options')
+            self._error(field, f'must select at least {min_select} options')
 
     def _validate_max_select(self, max_select, field, value):
         """{'type': 'integer'}"""
         if self._count_selections(value) > max_select:
-            self._error(field, f'Must select at most {max_select} options')
+            self._error(field, f'must select at most {max_select} options')
 
     def _validate_mandatory(self, mandatory, field, value):
         """{'type': 'boolean'}"""
@@ -229,4 +238,4 @@ class SubmissionValidator(Validator):
                 type(value) is bool and not value
                 or type(value) is str and value == ''
             ):
-                self._error(field, f'This field is mandatory')
+                self._error(field, f'this field is mandatory')
