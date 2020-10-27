@@ -20,17 +20,18 @@ class SurveyManager:
 
     def __init__(self, database, letterbox):
         """Initialize a survey manager instance."""
-        self._database = database
-        self._letterbox = letterbox
-        self._cache = {}
+        self.database = database
+        self.letterbox = letterbox
+        self.cache = {}
+        self.validator = ConfigurationValidator.create()
 
     def _remember(self, configuration):
         """Update local survey cache with config-generated survey object."""
-        self._cache.update({
+        self.cache.update({
             identify(configuration): Survey(
                 configuration,
-                self._database,
-                self._letterbox,
+                self.database,
+                self.letterbox,
             )
         })
 
@@ -41,15 +42,15 @@ class SurveyManager:
     async def fetch(self, admin_name, survey_name):
         """Return the survey object corresponding to admin and survey name."""
         survey_id = f'{admin_name}.{survey_name}'
-        if survey_id not in self._cache:
-            configuration = await self._database['configurations'].find_one(
+        if survey_id not in self.cache:
+            configuration = await self.database['configurations'].find_one(
                 filter={'_id': survey_id},
                 projection={'_id': False},
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')
             self._remember(configuration)
-        return self._cache[survey_id]
+        return self.cache[survey_id]
 
     async def update(self, admin_name, survey_name, configuration):
         """Create or update survey configuration in database and cache."""
@@ -57,8 +58,10 @@ class SurveyManager:
             raise HTTPException(400, 'route/configuration admin names differ')
         if survey_name != configuration['survey_name']:
             raise HTTPException(400, 'route/configuration survey names differ')
+        if not self.validator.validate(configuration):
+            raise HTTPException(400, 'invalid configuration')
         configuration['_id'] = identify(configuration)
-        await self._database['configurations'].find_one_and_replace(
+        await self.database['configurations'].find_one_and_replace(
             filter={'_id': configuration['_id']},
             replacement=configuration,
             upsert=True,
@@ -74,20 +77,20 @@ class SurveyManager:
 
         """
         survey_id = f'{admin_name}.{survey_name}'
-        await self._database[f'surveys.{survey_id}.submissions'].drop()
-        await self._database[f'surveys.{survey_id}.verified-submissions'].drop()
+        await self.database[f'surveys.{survey_id}.submissions'].drop()
+        await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
     async def reset(self, admin_name, survey_name):
         """Delete all submission data including the results of a survey."""
         survey_id = f'{admin_name}.{survey_name}'
-        await self._database['results'].delete_one({'_id': survey_id})
+        await self.database['results'].delete_one({'_id': survey_id})
         await self.sweep(admin_name, survey_name)
 
     async def delete(self, admin_name, survey_name):
         """Delete the survey and all its data from the database and cache."""
         survey_id = f'{admin_name}.{survey_name}'
-        await self._database['configurations'].delete_one({'_id': survey_id})
-        self._cache.pop(survey_id, None)  # delete if present
+        await self.database['configurations'].delete_one({'_id': survey_id})
+        self.cache.pop(survey_id, None)  # delete if present
         await self.reset(admin_name, survey_name)
 
 

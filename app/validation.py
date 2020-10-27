@@ -20,7 +20,7 @@ class ConfigurationValidator(Validator):
     EMAIL_FIELD_SCHEMA = {
         'type': 'dict',
         'schema': {
-            'type': {'type': 'string', 'equals': 'Email'},
+            'type': {'type': 'string', 'equals': 'email'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'regex': {'type': 'regex'},
@@ -30,7 +30,7 @@ class ConfigurationValidator(Validator):
     OPTION_FIELD_SCHEMA = {
         'type': 'dict',
         'schema': {
-            'type': {'type': 'string', 'equals': 'Option'},
+            'type': {'type': 'string', 'equals': 'option'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'mandatory': {'type': 'boolean'},
@@ -39,7 +39,7 @@ class ConfigurationValidator(Validator):
     RADIO_FIELD_SCHEMA = {
         'type': 'dict',
         'schema': {
-            'type': {'type': 'string', 'equals': 'Radio'},
+            'type': {'type': 'string', 'equals': 'radio'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'fields': {'type': 'list', 'schema': OPTION_FIELD_SCHEMA},
@@ -48,7 +48,7 @@ class ConfigurationValidator(Validator):
     SELECTION_FIELD_SCHEMA = {
         'type': 'dict',
         'schema': {
-            'type': {'type': 'string', 'equals': 'Selection'},
+            'type': {'type': 'string', 'equals': 'selection'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'min_select': {'type': 'integer', 'min': 0},
@@ -59,7 +59,7 @@ class ConfigurationValidator(Validator):
     TEXT_FIELD_SCHEMA = {
         'type': 'dict',
         'schema': {
-            'type': {'type': 'string', 'equals': 'Text'},
+            'type': {'type': 'string', 'equals': 'text'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'min_chars': {'type': 'integer', 'min': 0, 'max': 10000},
