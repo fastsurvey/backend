@@ -4,11 +4,18 @@ from cerberus import Validator, TypeDefinition
 
 
 class ConfigurationValidator(Validator):
+    """The custom cerberus validator for validating survey configurations.
+
+    TODO
+    - finetune title/description/hint char limits with frontend
+    - min_select <= max_select not validated
+    - min_chars <= max_chars not validated
+    - start <= end not validated
+
+    """
 
     TITLE_SCHEMA = {'type': 'string', 'maxlength': 100}
     DESCRIPTION_SCHEMA = {'type': 'string', 'maxlength': 1000}
-    HINT_SCHEMA = TITLE_SCHEMA
-    MANDATORY_SCHEMA = {'type': 'boolean'}
 
     EMAIL_FIELD_SCHEMA = {
         'type': 'dict',
@@ -17,7 +24,7 @@ class ConfigurationValidator(Validator):
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
             'regex': {'type': 'regex'},
-            'hint': HINT_SCHEMA,
+            'hint': {'type': 'string', 'maxlength': 100},
         },
     }
     OPTION_FIELD_SCHEMA = {
@@ -26,7 +33,7 @@ class ConfigurationValidator(Validator):
             'type': {'type': 'string', 'equals': 'Option'},
             'title': TITLE_SCHEMA,
             'description': DESCRIPTION_SCHEMA,
-            'mandatory': MANDATORY_SCHEMA,
+            'mandatory': {'type': 'boolean'},
         },
     }
     RADIO_FIELD_SCHEMA = {
