@@ -134,9 +134,43 @@ class SubmissionValidator(Validator):
 
         """
         return cls(
-            _generate_schema(configuration),
+            cls._generate_schema(configuration),
             require_all=True,
         )
+
+    @staticmethod
+    def _generate_schema(configuration):
+        """Generate the cerberus validation schema from a survey configuration."""
+
+        rules = [
+            'min_chars',
+            'max_chars',
+            'min_select',
+            'max_select',
+            'mandatory',
+            'regex',
+        ]
+
+        def _generate_field_schema(field):
+            """Recursively generate the cerberus schemas for a survey field."""
+            fs = {'type': field['type']}
+            if 'fields' in field.keys():
+                fs['schema'] = {
+                    str(i+1): _generate_field_schema(subfield)
+                    for i, subfield
+                    in enumerate(field['fields'])
+                }
+            for rule, value in field.items():
+                if rule in rules:
+                    fs[rule] = value
+            return fs
+
+        schema = {
+            str(i+1): _generate_field_schema(field)
+            for i, field
+            in enumerate(configuration['fields'])
+        }
+        return schema
 
     def _count_selections(self, value):
         """Count the number of selected options in a Selection field."""
@@ -196,37 +230,3 @@ class SubmissionValidator(Validator):
                 or type(value) is str and value == ''
             ):
                 self._error(field, f'This field is mandatory')
-
-
-def _generate_schema(configuration):
-    """Generate the cerberus validation schema from a survey configuration."""
-
-    rules = [
-        'min_chars',
-        'max_chars',
-        'min_select',
-        'max_select',
-        'mandatory',
-        'regex',
-    ]
-
-    def _generate_field_schema(field):
-        """Recursively generate the cerberus schemas for a survey field."""
-        fs = {'type': field['type']}
-        if 'fields' in field.keys():
-            fs['schema'] = {
-                str(i+1): _generate_field_schema(subfield)
-                for i, subfield
-                in enumerate(field['fields'])
-            }
-        for rule, value in field.items():
-            if rule in rules:
-                fs[rule] = value
-        return fs
-
-    schema = {
-        str(i+1): _generate_field_schema(field)
-        for i, field
-        in enumerate(configuration['fields'])
-    }
-    return schema
