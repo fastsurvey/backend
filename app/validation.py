@@ -12,6 +12,8 @@ class ConfigurationValidator(Validator):
 
     """
 
+    ADMIN_NAME_MIN_LENGTH, ADMIN_NAME_MAX_LENGTH = 1, 20
+    SURVEY_NAME_MIN_LENGTH, SURVEY_NAME_MAX_LENGTH = 1, 20
     TITLE_MAX_LENGTH = 100  # all lengths are inclusive
     DESCRIPTION_MAX_LENGTH = 1000
     REGEX_MAX_LENGTH = 100
@@ -148,6 +150,48 @@ class ConfigurationValidator(Validator):
             and type(value['min_chars']) == type(value['max_chars']) == int
             and 0 <= value['min_chars'] <= value['max_chars']
             and value['max_chars'] <= self.TEXT_MAX_LENGTH
+        )
+
+    def _validate_type_configuration(self, value):
+        """Validate that value is a correct survey configuration"""
+        keys = {
+            'admin_name',
+            'survey_name',
+            'title',
+            'description',
+            'start',
+            'end',
+            'mode',
+            'fields',
+        }
+        return (
+            type(value) is dict
+            and set(value.keys()) == keys
+            and type(value['admin_name']) == str
+            and len(value['admin_name']) >= self.ADMIN_NAME_MIN_LENGTH
+            and len(value['admin_name']) <= self.ADMIN_NAME_MAX_LENGTH
+            and type(value['survey_name']) == str
+            and len(value['survey_name']) >= self.SURVEY_NAME_MIN_LENGTH
+            and len(value['survey_name']) <= self.SURVEY_NAME_MAX_LENGTH
+            and type(value['title']) == str
+            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and type(value['description']) == str
+            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and type(value['start']) == type(value['end']) == int
+            and value['start'] <= value['end']
+            and value['mode'] in [0, 1, 2]
+            and type(value['fields']) == list
+            and all([
+                (
+                    self._validate_type_email(field)
+                    or self._validate_type_option(field)
+                    or self._validate_type_radio(field)
+                    or self._validate_type_selection(field)
+                    or self._validate_type_text(field)
+                )
+                for field
+                in value['fields']
+            ])
         )
 
 
