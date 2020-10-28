@@ -67,25 +67,20 @@ class ConfigurationValidator(Validator):
         },
     }
 
-    CONFIGURATION_SCHEMA = {
+    TITLE_MAX_LENGTH = 100
+    DESCRIPTION_MAX_LENGTH = 1000
+
+    SCHEMA = {
         'admin_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
         'survey_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
-        'title': TITLE_SCHEMA,
-        'description': DESCRIPTION_SCHEMA,
+        'title': {'type': 'string', 'maxlength': TITLE_MAX_LENGTH},
+        'description': {'type': 'string', 'maxlength': DESCRIPTION_MAX_LENGTH},
         'start': {'type': 'integer', 'min': 0},
         'end': {'type': 'integer', 'min': 0},
         'mode': {'type': 'integer', 'allowed': [0, 1, 2]},
         'fields': {
             'type': 'list',
-            'schema': {
-                'oneof': [
-                    EMAIL_FIELD_SCHEMA,
-                    OPTION_FIELD_SCHEMA,
-                    RADIO_FIELD_SCHEMA,
-                    SELECTION_FIELD_SCHEMA,
-                    TEXT_FIELD_SCHEMA,
-                ],
-            },
+            'schema': {'type': ['option']},
         },
     }
 
@@ -99,11 +94,24 @@ class ConfigurationValidator(Validator):
         easier way.
 
         """
-        return cls(cls.CONFIGURATION_SCHEMA, require_all=True)
+        return cls(cls.SCHEMA, require_all=True)
 
 
     ### CUSTOM TYPE VALIDATIONS ###
 
+    def _validate_type_option(self, value):
+        """Validateeeeeeeee"""
+        keys = ['type', 'title', 'description', 'mandatory']
+        return (
+            type(value) is dict
+            and list(value.keys()) == keys
+            and value['type'] == 'option'
+            and type(value['title']) == str
+            and len(value['title']) < self.TITLE_MAX_LENGTH
+            and type(value['description']) == str
+            and len(value['description']) < self.DESCRIPTION_MAX_LENGTH
+            and type(value['mandatory']) == bool
+        )
 
     def _validate_type_regex(self, value):
         """Validate that a given value is a valid regular expression."""
