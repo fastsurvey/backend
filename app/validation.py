@@ -1,6 +1,6 @@
-import re
-
 from cerberus import Validator, TypeDefinition
+
+from app.utils import isregex
 
 
 class ConfigurationValidator(Validator):
@@ -67,8 +67,10 @@ class ConfigurationValidator(Validator):
         },
     }
 
-    TITLE_MAX_LENGTH = 100
+    TITLE_MAX_LENGTH = 100  # all lengths are inclusive
     DESCRIPTION_MAX_LENGTH = 1000
+    REGEX_MAX_LENGTH = 100
+    HINT_MAX_LENGTH = 100
 
     SCHEMA = {
         'admin_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
@@ -80,7 +82,7 @@ class ConfigurationValidator(Validator):
         'mode': {'type': 'integer', 'allowed': [0, 1, 2]},
         'fields': {
             'type': 'list',
-            'schema': {'type': ['option']},
+            'schema': {'type': ['email', 'option', 'radio']},
         },
     }
 
@@ -99,6 +101,25 @@ class ConfigurationValidator(Validator):
 
     ### CUSTOM TYPE VALIDATIONS ###
 
+
+    def _validate_type_email(self, value):
+        """Validateeeeeeeee"""
+        keys = ['type', 'title', 'description', 'regex', 'hint']
+        return (
+            type(value) is dict
+            and list(value.keys()) == keys
+            and value['type'] == 'email'
+            and type(value['title']) == str
+            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and type(value['description']) == str
+            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and type(value['regex']) == str
+            and len(value['regex']) <= self.REGEX_MAX_LENGTH
+            and isregex(value['regex'])
+            and type(value['hint']) == str
+            and len(value['hint']) <= self.HINT_MAX_LENGTH
+        )
+
     def _validate_type_option(self, value):
         """Validateeeeeeeee"""
         keys = ['type', 'title', 'description', 'mandatory']
@@ -107,19 +128,30 @@ class ConfigurationValidator(Validator):
             and list(value.keys()) == keys
             and value['type'] == 'option'
             and type(value['title']) == str
-            and len(value['title']) < self.TITLE_MAX_LENGTH
+            and len(value['title']) <= self.TITLE_MAX_LENGTH
             and type(value['description']) == str
-            and len(value['description']) < self.DESCRIPTION_MAX_LENGTH
+            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
             and type(value['mandatory']) == bool
         )
 
-    def _validate_type_regex(self, value):
-        """Validate that a given value is a valid regular expression."""
-        try:
-            re.compile(value)
-            return True
-        except:
-            return False
+    def _validate_type_radio(self, value):
+        """Validateeeeeeeee"""
+        keys = ['type', 'title', 'description', 'fields']
+        return (
+            type(value) is dict
+            and list(value.keys()) == keys
+            and value['type'] == 'radio'
+            and type(value['title']) == str
+            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and type(value['description']) == str
+            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and type(value['fields']) == list
+            and all([
+                self._validate_type_option(field)
+                for field
+                in value['fields']
+            ])
+        )
 
 
     ### CUSTOM VALIDATION RULES ###
