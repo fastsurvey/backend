@@ -4,13 +4,7 @@ from app.utils import isregex
 
 
 class ConfigurationValidator(Validator):
-    """The custom cerberus validator for validating survey configurations.
-
-    TODO
-    - finetune title/description/hint char limits with frontend
-    - start <= end not validated
-
-    """
+    """The custom cerberus validator for validating survey configurations."""
 
     ADMIN_NAME_MIN_LENGTH, ADMIN_NAME_MAX_LENGTH = 1, 20
     SURVEY_NAME_MIN_LENGTH, SURVEY_NAME_MAX_LENGTH = 1, 20
@@ -19,26 +13,6 @@ class ConfigurationValidator(Validator):
     REGEX_MAX_LENGTH = 100
     HINT_MAX_LENGTH = 100
     TEXT_MAX_LENGTH = 10000
-
-    SCHEMA = {
-        'admin_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
-        'survey_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
-        'title': {'type': 'string', 'maxlength': TITLE_MAX_LENGTH},
-        'description': {'type': 'string', 'maxlength': DESCRIPTION_MAX_LENGTH},
-        'start': {'type': 'integer', 'min': 0},
-        'end': {'type': 'integer', 'min': 0},
-        'mode': {'type': 'integer', 'allowed': [0, 1, 2]},
-        'fields': {
-            'type': 'list',
-            'schema': {'type': [
-                'email',
-                'option',
-                'radio',
-                'selection',
-                'text',
-            ]},
-        },
-    }
 
     @classmethod
     def create(cls):
@@ -50,7 +24,35 @@ class ConfigurationValidator(Validator):
         easier way.
 
         """
-        return cls(cls.SCHEMA, require_all=True)
+        return cls(
+            {'__root__': {'type': 'configuration'}},
+            require_all=True,
+        )
+
+    def validate(self, document, schema=None, update=False, normalize=True):
+        """Overridden validate method used to type-check the root dict.
+
+        It seems to be impossible in cerberus to validate a field depending
+        on the value of another field. For example, for a survey we want to
+        have the value of `end` to be greater or equal to `start`. I did not
+        find a possibility to do this other than writing custom type classes
+        and thus checking the field values with simple comparisons instead
+        of cerberus' schemas. The downside of this is that the error messages
+        are now no longer informative. As we also need to cross-check `start`
+        and `end` which are not nested, we need to implement type checking
+        the entire document as this is not possible out of the box. I adapted
+        the solution from https://stackoverflow.com/questions/49762642. If
+        someone knows of a better alternative, please let me know.
+
+        """
+        result = super(ConfigurationValidator, self).validate(
+            {'__root__': document},
+            schema,
+            update,
+            normalize,
+        )
+        self.document = self.document['__root__']
+        return result
 
 
     ### CUSTOM TYPE VALIDATIONS ###
