@@ -8,69 +8,15 @@ class ConfigurationValidator(Validator):
 
     TODO
     - finetune title/description/hint char limits with frontend
-    - min_select <= max_select not validated
-    - min_chars <= max_chars not validated
     - start <= end not validated
 
     """
-
-    TITLE_SCHEMA = {'type': 'string', 'maxlength': 100}
-    DESCRIPTION_SCHEMA = {'type': 'string', 'maxlength': 1000}
-
-    EMAIL_FIELD_SCHEMA = {
-        'type': 'dict',
-        'schema': {
-            'type': {'type': 'string', 'equals': 'email'},
-            'title': TITLE_SCHEMA,
-            'description': DESCRIPTION_SCHEMA,
-            'regex': {'type': 'regex'},
-            'hint': {'type': 'string', 'maxlength': 100},
-        },
-    }
-    OPTION_FIELD_SCHEMA = {
-        'type': 'dict',
-        'schema': {
-            'type': {'type': 'string', 'equals': 'option'},
-            'title': TITLE_SCHEMA,
-            'description': DESCRIPTION_SCHEMA,
-            'mandatory': {'type': 'boolean'},
-        },
-    }
-    RADIO_FIELD_SCHEMA = {
-        'type': 'dict',
-        'schema': {
-            'type': {'type': 'string', 'equals': 'radio'},
-            'title': TITLE_SCHEMA,
-            'description': DESCRIPTION_SCHEMA,
-            'fields': {'type': 'list', 'schema': OPTION_FIELD_SCHEMA},
-        },
-    }
-    SELECTION_FIELD_SCHEMA = {
-        'type': 'dict',
-        'schema': {
-            'type': {'type': 'string', 'equals': 'selection'},
-            'title': TITLE_SCHEMA,
-            'description': DESCRIPTION_SCHEMA,
-            'min_select': {'type': 'integer', 'min': 0},
-            'max_select': {'type': 'integer', 'min': 0},
-            'fields': {'type': 'list', 'schema': OPTION_FIELD_SCHEMA},
-        },
-    }
-    TEXT_FIELD_SCHEMA = {
-        'type': 'dict',
-        'schema': {
-            'type': {'type': 'string', 'equals': 'text'},
-            'title': TITLE_SCHEMA,
-            'description': DESCRIPTION_SCHEMA,
-            'min_chars': {'type': 'integer', 'min': 0, 'max': 10000},
-            'max_chars': {'type': 'integer', 'min': 0, 'max': 10000},
-        },
-    }
 
     TITLE_MAX_LENGTH = 100  # all lengths are inclusive
     DESCRIPTION_MAX_LENGTH = 1000
     REGEX_MAX_LENGTH = 100
     HINT_MAX_LENGTH = 100
+    TEXT_MAX_LENGTH = 10000
 
     SCHEMA = {
         'admin_name': {'type': 'string', 'minlength': 1, 'maxlength': 20},
@@ -82,7 +28,13 @@ class ConfigurationValidator(Validator):
         'mode': {'type': 'integer', 'allowed': [0, 1, 2]},
         'fields': {
             'type': 'list',
-            'schema': {'type': ['email', 'option', 'radio']},
+            'schema': {'type': [
+                'email',
+                'option',
+                'radio',
+                'selection',
+                'text',
+            ]},
         },
     }
 
@@ -103,11 +55,11 @@ class ConfigurationValidator(Validator):
 
 
     def _validate_type_email(self, value):
-        """Validateeeeeeeee"""
-        keys = ['type', 'title', 'description', 'regex', 'hint']
+        """Validate that value is a correct email field specification"""
+        keys = {'type', 'title', 'description', 'regex', 'hint'}
         return (
             type(value) is dict
-            and list(value.keys()) == keys
+            and set(value.keys()) == keys
             and value['type'] == 'email'
             and type(value['title']) == str
             and len(value['title']) <= self.TITLE_MAX_LENGTH
@@ -121,11 +73,11 @@ class ConfigurationValidator(Validator):
         )
 
     def _validate_type_option(self, value):
-        """Validateeeeeeeee"""
-        keys = ['type', 'title', 'description', 'mandatory']
+        """Validate that value is a correct option field specification"""
+        keys = {'type', 'title', 'description', 'mandatory'}
         return (
             type(value) is dict
-            and list(value.keys()) == keys
+            and set(value.keys()) == keys
             and value['type'] == 'option'
             and type(value['title']) == str
             and len(value['title']) <= self.TITLE_MAX_LENGTH
@@ -135,11 +87,11 @@ class ConfigurationValidator(Validator):
         )
 
     def _validate_type_radio(self, value):
-        """Validateeeeeeeee"""
-        keys = ['type', 'title', 'description', 'fields']
+        """Validate that value is a correct radio field specification"""
+        keys = {'type', 'title', 'description', 'fields'}
         return (
             type(value) is dict
-            and list(value.keys()) == keys
+            and set(value.keys()) == keys
             and value['type'] == 'radio'
             and type(value['title']) == str
             and len(value['title']) <= self.TITLE_MAX_LENGTH
@@ -153,14 +105,50 @@ class ConfigurationValidator(Validator):
             ])
         )
 
+    def _validate_type_selection(self, value):
+        """Validate that value is a correct selection field specification"""
+        keys = {
+            'type',
+            'title',
+            'description',
+            'min_select',
+            'max_select',
+            'fields',
+        }
+        return (
+            type(value) is dict
+            and set(value.keys()) == keys
+            and value['type'] == 'selection'
+            and type(value['title']) == str
+            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and type(value['description']) == str
+            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and type(value['fields']) == list
+            and all([
+                self._validate_type_option(field)
+                for field
+                in value['fields']
+            ])
+            and type(value['min_select']) == type(value['max_select']) == int
+            and 0 <= value['min_select'] <= value['max_select']
+            and value['max_select'] <= len(value['fields'])
+        )
 
-    ### CUSTOM VALIDATION RULES ###
-
-
-    def _validate_equals(self, equals, field, value):
-        """{'type': 'string'}"""
-        if value != equals:
-            self._error(field, f'must be equal to {equals}')
+    def _validate_type_text(self, value):
+        """Validate that value is a correct text field specification"""
+        keys = {'type', 'title', 'description', 'min_chars', 'max_chars'}
+        return (
+            type(value) is dict
+            and set(value.keys()) == keys
+            and value['type'] == 'text'
+            and type(value['title']) == str
+            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and type(value['description']) == str
+            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and type(value['min_chars']) == type(value['max_chars']) == int
+            and 0 <= value['min_chars'] <= value['max_chars']
+            and value['max_chars'] <= self.TEXT_MAX_LENGTH
+        )
 
 
 class SubmissionValidator(Validator):
