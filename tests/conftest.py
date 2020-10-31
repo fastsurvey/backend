@@ -28,8 +28,8 @@ def event_loop(request):
 def test_surveys():
     """Provide mapping of test survey names to their testing parameters."""
     folder = 'tests/surveys'
-    survey_names = [e for e in os.listdir(folder) if e[0] != '.']
-    ts = {}
+    survey_names = [s for s in os.listdir(folder) if s[0] != '.']
+    tss = {}
     for survey_name in survey_names:
         subfolder = f'{folder}/{survey_name}'
         parameter_names = [
@@ -38,11 +38,23 @@ def test_surveys():
             in os.listdir(subfolder)
             if os.path.splitext(e)[1] == '.json'
         ]
-        ts[survey_name] = dict()
+        tss[survey_name] = dict()
         for parameter_name in parameter_names:
             with open(f'{subfolder}/{parameter_name}.json', 'r') as e:
-                ts[survey_name][parameter_name] = json.load(e)
-    return ts
+                tss[survey_name][parameter_name] = json.load(e)
+    return tss
+
+
+@pytest.fixture(scope='session')
+def test_admins():
+    """Provide mapping of test admin names to their test account data."""
+    folder = 'tests/admins'
+    admin_names = [s[:-5] for s in os.listdir(folder) if s.endswith('.json')]
+    tas = {}
+    with open(f'tests/admins.json', 'r') as e:
+        for admin_name in admin_names:
+            tas[admin_name] = json.load(e)
+    return tas
 
 
 async def reset(test_surveys):
