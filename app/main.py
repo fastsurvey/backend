@@ -37,7 +37,7 @@ async def fetch_admin(
     ):
     """Fetch the given admin's account data."""
     # TODO check authentication
-    return await admin_manager.fetch_account(admin_name)
+    return await admin_manager.fetch(admin_name)
 
 
 @app.post('/admins/{admin_name}')
@@ -53,7 +53,7 @@ async def create_admin(
     ):
     """Create a new admin with given account data."""
     # TODO check authentication
-    return await admin_manager.update_account(admin_name, account_data)
+    return await admin_manager.update(admin_name, account_data)
 
 
 @app.put('/admins/{admin_name}')
@@ -69,7 +69,7 @@ async def update_admin(
     ):
     """Update the given admin's account data."""
     # TODO check authentication
-    return await admin_manager.update_account(admin_name, account_data)
+    return await admin_manager.update(admin_name, account_data)
 
 
 @app.delete('/admins/{admin_name}')
@@ -81,7 +81,7 @@ async def delete_admin(
     ):
     """Delete the admin and all her surveys from the database."""
     # TODO check authentication
-    return await admin_manager.delete_account(admin_name)
+    return await admin_manager.delete(admin_name)
 
 
 @app.get('/admins/{admin_name}/surveys')
