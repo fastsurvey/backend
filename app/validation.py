@@ -1,3 +1,5 @@
+import re
+
 from cerberus import Validator, TypeDefinition
 
 from app.utils import isregex
@@ -6,13 +8,14 @@ from app.utils import isregex
 class ConfigurationValidator(Validator):
     """The custom cerberus validator for validating survey configurations."""
 
-    ADMIN_NAME_MIN_LENGTH, ADMIN_NAME_MAX_LENGTH = 1, 20
-    SURVEY_NAME_MIN_LENGTH, SURVEY_NAME_MAX_LENGTH = 1, 20
-    TITLE_MAX_LENGTH = 100  # all lengths are inclusive
-    DESCRIPTION_MAX_LENGTH = 1000
-    REGEX_MAX_LENGTH = 100
-    HINT_MAX_LENGTH = 100
-    TEXT_MAX_LENGTH = 10000
+    REGEXES = {  # input string regexes
+        'admin_name': '^[a-z0-9-]{2,20}$',
+        'survey_name': '^[a-z0-9-]{2,20}$',
+        'title': '^.{0,100}$',
+        'description': '^.{0,1000}$',
+        'regex': '^.{0,100}$',
+        'hint': '^.{0,100}$',
+    }
 
     @classmethod
     def create(cls):
@@ -66,11 +69,11 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'email'
             and type(value['title']) == str
-            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and re.match(self.REGEXES['title'], value['title'])
             and type(value['description']) == str
-            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and re.match(self.REGEXES['description'], value['description'])
             and type(value['regex']) == str
-            and len(value['regex']) <= self.REGEX_MAX_LENGTH
+            and re.match(self.REGEXES['regex'], value['regex'])
             and isregex(value['regex'])
             and type(value['hint']) == str
             and len(value['hint']) <= self.HINT_MAX_LENGTH
@@ -84,9 +87,9 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'option'
             and type(value['title']) == str
-            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and re.match(self.REGEXES['title'], value['title'])
             and type(value['description']) == str
-            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and re.match(self.REGEXES['description'], value['description'])
             and type(value['mandatory']) == bool
         )
 
@@ -98,9 +101,9 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'radio'
             and type(value['title']) == str
-            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and re.match(self.REGEXES['title'], value['title'])
             and type(value['description']) == str
-            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and re.match(self.REGEXES['description'], value['description'])
             and type(value['fields']) == list
             and all([
                 self._validate_type_option(field)
@@ -124,9 +127,9 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'selection'
             and type(value['title']) == str
-            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and re.match(self.REGEXES['title'], value['title'])
             and type(value['description']) == str
-            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and re.match(self.REGEXES['description'], value['description'])
             and type(value['fields']) == list
             and all([
                 self._validate_type_option(field)
@@ -146,12 +149,11 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'text'
             and type(value['title']) == str
-            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and re.match(self.REGEXES['title'], value['title'])
             and type(value['description']) == str
-            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and re.match(self.REGEXES['description'], value['description'])
             and type(value['min_chars']) == type(value['max_chars']) == int
-            and 0 <= value['min_chars'] <= value['max_chars']
-            and value['max_chars'] <= self.TEXT_MAX_LENGTH
+            and 0 <= value['min_chars'] <= value['max_chars'] <= 10000
         )
 
     def _validate_type_configuration(self, value):
@@ -170,15 +172,13 @@ class ConfigurationValidator(Validator):
             type(value) is dict
             and set(value.keys()) == keys
             and type(value['admin_name']) == str
-            and len(value['admin_name']) >= self.ADMIN_NAME_MIN_LENGTH
-            and len(value['admin_name']) <= self.ADMIN_NAME_MAX_LENGTH
+            and re.match(self.REGEXES['admin_name'], value['admin_name'])
             and type(value['survey_name']) == str
-            and len(value['survey_name']) >= self.SURVEY_NAME_MIN_LENGTH
-            and len(value['survey_name']) <= self.SURVEY_NAME_MAX_LENGTH
+            and re.match(self.REGEXES['survey_name'], value['survey_name'])
             and type(value['title']) == str
-            and len(value['title']) <= self.TITLE_MAX_LENGTH
+            and re.match(self.REGEXES['title'], value['title'])
             and type(value['description']) == str
-            and len(value['description']) <= self.DESCRIPTION_MAX_LENGTH
+            and re.match(self.REGEXES['description'], value['description'])
             and type(value['start']) == type(value['end']) == int
             and value['start'] <= value['end']
             and value['mode'] in [0, 1, 2]
