@@ -137,8 +137,8 @@ class Survey:
         self.vss = database[f'surveys.{self.survey_id}.verified-submissions']
         self.results = None
 
-    @classmethod
-    def _get_email_field_index(cls, configuration):
+    @staticmethod
+    def _get_email_field_index(configuration):
         """Find the index of the email field in a survey configuration."""
         for index, field in enumerate(configuration['fields']):
             if field['type'] == 'email':
