@@ -54,7 +54,19 @@ class SurveyManager:
 
     async def create(self, admin_name, survey_name, configuration):
         """Create a new survey configuration in the database and cache."""
-        raise HTTPException(501, 'not implemented')
+        if admin_name != configuration['admin_name']:
+            raise HTTPException(400, 'route/configuration admin names differ')
+        if survey_name != configuration['survey_name']:
+            raise HTTPException(400, 'route/configuration survey names differ')
+        if not self.validator.validate(configuration):
+            raise HTTPException(400, 'invalid configuration')
+        configuration['_id'] = identify(configuration)
+        try:
+            await self.database['configurations'].insert_one(configuration)
+        except DuplicateKeyError:
+            raise HTTPException(400, 'survey exists')
+        del configuration['_id']
+        self._remember(configuration)
 
     async def update(self, admin_name, survey_name, configuration):
         """Update a survey configuration in the database and cache."""
@@ -65,14 +77,12 @@ class SurveyManager:
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
         configuration['_id'] = identify(configuration)
-
-        # TODO use update_one or replace_one?
-
-        await self.database['configurations'].find_one_and_replace(
+        response = await self.database['configurations'].replace_one(
             filter={'_id': configuration['_id']},
             replacement=configuration,
-            upsert=True,
         )
+        if response['matchedCount'] == 0:
+            raise HTTPException(400, 'not an existing survey')
         del configuration['_id']
         self._remember(configuration)
 
