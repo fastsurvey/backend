@@ -2,6 +2,8 @@ from fastapi import HTTPException
 from pymongo import DESCENDING
 from pymongo.errors import DuplicateKeyError
 
+from app.validation import AccountDataValidator
+
 
 class AdminManager:
     """The manager manages creating, updating and deleting admins."""
@@ -19,6 +21,7 @@ class AdminManager:
             unique=True,
             name='email-index',
         )
+        self.validator = AccountDataValidator.create()
 
     async def fetch(self, admin_name):
         """Return the account data corresponding to given admin name."""
@@ -34,13 +37,8 @@ class AdminManager:
         """Update new admin account data in the database."""
         if admin_name != account_data['admin_name']:
             raise HTTPException(400, 'route/account data admin names differ')
-
-        # TODO account data validation
-
-        '''
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
-        '''
         try:
             await self.database['accounts'].insert_one(account_data)
         except DuplicateKeyError as error:

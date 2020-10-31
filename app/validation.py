@@ -326,3 +326,23 @@ class SubmissionValidator(Validator):
                 or type(value) is str and value == ''
             ):
                 self._error(field, f'this field is mandatory')
+
+
+class AccountDataValidator(Validator):
+    """The custom cerberus validator for validating admin account data."""
+
+    SCHEMA = {
+        'admin_name': {'type': 'string', 'regex': '^[a-z0-9-]{2,20}$'},
+    }
+
+    @classmethod
+    def create(cls):
+        """Factory method providing a simple interface to create a validator.
+
+        A more elegant way to achieve this would be to override the __init__
+        method of the Validator class. The __init__ method is somehow called
+        multiple times, though, that's why using a factory method is the
+        easier way.
+
+        """
+        return cls(cls.SCHEMA, require_all=True)
