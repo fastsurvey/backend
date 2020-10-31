@@ -31,14 +31,10 @@ survey_manager = SurveyManager(database, letterbox)
 account_data_01 = {
     "admin_name": "fastsurvey",
     "email": "support@fastsurvey.io",
-    "joined": 1000,
-    "last_login": 2000
 }
 account_data_02 = {
     "admin_name": "empicano",
-    "email": "test@fastsurvey.io",
-    "joined": 1000,
-    "last_login": 2000
+    "email": "felix@felixboehm.dev",
 }
 import asyncio
 loop = asyncio.get_event_loop()

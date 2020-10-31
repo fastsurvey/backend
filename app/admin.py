@@ -1,3 +1,5 @@
+import time
+
 from fastapi import HTTPException
 from pymongo import DESCENDING
 from pymongo.errors import DuplicateKeyError
@@ -39,6 +41,7 @@ class AdminManager:
             raise HTTPException(400, 'route/account data admin names differ')
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
+        account_data['created'] = int(time.time())
         try:
             await self.database['accounts'].insert_one(account_data)
         except DuplicateKeyError as error:

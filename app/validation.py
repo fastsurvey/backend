@@ -333,6 +333,7 @@ class AccountDataValidator(Validator):
 
     SCHEMA = {
         'admin_name': {'type': 'string', 'regex': '^[a-z0-9-]{2,20}$'},
+        'email': {'type': 'string'},
     }
 
     @classmethod
