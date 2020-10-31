@@ -34,7 +34,7 @@ class AdminManager:
         return account
 
     async def create(self, admin_name, account_data):
-        """Update new admin account data in the database."""
+        """Create new admin account data in the database."""
         if admin_name != account_data['admin_name']:
             raise HTTPException(400, 'route/account data admin names differ')
         if not self.validator.validate(account_data):
@@ -47,8 +47,20 @@ class AdminManager:
             raise HTTPException(400, f'{att} already taken')
 
     async def update(self, admin_name, account_data):
-        """Update admin account data in the database."""
-        raise HTTPException(501, 'not implemented')
+        """Update existing admin account data in the database."""
+
+        # TODO update survey names and ids when admin name is changed
+        if admin_name != account_data['admin_name']:
+            raise HTTPException(501, 'admin name changes not yet implemented')
+
+        if not self.validator.validate(account_data):
+            raise HTTPException(400, 'invalid account data')
+        result = await self.database['accounts'].replace_one(
+            filter={'admin_name': admin_name},
+            replacement=account_data,
+        )
+        if result.matched_count == 0:
+            raise HTTPException(400, 'not an existing admin account')
 
     async def delete(self, admin_name):
         """Delete the admin including all her surveys from the database."""

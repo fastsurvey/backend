@@ -76,14 +76,15 @@ class SurveyManager:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
-        configuration['_id'] = identify(configuration)
-        response = await self.database['configurations'].replace_one(
-            filter={'_id': configuration['_id']},
+        # configuration['_id'] = identify(configuration)
+        result = await self.database['configurations'].replace_one(
+            # filter={'_id': configuration['_id']},
+            filter={'_id': identify(configuration)},
             replacement=configuration,
         )
-        if response['matchedCount'] == 0:
+        if result.matched_count == 0:
             raise HTTPException(400, 'not an existing survey')
-        del configuration['_id']
+        # del configuration['_id']
         self._remember(configuration)
 
     async def sweep(self, admin_name, survey_name):

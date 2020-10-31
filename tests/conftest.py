@@ -62,7 +62,7 @@ async def reset(test_surveys):
     for survey_name in test_surveys.keys():
         await main.survey_manager.delete('fastsurvey', survey_name)
     for survey_name, parameters in test_surveys.items():
-        await main.survey_manager.update(
+        await main.survey_manager.create(
             'fastsurvey',
             survey_name,
             parameters['configuration'],

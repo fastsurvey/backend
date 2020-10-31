@@ -28,21 +28,6 @@ admin_manager = AdminManager(database)
 survey_manager = SurveyManager(database, letterbox)
 
 
-account_data_01 = {
-    "admin_name": "fastsurvey",
-    "email": "support@fastsurvey.io",
-}
-account_data_02 = {
-    "admin_name": "empicano",
-    "email": "felix@felixboehm.dev",
-}
-import asyncio
-loop = asyncio.get_event_loop()
-loop.run_until_complete(admin_manager.create('empicano', account_data_02))
-
-exit()
-
-
 @app.get('/admins/{admin_name}')
 async def fetch_admin(
         admin_name: str = Path(
