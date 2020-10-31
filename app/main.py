@@ -28,6 +28,25 @@ admin_manager = AdminManager(database)
 survey_manager = SurveyManager(database, letterbox)
 
 
+account_data_01 = {
+    "admin_name": "fastsurvey",
+    "email": "support@fastsurvey.io",
+    "joined": 1000,
+    "last_login": 2000
+}
+account_data_02 = {
+    "admin_name": "empicano",
+    "email": "test@fastsurvey.io",
+    "joined": 1000,
+    "last_login": 2000
+}
+import asyncio
+loop = asyncio.get_event_loop()
+loop.run_until_complete(admin_manager.create('empicano', account_data_02))
+
+exit()
+
+
 @app.get('/admins/{admin_name}')
 async def fetch_admin(
         admin_name: str = Path(
@@ -53,7 +72,7 @@ async def create_admin(
     ):
     """Create a new admin with given account data."""
     # TODO check authentication
-    return await admin_manager.update(admin_name, account_data)
+    return await admin_manager.create(admin_name, account_data)
 
 
 @app.put('/admins/{admin_name}')
@@ -137,7 +156,7 @@ async def create_survey(
     ):
     """Create new survey with given configuration."""
     # TODO check authentication
-    await survey_manager.update(admin_name, survey_name, configuration)
+    await survey_manager.create(admin_name, survey_name, configuration)
 
 
 @app.put('/admins/{admin_name}/surveys/{survey_name}')

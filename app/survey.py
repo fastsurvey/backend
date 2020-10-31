@@ -52,8 +52,12 @@ class SurveyManager:
             self._remember(configuration)
         return self.cache[survey_id]
 
+    async def create(self, admin_name, survey_name, configuration):
+        """Create a new survey configuration in the database and cache."""
+        raise HTTPException(501, 'not implemented')
+
     async def update(self, admin_name, survey_name, configuration):
-        """Create or update survey configuration in database and cache."""
+        """Update a survey configuration in the database and cache."""
         if admin_name != configuration['admin_name']:
             raise HTTPException(400, 'route/configuration admin names differ')
         if survey_name != configuration['survey_name']:
@@ -61,6 +65,9 @@ class SurveyManager:
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
         configuration['_id'] = identify(configuration)
+
+        # TODO use update_one or replace_one?
+
         await self.database['configurations'].find_one_and_replace(
             filter={'_id': configuration['_id']},
             replacement=configuration,
