@@ -122,12 +122,12 @@ class SubmissionValidator(Validator):
 
     def _validate_mandatory(self, mandatory, field, value):
         """{'type': 'boolean'}"""
-        if mandatory:
-            if (
-                type(value) is bool and not value
-                or type(value) is str and value == ''
-            ):
-                self._error(field, f'this field is mandatory')
+        if (
+            mandatory
+            and not (type(value) is bool and value)
+            and not (type(value) is str and value != '')
+        ):
+            self._error(field, f'this field is mandatory')
 
 
 class AccountDataValidator(Validator):
