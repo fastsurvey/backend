@@ -8,7 +8,7 @@ from app.validation import AccountDataValidator
 class AdminManager:
     """The manager manages creating, updating and deleting admins."""
 
-    def __init__(self, database):
+    def __init__(self, database, survey_manager):
         """Initialize an admin manager instance."""
         self.database = database
         self.database['accounts'].create_index(
@@ -21,6 +21,7 @@ class AdminManager:
             unique=True,
             name='email-index',
         )
+        self.survey_manager = survey_manager
         self.validator = AccountDataValidator.create()
 
     async def fetch(self, admin_name):
@@ -64,7 +65,14 @@ class AdminManager:
 
     async def delete(self, admin_name):
         """Delete the admin including all her surveys from the database."""
-        raise HTTPException(501, 'not implemented')
+        await self.database['accounts'].delete_one({'admin_name': admin_name})
+        cursor = self.database['configurations'].find(
+            filter={'admin_name': admin_name},
+            projection={'_id': False, 'survey_name': True},
+        )
+        survey_names = [e['survey_name'] for e in await cursor.to_list(None)]
+        for survey_name in survey_names:
+            await self.survey_manager.delete(admin_name, survey_name)
 
     async def fetch_configurations(self, admin_name, skip, limit):
         """Return list of admin's configurations within specified bounds."""

@@ -22,10 +22,10 @@ motor_client = AsyncIOMotorClient(MDBCS)
 database = motor_client[ENV]
 # create email client
 letterbox = Letterbox()
-# instantiate admin manager
-admin_manager = AdminManager(database)
 # instantiate survey manager
 survey_manager = SurveyManager(database, letterbox)
+# instantiate admin manager
+admin_manager = AdminManager(database, survey_manager)
 
 
 @app.get('/admins/{admin_name}')
