@@ -6,7 +6,7 @@
     "start": 1000000000,
     "end": 2000000000,
     "draft": false,
-    "authentication": "open",
+    "authentication": "email",
     "limit": 0,
     "fields": [
         {

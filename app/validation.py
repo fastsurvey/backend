@@ -317,7 +317,9 @@ class ConfigurationValidator(Validator):
             'description',
             'start',
             'end',
-            'mode',
+            'draft',
+            'authentication',
+            'limit',
             'fields',
         }
         return (
@@ -333,7 +335,10 @@ class ConfigurationValidator(Validator):
             and len(value['description']) <= self.MXLNS['description']
             and type(value['start']) == type(value['end']) == int
             and value['start'] <= value['end']
-            and value['mode'] in [0, 1, 2]
+            and type(value['draft']) == bool
+            and value['authentication'] in ['open', 'email']
+            and type(value['limit']) == int
+            and value['limit'] >= 0
             and type(value['fields']) == list
             and all([
                 (

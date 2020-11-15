@@ -132,7 +132,7 @@ class Survey:
         self.title = self.configuration['title']
         self.start = self.configuration['start']
         self.end = self.configuration['end']
-        self.mode = self.configuration['mode']
+        self.authentication = self.configuration['authentication']
         self.ei = Survey._get_email_field_index(self.configuration)
         self.validator = SubmissionValidator.create(self.configuration)
         self.letterbox = letterbox
@@ -162,11 +162,9 @@ class Survey:
             'submission-time': timestamp,
             'data': submission,
         }
-        # without identifier
-        if self.mode == 0:
+        if self.authentication == 'open':
             await self.submissions.insert_one(submission)
-        # using email address
-        if self.mode == 1:
+        if self.authentication == 'email':
             submission['_id'] = secrets.token_hex(32)
             while True:
                 try:
@@ -183,15 +181,14 @@ class Survey:
             )
             if status != 200:
                 raise HTTPException(500, 'email delivery failure')
-        # using invitations
-        if self.mode == 2:
+        if self.authentication == 'invitation':
             raise HTTPException(501, 'not implemented')
 
     async def verify(self, token):
         """Verify the user's email address and save submission as verified."""
         timestamp = int(time.time())
-        if self.mode != 1:
-            raise HTTPException(400, 'survey does not support verification')
+        if self.authentication != 'email':
+            raise HTTPException(400, 'survey does not verify email addresses')
         if timestamp < self.start:
             raise HTTPException(400, 'survey is not open yet')
         if timestamp >= self.end:

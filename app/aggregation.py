@@ -10,7 +10,7 @@ class Alligator:
         self.survey_id = identify(configuration)
         self.collection = (
             database[f'surveys.{self.survey_id}.submissions']
-            if self.configuration['mode'] == 0
+            if self.configuration['authentication'] == 'open'
             else database[f'surveys.{self.survey_id}.verified-submissions']
         )
         self.results = database['results']
