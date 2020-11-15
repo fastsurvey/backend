@@ -1,5 +1,4 @@
 from fastapi import HTTPException
-from pymongo import DESCENDING
 from pymongo.errors import DuplicateKeyError
 
 from app.validation import AccountDataValidator
@@ -73,15 +72,3 @@ class AdminManager:
         survey_names = [e['survey_name'] for e in await cursor.to_list(None)]
         for survey_name in survey_names:
             await self.survey_manager.delete(admin_name, survey_name)
-
-    async def fetch_configurations(self, admin_name, skip, limit):
-        """Return list of admin's configurations within specified bounds."""
-        cursor = self.database['configurations'].find(
-            filter={'admin_name': admin_name},
-            projection={'_id': False},
-            sort=[('start', DESCENDING)],
-            skip=skip,
-            limit=limit,
-        )
-        configurations = await cursor.to_list(None)
-        return configurations

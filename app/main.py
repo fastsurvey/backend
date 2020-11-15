@@ -106,7 +106,7 @@ async def fetch_surveys(
     """Fetch the admin's configurations sorted by the start date."""
     raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
-    return await admin_manager.fetch_configurations(admin_name, skip, limit)
+    return await survey_manager.fetch_multiple(admin_name, skip, limit)
 
 
 @app.get('/admins/{admin_name}/surveys/{survey_name}')

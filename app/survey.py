@@ -5,6 +5,7 @@ import os
 from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 from pymongo.errors import DuplicateKeyError
+from pymongo import DESCENDING
 
 from app.validation import SubmissionValidator, ConfigurationValidator
 from app.aggregation import Alligator
@@ -51,6 +52,18 @@ class SurveyManager:
                 raise HTTPException(404, 'survey not found')
             self._remember(configuration)
         return self.cache[survey_id]
+
+    async def fetch_multiple(self, admin_name, skip, limit):
+        """Return list of admin's configurations within specified bounds."""
+        cursor = self.database['configurations'].find(
+            filter={'admin_name': admin_name},
+            projection={'_id': False},
+            sort=[('start', DESCENDING)],
+            skip=skip,
+            limit=limit,
+        )
+        configurations = await cursor.to_list(None)
+        return configurations
 
     async def create(self, admin_name, survey_name, configuration):
         """Create a new survey configuration in the database and cache."""
