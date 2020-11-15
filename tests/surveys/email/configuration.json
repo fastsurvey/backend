@@ -5,7 +5,9 @@
     "description": "",
     "start": 1000000000,
     "end": 2000000000,
-    "mode": 1,
+    "draft": false,
+    "authentication": "email",
+    "limit": 0,
     "fields": [
         {
             "type": "email",
