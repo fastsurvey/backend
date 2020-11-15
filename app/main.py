@@ -36,6 +36,7 @@ async def fetch_admin(
         ),
     ):
     """Fetch the given admin's account data."""
+    raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
     return await admin_manager.fetch(admin_name)
 
@@ -52,6 +53,7 @@ async def create_admin(
         ),
     ):
     """Create a new admin with given account data."""
+    raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
     return await admin_manager.create(admin_name, account_data)
 
@@ -68,6 +70,7 @@ async def update_admin(
         ),
     ):
     """Update the given admin's account data."""
+    raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
     return await admin_manager.update(admin_name, account_data)
 
@@ -80,6 +83,7 @@ async def delete_admin(
         ),
     ):
     """Delete the admin and all her surveys from the database."""
+    raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
     return await admin_manager.delete(admin_name)
 
@@ -100,6 +104,7 @@ async def fetch_surveys(
         )
     ):
     """Fetch the admin's configurations sorted by the start date."""
+    raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
     return await admin_manager.fetch_configurations(admin_name, skip, limit)
 
@@ -136,6 +141,7 @@ async def create_survey(
         ),
     ):
     """Create new survey with given configuration."""
+    raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
     await survey_manager.create(admin_name, survey_name, configuration)
 
@@ -156,6 +162,7 @@ async def update_survey(
         ),
     ):
     """Update survey with given configuration."""
+    raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
     await survey_manager.update(admin_name, survey_name, configuration)
 
@@ -172,6 +179,7 @@ async def delete_survey(
         ),
     ):
     """Delete given survey and all its data (submissions, results, ...)."""
+    raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
     await survey_manager.delete(admin_name, survey_name)
 

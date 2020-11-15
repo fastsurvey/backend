@@ -46,11 +46,11 @@ class Letterbox:
         """Send confirmation email in order to verify an email address."""
         # verification url
         subject = 'Please verify your submission'
-        vu = f'{BURL}/{admin_name}/{survey_name}/verification/{token}'
+        vurl = f'{BURL}/{admin_name}/{survey_name}/verification/{token}'
         html = (
             '<p>Hi there, we received your submission!</p>'
             + f'<p>Survey: <strong>{title}</strong></p>'
-            + f'<p>Please verify your submission by <a href="{vu}" target="_blank">clicking here</a></p>'
-            + '<p>Your FastSurvey team</p>'
+            + f'<p>Please verify your submission by <a href="{vurl}" target="_blank">clicking here</a>.</p>'
+            + '<p>Best, the FastSurvey team</p>'
         )
         return await self.send(receiver, subject, html)

@@ -76,7 +76,10 @@ class SurveyManager:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
+
+        # TODO should work without specifying _id extra, does it?
         # configuration['_id'] = identify(configuration)
+
         result = await self.database['configurations'].replace_one(
             # filter={'_id': configuration['_id']},
             filter={'_id': identify(configuration)},
