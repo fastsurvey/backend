@@ -1,11 +1,17 @@
 import jwt
 import os
 import base64
+import time
 
 from passlib.context import CryptContext
 from fastapi import HTTPException
-from datetime import datetime, timedelta
 from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
+
+
+# public JSON Web Token signature key
+PUBLIC_RSA_KEY = base64.b64decode(os.getenv('PUBLIC_RSA_KEY'))
+# private JSON Web Token signature key
+PRIVATE_RSA_KEY = base64.b64decode(os.getenv('PRIVATE_RSA_KEY'))
 
 
 class PasswordManager:
@@ -30,20 +36,18 @@ class PasswordManager:
 class TokenManager:
     """The TokenManager manages encoding and decoding JSON Web Tokens."""
 
-    PUBLIC_RSA_KEY = base64.b64decode(os.getenv('PUBLIC_RSA_KEY'))
-    PRIVATE_RSA_KEY = base64.b64decode(os.getenv('PRIVATE_RSA_KEY'))
     ACCESS_TOKEN_TTL = 30*60  # 30 minutes
     REFRESH_TOKEN_TTL = 48*60*60  # 2 days
 
-    def generate(self, user_id: str, ttl: int):
+    def generate(self, user_id: str, time_to_live: int):
         """Generate a JWT containing the user id and an expiration date."""
         payload = {
-            'iss': 'authentication-backend',
+            'iss': 'FastSurvey',
             'sub': user_id,
-            'iat': datetime.utcnow(),
-            'exp': datetime.utcnow() + timedelta(ttl),
+            'iat': time.time(),
+            'exp': time.time() + time_to_live,
         }
-        return jwt.encode(payload, self.PRIVATE_RSA_KEY, algorithm='RS256')
+        return jwt.encode(payload, PRIVATE_RSA_KEY, algorithm='RS256')
 
     def generate_access_token(self, user_id: str):
         """Generate an access token JWT containing the user id."""
@@ -56,7 +60,7 @@ class TokenManager:
     def decode(self, token: str):
         """Decode the given JWT and return the user id."""
         try:
-            payload = jwt.decode(token, self.PUBLIC_RSA_KEY, algorithm='RS256')
+            payload = jwt.decode(token, PUBLIC_RSA_KEY, algorithm='RS256')
         except ExpiredSignatureError:
             raise HTTPException(401, 'token expired')
         except InvalidSignatureError:
