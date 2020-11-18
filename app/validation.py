@@ -130,7 +130,7 @@ class SubmissionValidator(Validator):
             self._error(field, f'this field is mandatory')
 
 
-class AccountDataValidator(Validator):
+class AccountValidator(Validator):
     """The custom cerberus validator for validating admin account data."""
 
     SCHEMA = {

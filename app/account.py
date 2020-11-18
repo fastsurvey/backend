@@ -1,34 +1,39 @@
 from fastapi import HTTPException
 from pymongo.errors import DuplicateKeyError
 
-from app.validation import AccountDataValidator
+from app.validation import AccountValidator
 
 
 class AccountManager:
-    """The manager manages creating, updating and deleting accounts."""
+    """The manager manages creating, updating and deleting admin accounts."""
 
-    def __init__(self, database, survey_manager):
+    async def __init__(self, database, survey_manager):
         """Initialize an admin manager instance."""
-
-        # TODO split into verified/unverified accounts
-
-        self.database = database
-        self.database['accounts'].create_index(
-            keys='admin_name',
-            unique=True,
-            name='admin-name-index',
-        )
-        self.database['accounts'].create_index(
-            keys='email',
-            unique=True,
-            name='email-index',
-        )
+        self.unverified_accounts = database['accounts.unverified']
+        self.verified_accounts = database['accounts.verified']
+        self.configurations = database['configurations']
         self.survey_manager = survey_manager
-        self.validator = AccountDataValidator.create()
+        self.validator = AccountValidator.create()
+
+        await self.verified_accounts.create_index(
+            keys='admin_name',
+            name='admin-name-index',
+            unique=True,
+        )
+        await self.verified_accounts.create_index(
+            keys='email',
+            name='email-index',
+            unique=True,
+        )
+        await self.unverified_accounts.create_index(
+            keys='timestamp',
+            name='timestamp-index',
+            expireAfterSeconds=10*60,  # delete draft accounts after 10 mins
+        )
 
     async def fetch(self, admin_name):
         """Return the account data corresponding to given admin name."""
-        account = await self.database['accounts'].find_one(
+        account = await self.verified_accounts.find_one(
             filter={'admin_name': admin_name},
             projection={'_id': False},
         )
@@ -36,10 +41,11 @@ class AccountManager:
             raise HTTPException(404, 'admin not found')
         return account
 
-    async def create(self, admin_name, account_data):
-        """Create new admin account data in the database."""
+    async def create(self, admin_name, email, password):
+        """Create new admin account with some default settings."""
 
         # TODO create account with some default data
+        # TODO validate data
 
         if admin_name != account_data['admin_name']:
             raise HTTPException(400, 'route/account data admin names differ')
@@ -61,7 +67,7 @@ class AccountManager:
 
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
-        result = await self.database['accounts'].replace_one(
+        result = await self.verified_accounts.replace_one(
             filter={'admin_name': admin_name},
             replacement=account_data,
         )
@@ -70,8 +76,8 @@ class AccountManager:
 
     async def delete(self, admin_name):
         """Delete the admin including all her surveys from the database."""
-        await self.database['accounts'].delete_one({'admin_name': admin_name})
-        cursor = self.database['configurations'].find(
+        await self.verified_accounts.delete_one({'admin_name': admin_name})
+        cursor = self.configurations.find(
             filter={'admin_name': admin_name},
             projection={'_id': False, 'survey_name': True},
         )

@@ -41,7 +41,7 @@ letterbox = Letterbox()
 # instantiate survey manager
 survey_manager = SurveyManager(database, letterbox)
 # instantiate admin acount manager
-account_manager = AccountManager(database, survey_manager)
+account_manager = await AccountManager(database, survey_manager)
 
 
 @app.get('/admins/{admin_name}')
@@ -57,14 +57,11 @@ async def fetch_admin(
 @app.post('/admins/{admin_name}')
 async def create_admin(
         admin_name: str = Path(..., description='The name of the admin'),
-        username: str = Form(..., description='The admin\'s username'),
         email: str = Form(..., description='The admin\'s email address'),
         password: str = Form(..., description='The account password'),
     ):
     """Create a new admin with default account data."""
-    raise HTTPException(401, 'authentication not yet implemented')
-    # TODO check authentication
-    return await account_manager.create(admin_name)
+    return await account_manager.create(admin_name, email, password)
 
 
 @app.put('/admins/{admin_name}')
