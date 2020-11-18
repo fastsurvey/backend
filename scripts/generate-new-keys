@@ -1,0 +1,21 @@
+#!/bin/sh
+
+ssh-keygen -t rsa -b 4096 -m PEM -f rsa.key -N '' -q
+touch .env
+
+# replace public key if exists, otherwise simply append to .env
+if grep -q '^PUBLIC_RSA_KEY=' .env; then
+    sed -i '' "s/PUBLIC_RSA_KEY=.*/PUBLIC_RSA_KEY=$(cat rsa.key.pub | base64)/g" .env
+else
+    echo "PUBLIC_RSA_KEY=$(cat rsa.key.pub | base64)" >> .env
+fi
+
+# replace private key if exists, otherwise simply append to .env
+if grep -q '^PRIVATE_RSA_KEY=' .env; then
+    sed -i '' "s/PRIVATE_RSA_KEY=.*/PRIVATE_RSA_KEY=$(cat rsa.key.pub | base64)/g" .env
+else
+    echo "PRIVATE_RSA_KEY=$(cat rsa.key.pub | base64)" >> .env
+fi
+
+# remove created key files afterwards
+rm rsa.key rsa.key.pub
