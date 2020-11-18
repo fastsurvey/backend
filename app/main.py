@@ -8,18 +8,34 @@ from app.admin import AdminManager
 from app.survey import SurveyManager
 
 
+# check that required environment variables are set
+assert all([
+    os.getenv(var)
+    for var
+    in [
+        'ENVIRONMENT',
+        'FRONTEND_URL',
+        'BACKEND_URL',
+        'PUBLIC_RSA_KEY',
+        'PRIVATE_RSA_KEY',
+        'MONGODB_CONNECTION_STRING',
+        'MAILGUN_API_KEY',
+    ]
+])
+
+
 # development / production / testing environment
-ENV = os.getenv('ENV')
+ENVIRONMENT = os.getenv('ENVIRONMENT')
 # MongoDB connection string
-MDBCS = os.getenv('MDBCS')
+MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
 
 
 # create fastapi app
 app = FastAPI()
 # connect to mongodb via pymongo and motor
-motor_client = AsyncIOMotorClient(MDBCS)
+motor_client = AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
 # get link to development / production / testing database
-database = motor_client[ENV]
+database = motor_client[ENVIRONMENT]
 # create email client
 letterbox = Letterbox()
 # instantiate survey manager

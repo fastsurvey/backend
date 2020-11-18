@@ -13,7 +13,7 @@ from app.utils import identify
 
 
 # frontend url
-FURL = os.getenv('FURL')
+FRONTEND_URL = os.getenv('FRONTEND_URL')
 
 
 class SurveyManager:
@@ -217,7 +217,7 @@ class Survey:
             upsert=True,
         )
         return RedirectResponse(
-            f'{FURL}/{self.admin_name}/{self.survey_name}/success'
+            f'{FRONTEND_URL}/{self.admin_name}/{self.survey_name}/success'
         )
 
     async def aggregate(self):
