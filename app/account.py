@@ -4,11 +4,14 @@ from pymongo.errors import DuplicateKeyError
 from app.validation import AccountDataValidator
 
 
-class AdminManager:
-    """The manager manages creating, updating and deleting admins."""
+class AccountManager:
+    """The manager manages creating, updating and deleting accounts."""
 
     def __init__(self, database, survey_manager):
         """Initialize an admin manager instance."""
+
+        # TODO split into verified/unverified accounts
+
         self.database = database
         self.database['accounts'].create_index(
             keys='admin_name',
@@ -35,6 +38,9 @@ class AdminManager:
 
     async def create(self, admin_name, account_data):
         """Create new admin account data in the database."""
+
+        # TODO create account with some default data
+
         if admin_name != account_data['admin_name']:
             raise HTTPException(400, 'route/account data admin names differ')
         if not self.validator.validate(account_data):

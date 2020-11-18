@@ -1,10 +1,10 @@
 import os
 
-from fastapi import FastAPI, Path, Query, Body, HTTPException
+from fastapi import FastAPI, Path, Query, Body, Form, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from app.mailing import Letterbox
-from app.admin import AdminManager
+from app.account import AccountManager
 from app.survey import SurveyManager
 
 
@@ -40,8 +40,8 @@ database = motor_client[ENVIRONMENT]
 letterbox = Letterbox()
 # instantiate survey manager
 survey_manager = SurveyManager(database, letterbox)
-# instantiate admin manager
-admin_manager = AdminManager(database, survey_manager)
+# instantiate admin acount manager
+account_manager = AccountManager(database, survey_manager)
 
 
 @app.get('/admins/{admin_name}')
@@ -51,18 +51,20 @@ async def fetch_admin(
     """Fetch the given admin's account data."""
     raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
-    return await admin_manager.fetch(admin_name)
+    return await account_manager.fetch(admin_name)
 
 
 @app.post('/admins/{admin_name}')
 async def create_admin(
         admin_name: str = Path(..., description='The name of the admin'),
-        account_data: dict = Body(..., description='The new account data'),
+        username: str = Form(..., description='The admin\'s username'),
+        email: str = Form(..., description='The admin\'s email address'),
+        password: str = Form(..., description='The account password'),
     ):
-    """Create a new admin with given account data."""
+    """Create a new admin with default account data."""
     raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
-    return await admin_manager.create(admin_name, account_data)
+    return await account_manager.create(admin_name)
 
 
 @app.put('/admins/{admin_name}')
@@ -73,7 +75,7 @@ async def update_admin(
     """Update the given admin's account data."""
     raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
-    return await admin_manager.update(admin_name, account_data)
+    return await account_manager.update(admin_name, account_data)
 
 
 @app.delete('/admins/{admin_name}')
@@ -83,7 +85,7 @@ async def delete_admin(
     """Delete the admin and all her surveys from the database."""
     raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
-    return await admin_manager.delete(admin_name)
+    return await account_manager.delete(admin_name)
 
 
 @app.get('/admins/{admin_name}/surveys')
