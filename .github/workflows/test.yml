@@ -20,12 +20,14 @@ jobs:
     - name: Test with pytest
       run: poetry run pytest --cov=app --cov-report=term-missing --cov-report=xml tests
       env:
-        ENV: ${{ secrets.ENV }}
-        FURL: ${{ secrets.FURL }}
-        BURL: ${{ secrets.BURL }}
-        MDBCS: ${{ secrets.MDBCS }}
-        MGKEY: ${{ secrets.MGKEY }}
-    - name:  Push Coverage Report to CodeClimate
+        ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
+        FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+        BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        PUBLIC_KEY: ${{ secrets.PUBLIC_KEY }}
+        PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        MONGODB_CONNECTION_STRING: ${{ secrets.MONGODB_CONNECTION_STRING }}
+        MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+    - name: Push Coverage Report to CodeClimate
       uses: paambaati/codeclimate-action@v2.3.0
       env:
         CC_TEST_REPORTER_ID: 3298667b78909cd0b6566313fce031e23d17c5efc5aa6d1cc8d3c10ce2ef2e9a
