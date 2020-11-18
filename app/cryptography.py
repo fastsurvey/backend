@@ -67,4 +67,4 @@ class TokenManager:
             raise HTTPException(401, 'signature verification failed')
         except InvalidTokenError:
             raise HTTPException(400, 'invalid token format')
-        return payload['uid']
+        return payload['sub']
