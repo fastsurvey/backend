@@ -20,7 +20,7 @@
             "type": "option",
             "title": "I have read and agree to the terms and conditions",
             "description": "",
-            "mandatory": true
+            "required": true
         },
         {
             "type": "radio",
@@ -31,25 +31,25 @@
                     "type": "option",
                     "title": "Asparagus",
                     "description": "",
-                    "mandatory": false
+                    "required": false
                 },
                 {
                     "type": "option",
                     "title": "Spinach",
                     "description": "",
-                    "mandatory": false
+                    "required": false
                 },
                 {
                     "type": "option",
                     "title": "Artichoke",
                     "description": "",
-                    "mandatory": false
+                    "required": false
                 },
                 {
                     "type": "option",
                     "title": "None of these is a fruit",
                     "description": "",
-                    "mandatory": false
+                    "required": false
                 }
             ]
         },
@@ -64,19 +64,19 @@
                     "type": "option",
                     "title": "Strawberry",
                     "description": "",
-                    "mandatory": false
+                    "required": false
                 },
                 {
                     "type": "option",
                     "title": "Vanilla",
                     "description": "",
-                    "mandatory": false
+                    "required": false
                 },
                 {
                     "type": "option",
                     "title": "Chocolate",
                     "description": "",
-                    "mandatory": false
+                    "required": false
                 }
             ]
         },

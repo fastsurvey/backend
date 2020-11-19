@@ -13,7 +13,7 @@
             "type": "option",
             "title": "I have read and agree to the terms and conditions",
             "description": "",
-            "mandatory": true
+            "required": false
         }
     ]
 }
