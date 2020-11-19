@@ -1,5 +1,4 @@
 import secrets
-import time
 import os
 
 from fastapi import HTTPException
@@ -9,7 +8,7 @@ from pymongo import DESCENDING
 
 from app.validation import SubmissionValidator, ConfigurationValidator
 from app.aggregation import Alligator
-from app.utils import identify
+from app.utils import identify, timestamp
 
 
 # frontend url
@@ -167,15 +166,15 @@ class Survey:
 
     async def submit(self, submission):
         """Save a user submission in the submissions collection."""
-        timestamp = int(time.time())
-        if timestamp < self.start:
+        ts = timestamp()
+        if ts < self.start:
             raise HTTPException(400, 'survey is not open yet')
-        if timestamp >= self.end:
+        if ts >= self.end:
             raise HTTPException(400, 'survey is closed')
         if not self.validator.validate(submission):
             raise HTTPException(400, 'invalid submission')
         submission = {
-            'submission-time': timestamp,
+            'submission-timestamp': timestamp,
             'data': submission,
         }
         if self.authentication == 'open':
@@ -202,17 +201,17 @@ class Survey:
 
     async def verify(self, token):
         """Verify the user's email address and save submission as verified."""
-        timestamp = int(time.time())
+        ts = timestamp()
         if self.authentication != 'email':
             raise HTTPException(400, 'survey does not verify email addresses')
-        if timestamp < self.start:
+        if ts < self.start:
             raise HTTPException(400, 'survey is not open yet')
-        if timestamp >= self.end:
+        if ts >= self.end:
             raise HTTPException(400, 'survey is closed')
         submission = await self.submissions.find_one({'_id': token})
         if submission is None:
             raise HTTPException(401, 'invalid token')
-        submission['verification-time'] = timestamp
+        submission['verification-timestamp'] = timestamp
         submission['_id'] = submission['data'][str(self.ei + 1)]
         await self.vss.find_one_and_replace(
             filter={'_id': submission['_id']},
@@ -225,8 +224,7 @@ class Survey:
 
     async def aggregate(self):
         """Query the survey submissions and return aggregated results."""
-        timestamp = int(time.time())
-        if timestamp < self.end:
+        if timestamp() < self.end:
             raise HTTPException(400, 'survey is not yet closed')
         self.results = self.results or await self.alligator.fetch()
         return self.results

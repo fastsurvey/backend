@@ -1,9 +1,12 @@
 import secrets
+import time
 
 from fastapi import HTTPException
 from pymongo.errors import DuplicateKeyError
 
 from app.validation import AccountValidator
+from app.cryptography import PasswordManager
+from app.utils import timestamp
 
 
 class AccountManager:
@@ -15,6 +18,7 @@ class AccountManager:
         self.configurations = database['configurations']
         self.survey_manager = survey_manager
         self.validator = AccountValidator.create()
+        self.password_manager = PasswordManager()
 
         await self.accounts.create_index(
             keys='admin_name',
@@ -53,7 +57,7 @@ class AccountManager:
             '_id': secrets.token_hex(64),
             'email': email,
             'pwdhash': self.password_manager.hash_password(password),
-            'created': datetime.utcnow(),
+            'created': timestamp(),
         }
 
         if not self.validator.validate(account_data):

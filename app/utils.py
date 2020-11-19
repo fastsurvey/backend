@@ -1,4 +1,5 @@
 import re
+import time
 
 
 def identify(configuration):
@@ -15,3 +16,8 @@ def isregex(value):
         return True
     except:
         return False
+
+
+def timestamp():
+    """Return unixtime utc timestamp integer."""
+    return int(time.time())
