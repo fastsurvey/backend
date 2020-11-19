@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import HTTPException
 from pymongo.errors import DuplicateKeyError
 
@@ -9,31 +11,31 @@ class AccountManager:
 
     async def __init__(self, database, survey_manager):
         """Initialize an admin manager instance."""
-        self.unverified_accounts = database['accounts.unverified']
-        self.verified_accounts = database['accounts.verified']
+        self.accounts = database['accounts']
         self.configurations = database['configurations']
         self.survey_manager = survey_manager
         self.validator = AccountValidator.create()
 
-        await self.verified_accounts.create_index(
+        await self.accounts.create_index(
             keys='admin_name',
             name='admin-name-index',
             unique=True,
         )
-        await self.verified_accounts.create_index(
+        await self.accounts.create_index(
             keys='email',
             name='email-index',
             unique=True,
         )
-        await self.unverified_accounts.create_index(
-            keys='timestamp',
-            name='timestamp-index',
+        await self.accounts.create_index(
+            keys='created',
+            name='created-index',
             expireAfterSeconds=10*60,  # delete draft accounts after 10 mins
+            partialFilterExpression={'verified': {'$eq': False}},
         )
 
     async def fetch(self, admin_name):
         """Return the account data corresponding to given admin name."""
-        account = await self.verified_accounts.find_one(
+        account = await self.accounts.find_one(
             filter={'admin_name': admin_name},
             projection={'_id': False},
         )
@@ -42,13 +44,18 @@ class AccountManager:
         return account
 
     async def create(self, admin_name, email, password):
-        """Create new admin account with some default settings."""
+        """Create new admin account with some default account data."""
 
         # TODO create account with some default data
         # TODO validate data
 
-        if admin_name != account_data['admin_name']:
-            raise HTTPException(400, 'route/account data admin names differ')
+        account_data = {
+            '_id': secrets.token_hex(64),
+            'email': email,
+            'pwdhash': self.password_manager.hash_password(password),
+            'created': datetime.utcnow(),
+        }
+
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
         try:

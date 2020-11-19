@@ -28,6 +28,9 @@ class SurveyManager:
 
     def _remember(self, configuration):
         """Update local survey cache with config-generated survey object."""
+
+        # TODO implement as some sort of dict-fifo-queue?
+
         self.cache.update({
             identify(configuration): Survey(
                 configuration,
