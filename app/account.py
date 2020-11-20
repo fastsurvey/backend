@@ -12,28 +12,29 @@ from app.utils import timestamp
 class AccountManager:
     """The manager manages creating, updating and deleting admin accounts."""
 
-    async def __init__(self, database, survey_manager):
+    async def __init__(self, database, survey_manager, letterbox):
         """Initialize an admin manager instance."""
         self.accounts = database['accounts']
         self.configurations = database['configurations']
         self.survey_manager = survey_manager
         self.validator = AccountValidator.create()
         self.password_manager = PasswordManager()
+        self.letterbox = letterbox
 
         await self.accounts.create_index(
             keys='admin_name',
-            name='admin-name-index',
+            name='admin_name_index',
             unique=True,
         )
         await self.accounts.create_index(
             keys='email',
-            name='email-index',
+            name='email_index',
             unique=True,
         )
         await self.accounts.create_index(
-            keys='created',
-            name='created-index',
-            expireAfterSeconds=10*60,  # delete draft accounts after 10 mins
+            keys='creation_time',
+            name='creation_time_index',
+            expireAfterSeconds=15*60,  # delete draft accounts after 15 mins
             partialFilterExpression={'verified': {'$eq': False}},
         )
 
@@ -50,29 +51,49 @@ class AccountManager:
     async def create(self, admin_name, email, password):
         """Create new admin account with some default account data."""
 
-        # TODO create account with some default data
         # TODO validate data
+        # TODO validate password format
 
         account_data = {
             '_id': secrets.token_hex(64),
+            'admin_name': admin_name,
             'email': email,
-            'pwdhash': self.password_manager.hash_password(password),
-            'created': timestamp(),
+            'password_hash': self.password_manager.hash_password(password),
+            'creation_time': timestamp(),
+            'verified': False,
         }
 
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
-        try:
-            await self.database['accounts'].insert_one(account_data)
-        except DuplicateKeyError as error:
-            index = str(error).split()[7]
-            att = 'admin name' if index == 'admin-name-index' else 'email'
-            raise HTTPException(400, f'{att} already taken')
+        while True:
+            try:
+                await self.accounts.insert_one(account_data)
+                break
+            except DuplicateKeyError as error:
+                index = str(error).split()[7]
+                if index == 'admin_name_index':
+                    raise HTTPException(400, f'admin name already taken')
+                if index == 'email_index':
+                    raise HTTPException(400, f'email already taken')
+                if index == '_id_':
+                    account_data['_id'] = secrets.token_hex(64)
+
+        status = await self.letterbox.send_account_verification_mail(
+            admin_name=admin_name,
+            receiver=email,
+            token=account_data['_id'],
+        )
+        if status != 200:
+            # we do not delete the unverified account here, as the admin could
+            # request a new verification email, and the account gets deleted
+            # anyways after a few minutes
+            raise HTTPException(500, 'email delivery failure')
 
     async def update(self, admin_name, account_data):
         """Update existing admin account data in the database."""
 
         # TODO update survey names and ids when admin name is changed
+
         if admin_name != account_data['admin_name']:
             raise HTTPException(501, 'admin name changes not yet implemented')
 

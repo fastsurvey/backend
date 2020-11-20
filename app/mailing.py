@@ -59,21 +59,32 @@ class Letterbox:
         )
         return await self.send(receiver, subject, html)
 
-    async def send_account_verification_email(self, receiver: str, token: str):
+    async def send_account_verification_email(
+            self,
+            admin_name,
+            receiver,
+            token,
+        ):
         """Send confirmation email to verify an account email address."""
+
+        # TODO
+
         subject = 'Welcome to FastSurvey!'
         # verification url
         vurl = f'{FRONTEND_URL}/verify?token={token}'
         html = (
-            '<p>Welcome to FastSurvey!</p>'
+            f'<p>Welcome to FastSurvey, {admin_name}!</p>'
             + f'<p>Please verify your email address by <a href="{vurl}" target="_blank">clicking here</a>.</p>'
-            + '<p>The verification link is valid for 10 minutes.</p>'
+            + '<p>The verification link is valid for 15 minutes.</p>'
             + '<p>Best, the FastSurvey team</p>'
         )
         return await self.send(receiver, subject, html)
 
     async def send_password_reset_email(self, receiver: str, token: str):
         """Send email in order to reset the password of an existing account."""
+
+        # TODO
+
         subject = 'Reset Your FastSurvey Password'
         # password reset url
         rurl = f'{FRONTEND_URL}/set-password?token={token}'

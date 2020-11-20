@@ -166,15 +166,15 @@ class Survey:
 
     async def submit(self, submission):
         """Save a user submission in the submissions collection."""
-        ts = timestamp()
-        if ts < self.start:
+        submission_time = timestamp()
+        if submission_time < self.start:
             raise HTTPException(400, 'survey is not open yet')
-        if ts >= self.end:
+        if submission_time >= self.end:
             raise HTTPException(400, 'survey is closed')
         if not self.validator.validate(submission):
             raise HTTPException(400, 'invalid submission')
         submission = {
-            'submission-timestamp': timestamp,
+            'submission_time': submission_time,
             'data': submission,
         }
         if self.authentication == 'open':
@@ -201,17 +201,17 @@ class Survey:
 
     async def verify(self, token):
         """Verify the user's email address and save submission as verified."""
-        ts = timestamp()
+        verification_time = timestamp()
         if self.authentication != 'email':
             raise HTTPException(400, 'survey does not verify email addresses')
-        if ts < self.start:
+        if verification_time < self.start:
             raise HTTPException(400, 'survey is not open yet')
-        if ts >= self.end:
+        if verification_time >= self.end:
             raise HTTPException(400, 'survey is closed')
         submission = await self.submissions.find_one({'_id': token})
         if submission is None:
             raise HTTPException(401, 'invalid token')
-        submission['verification-timestamp'] = timestamp
+        submission['verification_time'] = verification_time
         submission['_id'] = submission['data'][str(self.ei + 1)]
         await self.vss.find_one_and_replace(
             filter={'_id': submission['_id']},

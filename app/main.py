@@ -41,7 +41,7 @@ letterbox = Letterbox()
 # instantiate survey manager
 survey_manager = SurveyManager(database, letterbox)
 # instantiate admin acount manager
-account_manager = await AccountManager(database, survey_manager)
+account_manager = await AccountManager(database, survey_manager, letterbox)
 
 
 @app.get('/admins/{admin_name}')
