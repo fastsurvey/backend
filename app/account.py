@@ -60,15 +60,14 @@ class AccountManager:
 
     async def create(self, admin_name, email_address, password):
         """Create new admin account with some default account data."""
-
-        # TODO validate password format
-
         account_data = {
             'admin_name': admin_name,
             'email_address': email_address,
         }
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
+        if not self.password_manager.validate_password(password):
+            raise HTTPException(400, 'invalid password format')
         account_data = {
             '_id': secrets.token_hex(64),
             **account_data,
@@ -150,8 +149,6 @@ class AccountManager:
         """Update existing admin account data in the database."""
 
         # TODO handle email change specially, as it needs to be reverified
-        # TODO these settings need to be validated differently than
-        # the whole account data
 
         admin_id = self.token_manager.decode(access_token)
         if not self.validator.validate(account_data):
@@ -163,16 +160,21 @@ class AccountManager:
         if result.matched_count == 0:
             raise HTTPException(404, 'account not found')
 
-    async def delete(self, admin_name):
+    async def delete(self, admin_name, access_token):
         """Delete the admin including all her surveys from the database."""
-        await self.verified_accounts.delete_one({'admin_name': admin_name})
+        admin_id = self.token_manager.decode(access_token)
+        await self.accounts.delete_one({'_id': admin_id})
         cursor = self.configurations.find(
-            filter={'admin_name': admin_name},
+            filter={'admin_id': admin_id},
             projection={'_id': False, 'survey_name': True},
         )
-        survey_names = [e['survey_name'] for e in await cursor.to_list(None)]
+        survey_names = [
+            configuration['survey_name']
+            for configuration
+            in await cursor.to_list(None)
+        ]
         for survey_name in survey_names:
-            await self.survey_manager.delete(admin_name, survey_name)
+            await self.survey_manager.delete(admin_id, survey_name)
 
     async def fetch_configurations(self, admin_name, skip, limit):
         """Return list of admin's configurations within specified bounds."""

@@ -79,13 +79,10 @@ async def update_admin(
 @app.delete('/admins/{admin_name}')
 async def delete_admin(
         admin_name: str = Path(..., description='The username of the admin'),
+        access_token: str = Depends(oauth2_scheme),
     ):
     """Delete the admin and all her surveys from the database."""
-
-    # TODO check authentication
-    raise HTTPException(501, 'up for refactor')
-
-    return await account_manager.delete(admin_name)
+    return await account_manager.delete(admin_name, access_token)
 
 
 @app.get('/admins/{admin_name}/surveys')
