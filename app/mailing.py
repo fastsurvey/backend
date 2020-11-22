@@ -75,12 +75,17 @@ class Letterbox:
         html = (
             f'<p>Welcome to FastSurvey, {admin_name}!</p>'
             + f'<p>Please verify your email address by <a href="{vurl}" target="_blank">clicking here</a>.</p>'
-            + '<p>The verification link is valid for 15 minutes.</p>'
+            + '<p>The verification link is valid for 10 minutes.</p>'
             + '<p>Best, the FastSurvey team</p>'
         )
         return await self.send(receiver, subject, html)
 
-    async def send_password_reset_email(self, receiver: str, token: str):
+    async def send_password_reset_email(
+            self,
+            admin_name,
+            receiver,
+            token,
+        ):
         """Send email in order to reset the password of an existing account."""
 
         # TODO
@@ -89,7 +94,7 @@ class Letterbox:
         # password reset url
         rurl = f'{FRONTEND_URL}/set-password?token={token}'
         html = (
-            '<p>Hi there,</p>'
+            f'<p>Hello {admin_name}!</p>'
             + f'<p>You can set your new password by <a href="{rurl}" target="_blank">clicking here</a>.</p>'
             + '<p>Best, the FastSurvey team</p>'
         )

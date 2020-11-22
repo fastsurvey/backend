@@ -32,9 +32,14 @@ class AccountManager:
             unique=True,
         )
         await self.accounts.create_index(
+            keys='token',
+            name='token_index',
+            unique=True,
+        )
+        await self.accounts.create_index(
             keys='creation_time',
             name='creation_time_index',
-            expireAfterSeconds=15*60,  # delete draft accounts after 15 mins
+            expireAfterSeconds=10*60,  # delete draft accounts after 10 mins
             partialFilterExpression={'verified': {'$eq': False}},
         )
 
@@ -61,6 +66,7 @@ class AccountManager:
             'password_hash': self.password_manager.hash_password(password),
             'creation_time': timestamp(),
             'verified': False,
+            'token': secrets.token_hex(64),
         }
 
         if not self.validator.validate(account_data):
@@ -75,13 +81,17 @@ class AccountManager:
                     raise HTTPException(400, f'admin name already taken')
                 if index == 'email_index':
                     raise HTTPException(400, f'email already taken')
+                if index == 'token_index':
+                    account_data['token'] = secrets.token_hex(64)
                 if index == '_id_':
                     account_data['_id'] = secrets.token_hex(64)
+                else:
+                    raise HTTPException(500, 'account creation error')
 
         status = await self.letterbox.send_account_verification_mail(
             admin_name=admin_name,
             receiver=email,
-            token=account_data['_id'],
+            token=account_data['token'],
         )
         if status != 200:
             # we do not delete the unverified account here, as the admin could

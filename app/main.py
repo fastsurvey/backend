@@ -46,7 +46,7 @@ account_manager = await AccountManager(database, survey_manager, letterbox)
 
 @app.get('/admins/{admin_name}')
 async def fetch_admin(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
     ):
     """Fetch the given admin's account data."""
     raise HTTPException(401, 'authentication not yet implemented')
@@ -56,7 +56,7 @@ async def fetch_admin(
 
 @app.post('/admins/{admin_name}')
 async def create_admin(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
         email: str = Form(..., description='The admin\'s email address'),
         password: str = Form(..., description='The account password'),
     ):
@@ -66,7 +66,7 @@ async def create_admin(
 
 @app.put('/admins/{admin_name}')
 async def update_admin(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
         account_data: dict = Body(..., description='The updated account data'),
     ):
     """Update the given admin's account data."""
@@ -77,7 +77,7 @@ async def update_admin(
 
 @app.delete('/admins/{admin_name}')
 async def delete_admin(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
     ):
     """Delete the admin and all her surveys from the database."""
     raise HTTPException(401, 'authentication not yet implemented')
@@ -87,7 +87,7 @@ async def delete_admin(
 
 @app.get('/admins/{admin_name}/surveys')
 async def fetch_surveys(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
         skip: int = Query(0, description='Index of the first configuration'),
         limit: int = Query(10, description='Query limit; 0 means no limit'),
     ):
@@ -99,7 +99,7 @@ async def fetch_surveys(
 
 @app.get('/admins/{admin_name}/surveys/{survey_name}')
 async def fetch_survey(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
     ):
     """Fetch the configuration document of the given survey."""
@@ -109,7 +109,7 @@ async def fetch_survey(
 
 @app.post('/admins/{admin_name}/surveys/{survey_name}')
 async def create_survey(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
         configuration: dict = Body(..., description='The new configuration'),
     ):
@@ -121,7 +121,7 @@ async def create_survey(
 
 @app.put('/admins/{admin_name}/surveys/{survey_name}')
 async def update_survey(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
         configuration: dict = Body(..., description='Updated configuration'),
     ):
@@ -133,7 +133,7 @@ async def update_survey(
 
 @app.delete('/admins/{admin_name}/surveys/{survey_name}')
 async def delete_survey(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
     ):
     """Delete given survey and all its data (submissions, results, ...)."""
@@ -144,7 +144,7 @@ async def delete_survey(
 
 @app.post('/admins/{admin_name}/surveys/{survey_name}/submission')
 async def submit(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
         submission: dict = Body(..., description='The user submission'),
     ):
@@ -155,7 +155,7 @@ async def submit(
 
 @app.get('/admins/{admin_name}/surveys/{survey_name}/verification/{token}')
 async def verify(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
         token: str = Path(..., description='The verification token'),
     ):
@@ -166,7 +166,7 @@ async def verify(
 
 @app.get('/admins/{admin_name}/surveys/{survey_name}/results')
 async def aggregate(
-        admin_name: str = Path(..., description='The name of the admin'),
+        admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
     ):
     """Fetch the results of the given survey."""
