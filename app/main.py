@@ -90,13 +90,15 @@ async def fetch_surveys(
         admin_name: str = Path(..., description='The username of the admin'),
         skip: int = Query(0, description='Index of the first configuration'),
         limit: int = Query(10, description='Query limit; 0 means no limit'),
+        access_token: str = Depends(oauth2_scheme),
     ):
     """Fetch the admin's configurations sorted by the start date."""
-
-    # TODO check authentication
-    raise HTTPException(501, 'up for refactor')
-
-    return await account_manager.fetch_configurations(admin_name, skip, limit)
+    return await account_manager.fetch_configurations(
+        admin_name,
+        skip,
+        limit,
+        access_token,
+    )
 
 
 @app.get('/admins/{admin_name}/surveys/{survey_name}')

@@ -176,10 +176,17 @@ class AccountManager:
         for survey_name in survey_names:
             await self.survey_manager.delete(admin_id, survey_name)
 
-    async def fetch_configurations(self, admin_name, skip, limit):
-        """Return list of admin's configurations within specified bounds."""
+    async def fetch_configurations(
+            self,
+            admin_name,
+            skip,
+            limit,
+            access_token
+        ):
+        """Return a list of the admin's survey configurations."""
+        admin_id = self.token_manager.decode(access_token)
         cursor = self.configurations.find(
-            filter={'admin_name': admin_name},
+            filter={'admin_id': admin_id},
             projection={'_id': False},
             sort=[('start', DESCENDING)],
             skip=skip,
