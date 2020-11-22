@@ -100,6 +100,27 @@ class AccountManager:
             # anyways after a few minutes
             raise HTTPException(500, 'email delivery failure')
 
+    async def verify(self, token, password):
+        """Verify an existing account via its unique verification token."""
+        account_data = await self.accounts.find_one(
+            filter={'token': token},
+            projection={'_id': False, 'password_hash': True, 'verified': True},
+        )
+        if account_data is None:
+            raise HTTPException(401, 'invalid token')
+        password_hash = account_data['password_hash']
+        if not self.password_manager.verify_password(password, password_hash):
+            raise HTTPException(401, 'invalid password')
+        if account_data['verified'] is True:
+            raise HTTPException(400, 'account already verified')
+
+        # TODO check if update really took place, and else error
+
+        await self.accounts.update_one(
+            filter={'token': token},
+            update={'$set': {'verified': True}}
+        )
+
     async def update(self, admin_name, account_data):
         """Update existing admin account data in the database."""
 

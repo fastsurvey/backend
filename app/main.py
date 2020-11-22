@@ -94,7 +94,7 @@ async def fetch_surveys(
     """Fetch the admin's configurations sorted by the start date."""
     raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
-    return await survey_manager.fetch_multiple(admin_name, skip, limit)
+    return await account_manager.fetch_configurations(admin_name, skip, limit)
 
 
 @app.get('/admins/{admin_name}/surveys/{survey_name}')
@@ -173,3 +173,11 @@ async def aggregate(
     # TODO adapt result following authentication
     survey = await survey_manager.fetch(admin_name, survey_name)
     return await survey.aggregate()
+
+
+@app.post('/authentication/verification')
+async def verify_email_address(
+        token: str = Form(..., description='The account verification token'),
+        password: str = Form(..., description='The account password'),
+    ):
+    await account_manager.verify(token, password)
