@@ -46,15 +46,15 @@ def test_surveys():
 
 
 @pytest.fixture(scope='session')
-def test_admins():
+def test_accounts():
     """Provide mapping of test admin names to their test account data."""
-    folder = 'tests/admins'
+    folder = 'tests/accounts'
     admin_names = [s[:-5] for s in os.listdir(folder) if s.endswith('.json')]
-    tas = {}
-    with open(f'tests/admins.json', 'r') as e:
-        for admin_name in admin_names:
-            tas[admin_name] = json.load(e)
-    return tas
+    accounts = {}
+    for admin_name in admin_names:
+        with open(f'{folder}/{admin_name}.json', 'r') as e:
+            accounts[admin_name] = json.load(e)
+    return accounts
 
 
 async def reset(test_surveys):
