@@ -45,7 +45,7 @@ class AccountManager:
             partialFilterExpression={'verified': {'$eq': False}},
         )
 
-    async def fetch(self, access_token, admin_name):
+    async def fetch(self, admin_name, access_token):
         """Return the account data corresponding to given admin name."""
         admin_id = self.token_manager.decode(access_token)
         account_data = await self.accounts.find_one(
@@ -61,21 +61,22 @@ class AccountManager:
     async def create(self, admin_name, email_address, password):
         """Create new admin account with some default account data."""
 
-        # TODO validate data
         # TODO validate password format
 
         account_data = {
-            '_id': secrets.token_hex(64),
             'admin_name': admin_name,
             'email_address': email_address,
+        }
+        if not self.validator.validate(account_data):
+            raise HTTPException(400, 'invalid account data')
+        account_data = {
+            '_id': secrets.token_hex(64),
+            **account_data,
             'password_hash': self.password_manager.hash_password(password),
             'creation_time': now(),
             'verified': False,
             'token': secrets.token_hex(64),
         }
-
-        if not self.validator.validate(account_data):
-            raise HTTPException(400, 'invalid account data')
         while True:
             try:
                 await self.accounts.insert_one(account_data)
@@ -117,16 +118,12 @@ class AccountManager:
             raise HTTPException(401, 'invalid password')
         if account_data['verified'] is True:
             raise HTTPException(400, 'account already verified')
-
-        # TODO check if update really took place, and else error
-
-        status = await self.accounts.update_one(
+        result = await self.accounts.update_one(
             filter={'token': token},
             update={'$set': {'verified': True}}
         )
-        ##
-        print(status)
-        ##
+        if result.matched_count == 0:
+            raise HTTPException(401, 'invalid token')
         return self.token_manager.generate(account_data['_id'])
 
     async def authenticate(self, identifier, password):
@@ -141,7 +138,7 @@ class AccountManager:
             projection={'password_hash': True, 'verified': True},
         )
         if account_data is None:
-            raise HTTPException(404, 'admin not found')
+            raise HTTPException(404, 'account not found')
         password_hash = account_data['password_hash']
         if not self.password_manager.verify_password(password, password_hash):
             raise HTTPException(401, 'invalid password')
@@ -149,22 +146,22 @@ class AccountManager:
             raise HTTPException(400, 'account not verified')
         return self.token_manager.generate(account_data['_id'])
 
-    async def update(self, admin_id, account_data):
+    async def update(self, admin_name, account_data, access_token):
         """Update existing admin account data in the database."""
 
-        # TODO update survey names and ids when admin name is changed
+        # TODO handle email change specially, as it needs to be reverified
+        # TODO these settings need to be validated differently than
+        # the whole account data
 
-        if admin_name != account_data['admin_name']:
-            raise HTTPException(501, 'admin name changes not yet implemented')
-
+        admin_id = self.token_manager.decode(access_token)
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
-        result = await self.verified_accounts.replace_one(
-            filter={'admin_name': admin_name},
+        result = await self.accounts.replace_one(
+            filter={'_id': admin_id, 'admin_name': admin_name},
             replacement=account_data,
         )
         if result.matched_count == 0:
-            raise HTTPException(400, 'not an existing admin account')
+            raise HTTPException(404, 'account not found')
 
     async def delete(self, admin_name):
         """Delete the admin including all her surveys from the database."""

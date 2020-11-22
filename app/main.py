@@ -49,11 +49,11 @@ oauth2_scheme = OAuth2PasswordBearer('/authentication')
 
 @app.get('/admins/{admin_name}')
 async def fetch_admin(
-        access_token: str = Depends(oauth2_scheme),
         admin_name: str = Path(..., description='The username of the admin'),
+        access_token: str = Depends(oauth2_scheme),
     ):
     """Fetch the given admin's account data."""
-    return await account_manager.fetch(access_token, admin_name)
+    return await account_manager.fetch(admin_name, access_token)
 
 
 @app.post('/admins/{admin_name}')
@@ -70,11 +70,10 @@ async def create_admin(
 async def update_admin(
         admin_name: str = Path(..., description='The username of the admin'),
         account_data: dict = Body(..., description='The updated account data'),
+        access_token: str = Depends(oauth2_scheme),
     ):
     """Update the given admin's account data."""
-    raise HTTPException(401, 'authentication not yet implemented')
-    # TODO check authentication
-    return await account_manager.update(admin_name, account_data)
+    return await account_manager.update(admin_name, account_data, access_token)
 
 
 @app.delete('/admins/{admin_name}')
@@ -82,8 +81,10 @@ async def delete_admin(
         admin_name: str = Path(..., description='The username of the admin'),
     ):
     """Delete the admin and all her surveys from the database."""
-    raise HTTPException(401, 'authentication not yet implemented')
+
     # TODO check authentication
+    raise HTTPException(501, 'up for refactor')
+
     return await account_manager.delete(admin_name)
 
 
@@ -94,8 +95,10 @@ async def fetch_surveys(
         limit: int = Query(10, description='Query limit; 0 means no limit'),
     ):
     """Fetch the admin's configurations sorted by the start date."""
-    raise HTTPException(401, 'authentication not yet implemented')
+
     # TODO check authentication
+    raise HTTPException(501, 'up for refactor')
+
     return await account_manager.fetch_configurations(admin_name, skip, limit)
 
 
@@ -116,8 +119,10 @@ async def create_survey(
         configuration: dict = Body(..., description='The new configuration'),
     ):
     """Create new survey with given configuration."""
-    raise HTTPException(401, 'authentication not yet implemented')
+
     # TODO check authentication
+    raise HTTPException(501, 'up for refactor')
+
     await survey_manager.create(admin_name, survey_name, configuration)
 
 
@@ -128,8 +133,10 @@ async def update_survey(
         configuration: dict = Body(..., description='Updated configuration'),
     ):
     """Update survey with given configuration."""
-    raise HTTPException(401, 'authentication not yet implemented')
+
     # TODO check authentication
+    raise HTTPException(501, 'up for refactor')
+
     await survey_manager.update(admin_name, survey_name, configuration)
 
 
@@ -139,8 +146,10 @@ async def delete_survey(
         survey_name: str = Path(..., description='The name of the survey'),
     ):
     """Delete given survey and all its data (submissions, results, ...)."""
-    raise HTTPException(401, 'authentication not yet implemented')
+
     # TODO check authentication
+    raise HTTPException(501, 'up for refactor')
+
     await survey_manager.delete(admin_name, survey_name)
 
 
@@ -172,13 +181,16 @@ async def aggregate(
         survey_name: str = Path(..., description='The name of the survey'),
     ):
     """Fetch the results of the given survey."""
+
     # TODO adapt result following authentication
+    raise HTTPException(501, 'up for refactor')
+
     survey = await survey_manager.fetch(admin_name, survey_name)
     return await survey.aggregate()
 
 
 @app.post('/authentication')
-async def authenticate (
+async def authenticate(
         identifier: str = Form(..., description='The email or username'),
         password: str = Form(..., description='The account password'),
     ):
