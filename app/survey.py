@@ -4,7 +4,7 @@ import os
 from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 from pymongo.errors import DuplicateKeyError
-from pymongo import DESCENDING
+from cachetools import LRUCache
 
 from app.validation import SubmissionValidator, ConfigurationValidator
 from app.aggregation import Alligator
@@ -22,29 +22,15 @@ class SurveyManager:
         """Initialize a survey manager instance."""
         self.database = database
         self.letterbox = letterbox
-        self.cache = {}
+        self.cache = LRUCache(maxsize=256)
         self.validator = ConfigurationValidator.create()
-
-    def _remember(self, configuration):
-        """Update local survey cache with config-generated survey object."""
-
-        # TODO implement as some sort of dict-fifo-queue?
-
-        self.cache.update({
-            identify(configuration): Survey(
-                configuration,
-                self.database,
-                self.letterbox,
-            )
-        })
-
-    def _forget(self, admin_name, survey_name):
-        """Remove survey from cache, due to deletion or cache clearing."""
-        raise NotImplementedError
 
     async def fetch(self, admin_name, survey_name):
         """Return the survey object corresponding to admin and survey name."""
+
+        # TODO access survey over admin_id instead of admin_name
         survey_id = f'{admin_name}.{survey_name}'
+
         if survey_id not in self.cache:
             configuration = await self.database['configurations'].find_one(
                 filter={'_id': survey_id},
@@ -52,20 +38,12 @@ class SurveyManager:
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')
-            self._remember(configuration)
+            self.cache[survey_id] = Survey(
+                configuration,
+                self.database,
+                self.letterbox,
+            )
         return self.cache[survey_id]
-
-    async def fetch_multiple(self, admin_name, skip, limit):
-        """Return list of admin's configurations within specified bounds."""
-        cursor = self.database['configurations'].find(
-            filter={'admin_name': admin_name},
-            projection={'_id': False},
-            sort=[('start', DESCENDING)],
-            skip=skip,
-            limit=limit,
-        )
-        configurations = await cursor.to_list(None)
-        return configurations
 
     async def create(self, admin_name, survey_name, configuration):
         """Create a new survey configuration in the database and cache."""
@@ -75,13 +53,14 @@ class SurveyManager:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
-        configuration['_id'] = identify(configuration)
         try:
-            await self.database['configurations'].insert_one(configuration)
+            await self.database['configurations'].insert_one({
+                '_id': identify(configuration),
+                **configuration,
+            })
         except DuplicateKeyError:
             raise HTTPException(400, 'survey exists')
-        del configuration['_id']
-        self._remember(configuration)
+        self.cache[identify(configuration)] = configuration
 
     async def update(self, admin_name, survey_name, configuration):
         """Update a survey configuration in the database and cache."""
@@ -103,7 +82,7 @@ class SurveyManager:
         if result.matched_count == 0:
             raise HTTPException(400, 'not an existing survey')
         # del configuration['_id']
-        self._remember(configuration)
+        self.cache[identify(configuration)] = configuration
 
     async def sweep(self, admin_name, survey_name):
         """Delete all the submission data of the survey from the database.
@@ -126,7 +105,8 @@ class SurveyManager:
         """Delete the survey and all its data from the database and cache."""
         survey_id = f'{admin_name}.{survey_name}'
         await self.database['configurations'].delete_one({'_id': survey_id})
-        self.cache.pop(survey_id, None)  # delete if present
+        if survey_id in self.cache:
+            del self.cache[survey_id]
         await self.reset(admin_name, survey_name)
 
 
