@@ -175,9 +175,9 @@ async def aggregate(
     return await survey.aggregate()
 
 
-@app.post('/authentication/verification')
+@app.post('/authentication/email-verification')
 async def verify_email_address(
         token: str = Form(..., description='The account verification token'),
         password: str = Form(..., description='The account password'),
     ):
-    await account_manager.verify(token, password)
+    return await account_manager.verify(token, password)

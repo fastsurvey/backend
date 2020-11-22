@@ -20,6 +20,7 @@ class AccountManager:
         self.survey_manager = survey_manager
         self.validator = AccountValidator.create()
         self.password_manager = PasswordManager()
+        self.token_manager = TokenManager()
         self.letterbox = letterbox
 
         await self.accounts.create_index(
@@ -104,7 +105,7 @@ class AccountManager:
         """Verify an existing account via its unique verification token."""
         account_data = await self.accounts.find_one(
             filter={'token': token},
-            projection={'_id': False, 'password_hash': True, 'verified': True},
+            projection={'password_hash': True, 'verified': True},
         )
         if account_data is None:
             raise HTTPException(401, 'invalid token')
@@ -120,6 +121,7 @@ class AccountManager:
             filter={'token': token},
             update={'$set': {'verified': True}}
         )
+        return self.token_manager.generate(account_data['_id'])
 
     async def update(self, admin_name, account_data):
         """Update existing admin account data in the database."""
