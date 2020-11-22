@@ -1,7 +1,8 @@
 import os
 
-from fastapi import FastAPI, Path, Query, Body, Form, HTTPException
+from fastapi import FastAPI, Path, Query, Body, Form, HTTPException, Depends
 from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi.security import OAuth2PasswordBearer
 
 from app.mailing import Letterbox
 from app.account import AccountManager
@@ -42,16 +43,17 @@ letterbox = Letterbox()
 survey_manager = SurveyManager(database, letterbox)
 # instantiate admin acount manager
 account_manager = await AccountManager(database, survey_manager, letterbox)
+# fastapi password bearer
+oauth2_scheme = OAuth2PasswordBearer('/authentication')
 
 
 @app.get('/admins/{admin_name}')
 async def fetch_admin(
+        access_token: str = Depends(oauth2_scheme),
         admin_name: str = Path(..., description='The username of the admin'),
     ):
     """Fetch the given admin's account data."""
-    raise HTTPException(401, 'authentication not yet implemented')
-    # TODO check authentication
-    return await account_manager.fetch(admin_id)
+    return await account_manager.fetch(access_token, admin_name)
 
 
 @app.post('/admins/{admin_name}')

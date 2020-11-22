@@ -45,14 +45,17 @@ class AccountManager:
             partialFilterExpression={'verified': {'$eq': False}},
         )
 
-    async def fetch(self, admin_id):
+    async def fetch(self, access_token, admin_name):
         """Return the account data corresponding to given admin name."""
+        admin_id = self.token_manager.decode(access_token)
         account_data = await self.accounts.find_one(
             filter={'_id': admin_id},
             projection={'_id': False},
         )
         if account_data is None:
             raise HTTPException(404, 'admin not found')
+        if account_data['admin_name'] != admin_name:
+            raise HTTPException(401, 'unauthorized')
         return account_data
 
     async def create(self, admin_name, email_address, password):
