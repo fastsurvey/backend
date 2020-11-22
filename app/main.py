@@ -61,7 +61,7 @@ async def create_admin(
         password: str = Form(..., description='The account password'),
     ):
     """Create a new admin with default account data."""
-    return await account_manager.create(admin_name, email, password)
+    await account_manager.create(admin_name, email, password)
 
 
 @app.put('/admins/{admin_name}')

@@ -5,8 +5,8 @@ from fastapi import HTTPException
 from pymongo.errors import DuplicateKeyError
 
 from app.validation import AccountValidator
-from app.cryptography import PasswordManager
-from app.utils import timestamp
+from app.cryptography import PasswordManager, TokenManager
+from app.utils import now
 
 
 class AccountManager:
@@ -64,7 +64,7 @@ class AccountManager:
             'admin_name': admin_name,
             'email': email,
             'password_hash': self.password_manager.hash_password(password),
-            'creation_time': timestamp(),
+            'creation_time': now(),
             'verified': False,
             'token': secrets.token_hex(64),
         }

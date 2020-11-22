@@ -8,7 +8,7 @@ from pymongo import DESCENDING
 
 from app.validation import SubmissionValidator, ConfigurationValidator
 from app.aggregation import Alligator
-from app.utils import identify, timestamp
+from app.utils import identify, now
 
 
 # frontend url
@@ -166,7 +166,7 @@ class Survey:
 
     async def submit(self, submission):
         """Save a user submission in the submissions collection."""
-        submission_time = timestamp()
+        submission_time = now()
         if submission_time < self.start:
             raise HTTPException(400, 'survey is not open yet')
         if submission_time >= self.end:
@@ -201,7 +201,7 @@ class Survey:
 
     async def verify(self, token):
         """Verify the user's email address and save submission as verified."""
-        verification_time = timestamp()
+        verification_time = now()
         if self.authentication != 'email':
             raise HTTPException(400, 'survey does not verify email addresses')
         if verification_time < self.start:
@@ -224,7 +224,7 @@ class Survey:
 
     async def aggregate(self):
         """Query the survey submissions and return aggregated results."""
-        if timestamp() < self.end:
+        if now() < self.end:
             raise HTTPException(400, 'survey is not yet closed')
         self.results = self.results or await self.alligator.fetch()
         return self.results

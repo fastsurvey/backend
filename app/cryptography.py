@@ -1,11 +1,12 @@
 import jwt
 import os
 import base64
-import time
 
 from passlib.context import CryptContext
 from fastapi import HTTPException
 from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
+
+from utils import now
 
 
 # public JSON Web Token signature key
@@ -41,11 +42,12 @@ class TokenManager:
 
     def generate(self, user_id: str, time_to_live: int):
         """Generate a JWT containing the user id and an expiration date."""
+        timestamp = now()
         payload = {
             'iss': 'FastSurvey',
             'sub': user_id,
-            'iat': time.time(),
-            'exp': time.time() + time_to_live,
+            'iat': timestamp,
+            'exp': timestamp + time_to_live,
         }
         return jwt.encode(payload, PRIVATE_RSA_KEY, algorithm='RS256')
 

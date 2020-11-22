@@ -18,6 +18,6 @@ def isregex(value):
         return False
 
 
-def timestamp():
-    """Return unixtime utc timestamp integer."""
+def now():
+    """Return current unixtime utc timestamp integer."""
     return int(time.time())
