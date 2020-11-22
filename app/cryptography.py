@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from fastapi import HTTPException
 from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
 
-from utils import now
+from app.utils import now
 
 
 # public JSON Web Token signature key

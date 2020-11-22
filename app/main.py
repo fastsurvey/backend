@@ -42,7 +42,7 @@ letterbox = Letterbox()
 # instantiate survey manager
 survey_manager = SurveyManager(database, letterbox)
 # instantiate admin acount manager
-account_manager = await AccountManager(database, survey_manager, letterbox)
+account_manager = AccountManager(database, survey_manager, letterbox)
 # fastapi password bearer
 oauth2_scheme = OAuth2PasswordBearer('/authentication')
 

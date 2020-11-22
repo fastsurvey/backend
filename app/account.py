@@ -1,5 +1,6 @@
 import secrets
 import time
+import asyncio
 
 from fastapi import HTTPException
 from pymongo.errors import DuplicateKeyError
@@ -13,7 +14,7 @@ from app.utils import now
 class AccountManager:
     """The manager manages creating, updating and deleting admin accounts."""
 
-    async def __init__(self, database, survey_manager, letterbox):
+    def __init__(self, database, survey_manager, letterbox):
         """Initialize an admin manager instance."""
         self.accounts = database['accounts']
         self.configurations = database['configurations']
@@ -23,27 +24,29 @@ class AccountManager:
         self.token_manager = TokenManager()
         self.letterbox = letterbox
 
-        await self.accounts.create_index(
+        loop = asyncio.get_event_loop()
+
+        loop.run_until_complete(self.accounts.create_index(
             keys='admin_name',
             name='admin_name_index',
             unique=True,
-        )
-        await self.accounts.create_index(
+        ))
+        loop.run_until_complete(self.accounts.create_index(
             keys='email_address',
             name='email_address_index',
             unique=True,
-        )
-        await self.accounts.create_index(
+        ))
+        loop.run_until_complete(self.accounts.create_index(
             keys='token',
             name='token_index',
             unique=True,
-        )
-        await self.accounts.create_index(
+        ))
+        loop.run_until_complete(self.accounts.create_index(
             keys='creation_time',
             name='creation_time_index',
             expireAfterSeconds=10*60,  # delete draft accounts after 10 mins
             partialFilterExpression={'verified': {'$eq': False}},
-        )
+        ))
 
     async def fetch(self, admin_name, access_token):
         """Return the account data corresponding to given admin name."""
