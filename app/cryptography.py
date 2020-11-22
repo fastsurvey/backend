@@ -16,7 +16,7 @@ PRIVATE_RSA_KEY = base64.b64decode(os.getenv('PRIVATE_RSA_KEY'))
 
 
 class PasswordManager:
-    """The PasswordManager manages hashing and checking passwords."""
+    """The PasswordManager hashes, verifies and validates passwords."""
 
     def __init__(self):
         """Initialize a password manager instance."""
@@ -32,6 +32,10 @@ class PasswordManager:
     def verify_password(self, password, pwdhash):
         """Return true if the password results in the hash, else False."""
         return self.context.verify(password, pwdhash)
+
+    def validate_password(self, password):
+        """Validate that the password has the right format."""
+        return 8 <= len(password) <= 64
 
 
 class TokenManager:
