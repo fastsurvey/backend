@@ -51,7 +51,7 @@ async def fetch_admin(
     """Fetch the given admin's account data."""
     raise HTTPException(401, 'authentication not yet implemented')
     # TODO check authentication
-    return await account_manager.fetch(admin_name)
+    return await account_manager.fetch(admin_id)
 
 
 @app.post('/admins/{admin_name}')
@@ -173,6 +173,14 @@ async def aggregate(
     # TODO adapt result following authentication
     survey = await survey_manager.fetch(admin_name, survey_name)
     return await survey.aggregate()
+
+
+@app.post('/authentication')
+async def authenticate (
+        identifier: str = Form(..., description='The email or username'),
+        password: str = Form(..., description='The account password'),
+    ):
+    return await account_manager.authenticate(identifier, password)
 
 
 @app.post('/authentication/email-verification')

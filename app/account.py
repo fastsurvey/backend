@@ -29,8 +29,8 @@ class AccountManager:
             unique=True,
         )
         await self.accounts.create_index(
-            keys='email',
-            name='email_index',
+            keys='email_address',
+            name='email_address_index',
             unique=True,
         )
         await self.accounts.create_index(
@@ -45,17 +45,17 @@ class AccountManager:
             partialFilterExpression={'verified': {'$eq': False}},
         )
 
-    async def fetch(self, admin_name):
+    async def fetch(self, admin_id):
         """Return the account data corresponding to given admin name."""
-        account = await self.accounts.find_one(
-            filter={'admin_name': admin_name},
+        account_data = await self.accounts.find_one(
+            filter={'_id': admin_id},
             projection={'_id': False},
         )
-        if account is None:
+        if account_data is None:
             raise HTTPException(404, 'admin not found')
-        return account
+        return account_data
 
-    async def create(self, admin_name, email, password):
+    async def create(self, admin_name, email_address, password):
         """Create new admin account with some default account data."""
 
         # TODO validate data
@@ -64,7 +64,7 @@ class AccountManager:
         account_data = {
             '_id': secrets.token_hex(64),
             'admin_name': admin_name,
-            'email': email,
+            'email_address': email_address,
             'password_hash': self.password_manager.hash_password(password),
             'creation_time': now(),
             'verified': False,
@@ -81,7 +81,7 @@ class AccountManager:
                 index = str(error).split()[7]
                 if index == 'admin_name_index':
                     raise HTTPException(400, f'admin name already taken')
-                if index == 'email_index':
+                if index == 'email_address_index':
                     raise HTTPException(400, f'email already taken')
                 if index == 'token_index':
                     account_data['token'] = secrets.token_hex(64)
@@ -92,7 +92,7 @@ class AccountManager:
 
         status = await self.letterbox.send_account_verification_mail(
             admin_name=admin_name,
-            receiver=email,
+            receiver=email_address,
             token=account_data['token'],
         )
         if status != 200:
@@ -117,13 +117,36 @@ class AccountManager:
 
         # TODO check if update really took place, and else error
 
-        await self.accounts.update_one(
+        status = await self.accounts.update_one(
             filter={'token': token},
             update={'$set': {'verified': True}}
         )
+        ##
+        print(status)
+        ##
         return self.token_manager.generate(account_data['_id'])
 
-    async def update(self, admin_name, account_data):
+    async def authenticate(self, identifier, password):
+        """Authenticate admin by her admin_name or email and her password."""
+        expression = (
+            {'email_address': identifier}
+            if '@' in identifier
+            else {'admin_name': identifier}
+        )
+        account_data = await self.accounts.find_one(
+            filter=expression,
+            projection={'password_hash': True, 'verified': True},
+        )
+        if account_data is None:
+            raise HTTPException(404, 'admin not found')
+        password_hash = account_data['password_hash']
+        if not self.password_manager.verify_password(password, password_hash):
+            raise HTTPException(401, 'invalid password')
+        if account_data['verified'] is False:
+            raise HTTPException(400, 'account not verified')
+        return self.token_manager.generate(account_data['_id'])
+
+    async def update(self, admin_id, account_data):
         """Update existing admin account data in the database."""
 
         # TODO update survey names and ids when admin name is changed
