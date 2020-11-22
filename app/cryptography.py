@@ -37,22 +37,20 @@ class PasswordManager:
 class TokenManager:
     """The TokenManager manages encoding and decoding JSON Web Tokens."""
 
-    ACCESS_TOKEN_TTL = 30*60  # 30 minutes
-    REFRESH_TOKEN_TTL = 7*24*60*60  # 7 days
-
-    def generate(self, admin_id, time_to_live):
-        """Generate a JWT containing the user id and an expiration date."""
+    def generate(self, admin_id):
+        """Generate a JWT access token containing user id and expiration."""
         timestamp = now()
         payload = {
             'iss': 'FastSurvey',
             'sub': admin_id,
             'iat': timestamp,
-            'exp': timestamp + time_to_live,
+            'exp': timestamp + 2*60*60,  # tokens are valid for 2 hours
         }
-        return jwt.encode(payload, PRIVATE_RSA_KEY, algorithm='RS256')
+        access_token = jwt.encode(payload, PRIVATE_RSA_KEY, algorithm='RS256')
+        return {'access_token': access_token, 'token_type': 'bearer'}
 
     def decode(self, token):
-        """Decode the given JWT and return the user id."""
+        """Decode the given JWT access token and return the user id."""
         try:
             payload = jwt.decode(token, PUBLIC_RSA_KEY, algorithm='RS256')
         except ExpiredSignatureError:
@@ -62,11 +60,3 @@ class TokenManager:
         except InvalidTokenError:
             raise HTTPException(400, 'invalid token format')
         return payload['sub']
-
-    def oauth(self, admin_id):
-        """Generate an OAuth2 token containing an access and refresh JWT."""
-        return {
-            'access_token': self.generate(admin_id, self.ACCESS_TOKEN_TTL),
-            'refresh_token': self.generate(admin_id, self.REFRESH_TOKEN_TTL),
-            'token_type': 'bearer',
-        }
