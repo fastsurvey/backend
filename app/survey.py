@@ -1,6 +1,6 @@
 import secrets
 import os
-
+import asyncio
 from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 from pymongo.errors import DuplicateKeyError
@@ -25,16 +25,32 @@ class SurveyManager:
         self.cache = LRUCache(maxsize=256)
         self.validator = ConfigurationValidator.create()
 
+        loop = asyncio.get_event_loop()
+
+        loop.run_until_complete(self.database['configurations'].create_index(
+            keys=['admin_id', 'survey_name'],
+            name='admin_id_survey_name_index',
+            unique=True,
+        ))
+
     async def fetch(self, admin_name, survey_name):
         """Return the survey object corresponding to admin and survey name."""
 
-        # TODO access survey over admin_id instead of admin_name
-        survey_id = f'{admin_name}.{survey_name}'
+        account_data = self.database['accounts'].find_one(
+            filter={'admin_name': admin_name},
+            projection={'_id': True},
+        )
+        admin_id = account_data['_id']
 
+
+        assert set(account_data.keys()) == {'_id'}  # only return admin_id
+
+
+        survey_id = f'{admin_id}.{survey_name}'
         if survey_id not in self.cache:
             configuration = await self.database['configurations'].find_one(
-                filter={'_id': survey_id},
-                projection={'_id': False},
+                filter={'admin_id': admin_id, 'survey_name': survey_name},
+                projection={'_id': False, 'admin_id': False},
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')

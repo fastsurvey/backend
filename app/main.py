@@ -86,7 +86,7 @@ async def delete_admin(
 
 
 @app.get('/admins/{admin_name}/surveys')
-async def fetch_surveys(
+async def fetch_configurations(
         admin_name: str = Path(..., description='The username of the admin'),
         skip: int = Query(0, description='Index of the first configuration'),
         limit: int = Query(10, description='Query limit; 0 means no limit'),
@@ -102,11 +102,11 @@ async def fetch_surveys(
 
 
 @app.get('/admins/{admin_name}/surveys/{survey_name}')
-async def fetch_survey(
+async def fetch_configuration(
         admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
     ):
-    """Fetch the configuration document of the given survey."""
+    """Fetch the configuration document of a given survey."""
     survey = await survey_manager.fetch(admin_name, survey_name)
     return survey.configuration
 
