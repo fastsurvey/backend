@@ -6,7 +6,6 @@ RUN poetry config virtualenvs.create false
 
 COPY pyproject.toml pyproject.toml
 RUN poetry install --no-dev
-RUN pip list
 
 EXPOSE 8000
 
