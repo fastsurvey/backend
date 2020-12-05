@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from app.mailing import Letterbox
 from app.account import AccountManager
 from app.survey import SurveyManager
+from app.cryptography import TokenManager
 
 
 # check that required environment variables are set
@@ -39,10 +40,17 @@ motor_client = AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
 database = motor_client[ENVIRONMENT]
 # create email client
 letterbox = Letterbox()
+# create JWT manager
+token_manager = TokenManager()
 # instantiate survey manager
-survey_manager = SurveyManager(database, letterbox)
+survey_manager = SurveyManager(database, letterbox, token_manager)
 # instantiate admin acount manager
-account_manager = AccountManager(database, survey_manager, letterbox)
+account_manager = AccountManager(
+    database,
+    survey_manager,
+    letterbox,
+    token_manager,
+)
 # fastapi password bearer
 oauth2_scheme = OAuth2PasswordBearer('/authentication')
 
@@ -116,13 +124,15 @@ async def create_survey(
         admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
         configuration: dict = Body(..., description='The new configuration'),
+        access_token: str = Depends(oauth2_scheme),
     ):
     """Create new survey with given configuration."""
-
-    # TODO check authentication
-    raise HTTPException(501, 'up for refactor')
-
-    await survey_manager.create(admin_name, survey_name, configuration)
+    await survey_manager.create(
+        admin_name,
+        survey_name,
+        configuration,
+        access_token,
+    )
 
 
 @app.put('/admins/{admin_name}/surveys/{survey_name}')

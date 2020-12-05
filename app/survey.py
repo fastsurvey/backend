@@ -20,12 +20,13 @@ FRONTEND_URL = os.getenv('FRONTEND_URL')
 class SurveyManager:
     """The manager manages creating, updating and deleting surveys."""
 
-    def __init__(self, database, letterbox):
+    def __init__(self, database, letterbox, token_manager):
         """Initialize a survey manager instance."""
         self.database = database
         self.letterbox = letterbox
         self.cache = LRUCache(maxsize=256)
         self.validator = ConfigurationValidator.create()
+        self.token_manager = token_manager
 
         loop = asyncio.get_event_loop()
 
@@ -38,19 +39,21 @@ class SurveyManager:
             unique=True,
         ))
 
-    async def fetch(self, admin_name, survey_name):
-        """Return the survey object corresponding to admin and survey name."""
-
+    async def _get_admin_id(self, admin_name):
+        """Look up the primary admin key from her username."""
         account_data = self.database['accounts'].find_one(
             filter={'admin_name': admin_name},
             projection={'_id': True},
         )
         admin_id = account_data['_id']
 
-
         assert set(account_data.keys()) == {'_id'}  # only return admin_id
 
+        return admin_id
 
+    async def fetch(self, admin_name, survey_name):
+        """Return the survey object corresponding to admin and survey name."""
+        admin_id = self._get_admin_id(admin_name)
         survey_id = f'{admin_id}.{survey_name}'
         if survey_id not in self.cache:
             configuration = await self.database['configurations'].find_one(
@@ -66,10 +69,17 @@ class SurveyManager:
             )
         return self.cache[survey_id]
 
-    async def create(self, admin_name, survey_name, configuration):
+    async def create(
+            self,
+            admin_name,
+            survey_name,
+            configuration,
+            access_token,
+        ):
         """Create a new survey configuration in the database and cache."""
-        if admin_name != configuration['admin_name']:
-            raise HTTPException(400, 'route/configuration admin names differ')
+        admin_id = self._get_admin_id(admin_name)
+        if admin_id != self.token_manager.decode(access_token):
+            raise HTTPException(401, 'unauthorized')
         if survey_name != configuration['survey_name']:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):

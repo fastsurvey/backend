@@ -7,21 +7,21 @@ from pymongo.errors import DuplicateKeyError
 from pymongo import DESCENDING
 
 from app.validation import AccountValidator
-from app.cryptography import PasswordManager, TokenManager
+from app.cryptography import PasswordManager
 from app.utils import now
 
 
 class AccountManager:
     """The manager manages creating, updating and deleting admin accounts."""
 
-    def __init__(self, database, survey_manager, letterbox):
+    def __init__(self, database, survey_manager, letterbox, token_manager):
         """Initialize an admin manager instance."""
         self.accounts = database['accounts']
         self.configurations = database['configurations']
         self.survey_manager = survey_manager
         self.validator = AccountValidator.create()
         self.password_manager = PasswordManager()
-        self.token_manager = TokenManager()
+        self.token_manager = token_manager
         self.letterbox = letterbox
 
         loop = asyncio.get_event_loop()
