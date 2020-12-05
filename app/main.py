@@ -172,6 +172,16 @@ async def submit(
     return await survey.submit(submission)
 
 
+@app.delete('/admins/{admin_name}/surveys/{survey_name}/submissions')
+async def reset_survey(
+        admin_name: str = Path(..., description='The username of the admin'),
+        survey_name: str = Path(..., description='The name of the survey'),
+        access_token: str = Depends(oauth2_scheme),
+    ):
+    """Reset a survey by delete all submission data including any results."""
+    await survey_manager.reset(admin_name, survey_name, access_token)
+
+
 @app.get('/admins/{admin_name}/surveys/{survey_name}/verification/{token}')
 async def verify(
         admin_name: str = Path(..., description='The username of the admin'),

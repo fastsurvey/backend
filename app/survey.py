@@ -111,7 +111,7 @@ class SurveyManager:
         # del configuration['_id']
         self.cache[identify(configuration)] = configuration
 
-    async def archive(self, admin_id, survey_name):
+    async def _archive(self, admin_id, survey_name):
         """Delete submission data of a survey, but keep the results."""
         survey_id = f'{admin_id}.{survey_name}'
         await self.database[f'surveys.{survey_id}.submissions'].drop()
