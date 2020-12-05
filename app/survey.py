@@ -1,6 +1,8 @@
 import secrets
 import os
 import asyncio
+import pymongo
+
 from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 from pymongo.errors import DuplicateKeyError
@@ -28,7 +30,10 @@ class SurveyManager:
         loop = asyncio.get_event_loop()
 
         loop.run_until_complete(self.database['configurations'].create_index(
-            keys=['admin_id', 'survey_name'],
+            keys=[
+                ('admin_id', pymongo.ASCENDING),
+                ('survey_name', pymongo.ASCENDING)
+            ],
             name='admin_id_survey_name_index',
             unique=True,
         ))
