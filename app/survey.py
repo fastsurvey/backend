@@ -28,17 +28,6 @@ class SurveyManager:
         self.validator = ConfigurationValidator.create()
         self.token_manager = token_manager
 
-        loop = asyncio.get_event_loop()
-
-        loop.run_until_complete(self.database['configurations'].create_index(
-            keys=[
-                ('admin_id', pymongo.ASCENDING),
-                ('survey_name', pymongo.ASCENDING)
-            ],
-            name='admin_id_survey_name_index',
-            unique=True,
-        ))
-
     async def _get_admin_id(self, admin_name):
         """Look up the primary admin key from her username."""
         account_data = self.database['accounts'].find_one(
@@ -57,8 +46,8 @@ class SurveyManager:
         survey_id = f'{admin_id}.{survey_name}'
         if survey_id not in self.cache:
             configuration = await self.database['configurations'].find_one(
-                filter={'admin_id': admin_id, 'survey_name': survey_name},
-                projection={'_id': False, 'admin_id': False},
+                filter={'_id': survey_id},
+                projection={'_id': False},
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')
@@ -93,10 +82,17 @@ class SurveyManager:
             raise HTTPException(400, 'survey exists')
         self.cache[identify(configuration)] = configuration
 
-    async def update(self, admin_name, survey_name, configuration):
+    async def update(
+            self,
+            admin_name,
+            survey_name,
+            configuration,
+            access_token,
+        ):
         """Update a survey configuration in the database and cache."""
-        if admin_name != configuration['admin_name']:
-            raise HTTPException(400, 'route/configuration admin names differ')
+        admin_id = self._get_admin_id(admin_name)
+        if admin_id != self.token_manager.decode(access_token):
+            raise HTTPException(401, 'unauthorized')
         if survey_name != configuration['survey_name']:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):
@@ -115,30 +111,34 @@ class SurveyManager:
         # del configuration['_id']
         self.cache[identify(configuration)] = configuration
 
-    async def sweep(self, admin_name, survey_name):
-        """Delete all the submission data of the survey from the database.
-
-        We intentionally do not use self.fetch() here, as we want to delete
-        the survey entry in self.delete() before calling self.sweep()
-
-        """
-        survey_id = f'{admin_name}.{survey_name}'
+    async def archive(self, admin_id, survey_name):
+        """Delete submission data of a survey, but keep the results."""
+        survey_id = f'{admin_id}.{survey_name}'
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
-    async def reset(self, admin_name, survey_name):
+    async def reset(self, admin_name, survey_name, access_token):
         """Delete all submission data including the results of a survey."""
-        survey_id = f'{admin_name}.{survey_name}'
+        admin_id = self._get_admin_id(admin_name)
+        if admin_id != self.token_manager.decode(access_token):
+            raise HTTPException(401, 'unauthorized')
+        survey_id = f'{admin_id}.{survey_name}'
         await self.database['results'].delete_one({'_id': survey_id})
-        await self.sweep(admin_name, survey_name)
+        await self.database[f'surveys.{survey_id}.submissions'].drop()
+        await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
-    async def delete(self, admin_name, survey_name):
+    async def delete(self, admin_name, survey_name, access_token):
         """Delete the survey and all its data from the database and cache."""
-        survey_id = f'{admin_name}.{survey_name}'
+        admin_id = self._get_admin_id(admin_name)
+        if admin_id != self.token_manager.decode(access_token):
+            raise HTTPException(401, 'unauthorized')
+        survey_id = f'{admin_id}.{survey_name}'
         await self.database['configurations'].delete_one({'_id': survey_id})
         if survey_id in self.cache:
             del self.cache[survey_id]
-        await self.reset(admin_name, survey_name)
+        await self.database['results'].delete_one({'_id': survey_id})
+        await self.database[f'surveys.{survey_id}.submissions'].drop()
+        await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
 
 class Survey:

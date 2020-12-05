@@ -140,29 +140,28 @@ async def update_survey(
         admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
         configuration: dict = Body(..., description='Updated configuration'),
+        access_token: str = Depends(oauth2_scheme),
     ):
     """Update survey with given configuration."""
-
-    # TODO check authentication
-    raise HTTPException(501, 'up for refactor')
-
-    await survey_manager.update(admin_name, survey_name, configuration)
+    await survey_manager.update(
+        admin_name,
+        survey_name,
+        configuration,
+        access_token,
+    )
 
 
 @app.delete('/admins/{admin_name}/surveys/{survey_name}')
 async def delete_survey(
         admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
+        access_token: str = Depends(oauth2_scheme),
     ):
-    """Delete given survey and all its data (submissions, results, ...)."""
-
-    # TODO check authentication
-    raise HTTPException(501, 'up for refactor')
-
-    await survey_manager.delete(admin_name, survey_name)
+    """Delete given survey including all its submissions and other data."""
+    await survey_manager.delete(admin_name, survey_name, access_token)
 
 
-@app.post('/admins/{admin_name}/surveys/{survey_name}/submission')
+@app.post('/admins/{admin_name}/surveys/{survey_name}/submissions')
 async def submit(
         admin_name: str = Path(..., description='The username of the admin'),
         survey_name: str = Path(..., description='The name of the survey'),
