@@ -156,7 +156,6 @@ class ConfigurationValidator(Validator):
 
     # string validation regexes
     REGEXES = {
-        'admin_name': '^[a-z0-9-]{2,20}$',
         'survey_name': '^[a-z0-9-]{2,20}$',
     }
     # maximum character lengths (inclusive)
@@ -235,7 +234,7 @@ class ConfigurationValidator(Validator):
 
     def _validate_type_option(self, value):
         """Validate that value is a correct option field specification"""
-        keys = {'type', 'title', 'description', 'mandatory'}
+        keys = {'type', 'title', 'description', 'required'}
         return (
             type(value) is dict
             and set(value.keys()) == keys
@@ -244,7 +243,7 @@ class ConfigurationValidator(Validator):
             and len(value['title']) <= self.MXLNS['title']
             and type(value['description']) == str
             and len(value['description']) <= self.MXLNS['description']
-            and type(value['mandatory']) == bool
+            and type(value['required']) == bool
         )
 
     def _validate_type_radio(self, value):
@@ -314,7 +313,6 @@ class ConfigurationValidator(Validator):
     def _validate_type_configuration(self, value):
         """Validate that value is a correct survey configuration"""
         keys = {
-            'admin_name',
             'survey_name',
             'title',
             'description',
@@ -328,8 +326,6 @@ class ConfigurationValidator(Validator):
         return (
             type(value) is dict
             and set(value.keys()) == keys
-            and type(value['admin_name']) == str
-            and re.match(self.REGEXES['admin_name'], value['admin_name'])
             and type(value['survey_name']) == str
             and re.match(self.REGEXES['survey_name'], value['survey_name'])
             and type(value['title']) == str

@@ -45,9 +45,6 @@ class SurveyManager:
         if account_data is None:
             raise HTTPException(404, 'admin not found')
         admin_id = account_data['_id']
-
-        assert set(account_data.keys()) == {'_id'}  # only return admin_id
-
         return admin_id
 
     async def fetch(self, admin_name, survey_name):
@@ -177,9 +174,9 @@ class Survey:
         self.ei = Survey._get_email_field_index(self.configuration)
         self.validator = SubmissionValidator.create(self.configuration)
         self.letterbox = letterbox
-        self.alligator = Alligator(self.configuration, database)
-        self.submissions = database[f'surveys.{self.survey_id}.submissions']
-        self.vss = database[f'surveys.{self.survey_id}.verified-submissions']
+        self.alligator = Alligator(survey_id, self.configuration, database)
+        self.submissions = database[f'surveys.{survey_id}.submissions']
+        self.vss = database[f'surveys.{survey_id}.verified-submissions']
         self.results = None
 
     @staticmethod

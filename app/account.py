@@ -180,7 +180,11 @@ class AccountManager:
             in await cursor.to_list(None)
         ]
         for survey_name in survey_names:
-            await self.survey_manager.delete(admin_id, survey_name)
+            await self.survey_manager.delete(
+                admin_id,
+                survey_name,
+                access_token,
+            )
 
     async def fetch_configurations(
             self,

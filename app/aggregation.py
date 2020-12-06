@@ -4,10 +4,10 @@ from app.utils import identify
 class Alligator:
     """Does it aggregate ... or does it alligate ... ?"""
 
-    def __init__(self, configuration, database):
+    def __init__(self, survey_id, configuration, database):
         """Initialize alligator with some pipeline parts already defined."""
         self.configuration = configuration
-        self.survey_id = identify(configuration)
+        self.survey_id = survey_id
         self.collection = (
             database[f'surveys.{self.survey_id}.submissions']
             if self.configuration['authentication'] == 'open'
