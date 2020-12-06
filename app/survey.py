@@ -28,6 +28,17 @@ class SurveyManager:
         self.validator = ConfigurationValidator.create()
         self.token_manager = token_manager
 
+        loop = asyncio.get_event_loop()
+
+        loop.run_until_complete(self.database['configurations'].create_index(
+            keys=[
+                ('admin_id', pymongo.ASCENDING),
+                ('survey_name', pymongo.ASCENDING)
+            ],
+            name='admin_id_survey_name_index',
+            unique=True,
+        ))
+
     async def _get_admin_id(self, admin_name):
         """Look up the primary admin key from her username."""
         account_data = self.database['accounts'].find_one(
@@ -43,15 +54,16 @@ class SurveyManager:
     async def fetch(self, admin_name, survey_name):
         """Return the survey object corresponding to admin and survey name."""
         admin_id = self._get_admin_id(admin_name)
-        survey_id = f'{admin_id}.{survey_name}'
+        survey_id = identify(admin_id, survey_name)
         if survey_id not in self.cache:
             configuration = await self.database['configurations'].find_one(
-                filter={'_id': survey_id},
-                projection={'_id': False},
+                filter={'admin_id': admin_id, 'survey_name': survey_name},
+                projection={'_id': False, 'admin_id': False},
             )
             if configuration is None:
                 raise HTTPException(404, 'survey not found')
             self.cache[survey_id] = Survey(
+                survey_id,
                 configuration,
                 self.database,
                 self.letterbox,
@@ -75,12 +87,12 @@ class SurveyManager:
             raise HTTPException(400, 'invalid configuration')
         try:
             await self.database['configurations'].insert_one({
-                '_id': identify(configuration),
+                'admin_id': admin_id,
                 **configuration,
             })
         except DuplicateKeyError:
             raise HTTPException(400, 'survey exists')
-        self.cache[identify(configuration)] = configuration
+        self.cache[identify(admin_id, survey_name)] = configuration
 
     async def update(
             self,
@@ -97,23 +109,20 @@ class SurveyManager:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
-
-        # TODO should work without specifying _id extra, does it?
-        # configuration['_id'] = identify(configuration)
-
         result = await self.database['configurations'].replace_one(
-            # filter={'_id': configuration['_id']},
-            filter={'_id': identify(configuration)},
-            replacement=configuration,
+            filter={
+                'admin_id': admin_id,
+                'survey_name': configuration['survey_name'],
+            },
+            replacement={'admin_id': admin_id, **configuration}
         )
         if result.matched_count == 0:
             raise HTTPException(400, 'not an existing survey')
-        # del configuration['_id']
-        self.cache[identify(configuration)] = configuration
+        self.cache[identify(admin_id, survey_name)] = configuration
 
     async def _archive(self, admin_id, survey_name):
         """Delete submission data of a survey, but keep the results."""
-        survey_id = f'{admin_id}.{survey_name}'
+        survey_id = identify(admin_id, survey_name)
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
@@ -122,7 +131,7 @@ class SurveyManager:
         admin_id = self._get_admin_id(admin_name)
         if admin_id != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
-        survey_id = f'{admin_id}.{survey_name}'
+        survey_id = identify(admin_id, survey_name)
         await self.database['results'].delete_one({'_id': survey_id})
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
@@ -132,8 +141,10 @@ class SurveyManager:
         admin_id = self._get_admin_id(admin_name)
         if admin_id != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
-        survey_id = f'{admin_id}.{survey_name}'
-        await self.database['configurations'].delete_one({'_id': survey_id})
+        survey_id = identify(admin_id, survey_name)
+        await self.database['configurations'].delete_one(
+            filter={'admin_id': admin_id, 'survey_name': survey_name},
+        )
         if survey_id in self.cache:
             del self.cache[survey_id]
         await self.database['results'].delete_one({'_id': survey_id})
@@ -146,6 +157,7 @@ class Survey:
 
     def __init__(
             self,
+            survey_id,
             configuration,
             database,
             letterbox,
@@ -154,7 +166,7 @@ class Survey:
         self.configuration = configuration
         self.admin_name = self.configuration['admin_name']
         self.survey_name = self.configuration['survey_name']
-        self.survey_id = identify(configuration)
+        self.survey_id = survey_id
         self.title = self.configuration['title']
         self.start = self.configuration['start']
         self.end = self.configuration['end']

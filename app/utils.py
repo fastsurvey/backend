@@ -2,10 +2,8 @@ import re
 import time
 
 
-def identify(configuration):
-    """Build survey id from its configuration."""
-    admin_id = configuration['admin_id']
-    survey_name = configuration['survey_name']
+def identify(admin_id, survey_name):
+    """Build survey identifier from admin_id and survey_name."""
     return f'{admin_id}.{survey_name}'
 
 

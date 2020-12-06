@@ -201,7 +201,6 @@ async def aggregate(
     """Fetch the results of the given survey."""
 
     # TODO adapt result following authentication
-    raise HTTPException(501, 'up for refactor')
 
     survey = await survey_manager.fetch(admin_name, survey_name)
     return await survey.aggregate()

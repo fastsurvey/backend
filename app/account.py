@@ -55,6 +55,9 @@ class AccountManager:
             filter={'_id': admin_id},
             projection={'_id': False},
         )
+
+        # TODO do not return sensitive information e.g. password hash
+
         if account_data is None:
             raise HTTPException(404, 'admin not found')
         if account_data['admin_name'] != admin_name:
