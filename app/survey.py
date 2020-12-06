@@ -43,7 +43,7 @@ class SurveyManager:
             projection={'_id': True},
         )
         if account_data is None:
-            raise HTTPException(404, 'admin not found')
+            raise HTTPException(404, 'account not found')
         admin_id = account_data['_id']
         return admin_id
 
@@ -116,31 +116,35 @@ class SurveyManager:
             raise HTTPException(400, 'not an existing survey')
         self.cache[identify(admin_id, survey_name)] = configuration
 
+    async def reset(self, admin_name, survey_name, access_token):
+        """Delete all submission data including the results of a survey."""
+        admin_id = await self._get_admin_id(admin_name)
+        if admin_id != self.token_manager.decode(access_token):
+            raise HTTPException(401, 'unauthorized')
+        self._reset(admin_id, survey_name)
+
+    async def delete(self, admin_name, survey_name, access_token):
+        """Delete the survey and all its data from the database and cache."""
+        admin_id = await self._get_admin_id(admin_name)
+        if admin_id != self.token_manager.decode(access_token):
+            raise HTTPException(401, 'unauthorized')
+        self._delete(admin_id, survey_name)
+
     async def _archive(self, admin_id, survey_name):
         """Delete submission data of a survey, but keep the results."""
         survey_id = identify(admin_id, survey_name)
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
-    async def reset(self, admin_name, survey_name, access_token):
+    async def _reset(self, admin_id, survey_name):
         """Delete all submission data including the results of a survey."""
-        admin_id = await self._get_admin_id(admin_name)
-        if admin_id != self.token_manager.decode(access_token):
-            raise HTTPException(401, 'unauthorized')
         survey_id = identify(admin_id, survey_name)
         await self.database['results'].delete_one({'_id': survey_id})
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
-    async def delete(self, admin_name, survey_name, access_token):
+    async def _delete(self, admin_id, survey_name):
         """Delete the survey and all its data from the database and cache."""
-        admin_id = await self._get_admin_id(admin_name)
-
-        print(admin_id)
-        print(self.token_manager.decode(access_token))
-
-        if admin_id != self.token_manager.decode(access_token):
-            raise HTTPException(401, 'unauthorized')
         survey_id = identify(admin_id, survey_name)
         await self.database['configurations'].delete_one(
             filter={'admin_id': admin_id, 'survey_name': survey_name},

@@ -46,33 +46,47 @@ def test_surveys():
 
 
 @pytest.fixture(scope='function')
-def test_access_token():
+async def test_access_token():
     """Provide valid access token for fastsurvey test account."""
-    return main.account_manager.authenticate('fastsurvey', 'supersecure')
+    return await main.account_manager.authenticate('fastsurvey', 'supersecure')
+
+
+@pytest.fixture(scope='function')
+def test_admin_id(test_access_token):
+    """Provide admin id of fastsurvey test account."""
+    return main.token_manager.decode(test_access_token)
 
 
 async def reset(test_surveys):
     """Purge all admin and survey data locally and remotely and reset them."""
+    print(1)
     test_access_token = await main.account_manager.authenticate(
         'fastsurvey',
         'supersecure',
     )
+    print(2)
     await main.account_manager.delete('fastsurvey', test_access_token)
+    print(3)
     await main.account_manager.create(
         'fastsurvey',
         'support@fastsurvey.io',
         'supersecure',
     )
+    print(4)
     verification_token = await main.database['accounts'].find_one(
         filter={'admin_name': 'fastsurvey'},
         projection={'_id': False, 'verification_token': True},
     )
+    print(5)
     verification_token = verification_token['verification_token']
+    print(6)
     await main.account_manager.verify(verification_token, 'supersecure')
+    print(7)
     test_access_token = await main.account_manager.authenticate(
         'fastsurvey',
         'supersecure',
     )
+    print(8)
     for survey_name, parameters in test_surveys.items():
         await main.survey_manager.create(
             'fastsurvey',

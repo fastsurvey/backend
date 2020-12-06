@@ -53,11 +53,11 @@ class TokenManager:
         access_token = jwt.encode(payload, PRIVATE_RSA_KEY, algorithm='RS256')
         return {'access_token': access_token, 'token_type': 'bearer'}
 
-    def decode(self, token):
+    def decode(self, access_token):
         """Decode the given JWT access token and return the user id."""
         try:
             payload = jwt.decode(
-                token['access_token'],
+                access_token['access_token'],
                 PUBLIC_RSA_KEY,
                 algorithms=['RS256'],
             )

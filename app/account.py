@@ -59,7 +59,7 @@ class AccountManager:
         # TODO do not return sensitive information e.g. password hash
 
         if account_data is None:
-            raise HTTPException(404, 'admin not found')
+            raise HTTPException(404, 'account not found')
         if account_data['admin_name'] != admin_name:
             raise HTTPException(401, 'unauthorized')
         return account_data
