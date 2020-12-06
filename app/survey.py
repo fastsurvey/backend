@@ -10,7 +10,7 @@ from cachetools import LRUCache
 
 from app.validation import SubmissionValidator, ConfigurationValidator
 from app.aggregation import Alligator
-from app.utils import identify, now
+from app.utils import toid, now
 
 
 # frontend url
@@ -56,7 +56,7 @@ class SurveyManager:
     async def fetch(self, admin_name, survey_name):
         """Return the survey object corresponding to admin and survey name."""
         admin_id = await self._identify(admin_name)
-        survey_id = identify(admin_id, survey_name)
+        survey_id = toid(admin_id, survey_name)
         if survey_id not in self.cache:
             configuration = await self.database['configurations'].find_one(
                 filter={'admin_id': admin_id, 'survey_name': survey_name},
@@ -117,7 +117,7 @@ class SurveyManager:
             })
         except DuplicateKeyError:
             raise HTTPException(400, 'survey exists')
-        self.cache[identify(admin_id, survey_name)] = configuration
+        self.cache[toid(admin_id, survey_name)] = configuration
 
     async def _update(self, admin_id, survey_name, configuration):
         """Update a survey configuration in the database and cache."""
@@ -134,24 +134,24 @@ class SurveyManager:
         )
         if result.matched_count == 0:
             raise HTTPException(400, 'not an existing survey')
-        self.cache[identify(admin_id, survey_name)] = configuration
+        self.cache[toid(admin_id, survey_name)] = configuration
 
     async def _archive(self, admin_id, survey_name):
         """Delete submission data of a survey, but keep the results."""
-        survey_id = identify(admin_id, survey_name)
+        survey_id = toid(admin_id, survey_name)
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
     async def _reset(self, admin_id, survey_name):
         """Delete all submission data including the results of a survey."""
-        survey_id = identify(admin_id, survey_name)
+        survey_id = toid(admin_id, survey_name)
         await self.database['results'].delete_one({'_id': survey_id})
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
     async def _delete(self, admin_id, survey_name):
         """Delete the survey and all its data from the database and cache."""
-        survey_id = identify(admin_id, survey_name)
+        survey_id = toid(admin_id, survey_name)
         await self.database['configurations'].delete_one(
             filter={'admin_id': admin_id, 'survey_name': survey_name},
         )

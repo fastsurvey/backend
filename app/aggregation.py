@@ -1,5 +1,3 @@
-from app.utils import identify
-
 
 class Alligator:
     """Does it aggregate ... or does it alligate ... ?"""

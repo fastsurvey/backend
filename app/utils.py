@@ -2,7 +2,7 @@ import re
 import time
 
 
-def identify(admin_id, survey_name):
+def toid(admin_id, survey_name):
     """Build survey identifier from admin_id and survey_name."""
     return f'{admin_id}.{survey_name}'
 
