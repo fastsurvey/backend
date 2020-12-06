@@ -57,6 +57,16 @@ def test_accounts():
     return accounts
 
 
+@pytest.fixture(scope='session')
+def test_access_tokens(test_accounts):
+    """Provide mapping of test admin names to valid access tokens."""
+    access_tokens = {}
+    for admin_name, account_data in test_accounts.items():
+        admin_id = account_data['_id']
+        access_tokens[admin_name] = main.token_manager.generate(admin_id)
+    return access_tokens
+
+
 async def reset(test_surveys):
     """Purge all survey data locally and remotely and reset configurations."""
     for survey_name in test_surveys.keys():
