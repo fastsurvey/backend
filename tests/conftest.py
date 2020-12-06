@@ -52,20 +52,16 @@ async def test_access_token():
 
 
 @pytest.fixture(scope='function')
-def test_admin_id(test_access_token):
-    """Provide admin id of fastsurvey test account."""
-    return main.token_manager.decode(test_access_token)
+def test_admin_id():
+    """Provide the admin id of the fastsurvey test account."""
+    return await main.survey_manager._get_admin_id('fastsurvey')
 
 
 async def reset(test_surveys):
     """Purge all admin and survey data locally and remotely and reset them."""
-    print(1)
-    test_access_token = await main.account_manager.authenticate(
-        'fastsurvey',
-        'supersecure',
-    )
+    test_admin_id = await main.survey_manager._get_admin_id('fastsurvey')
     print(2)
-    await main.account_manager.delete('fastsurvey', test_access_token)
+    await main.account_manager._delete(test_admin_id)
     print(3)
     await main.account_manager.create(
         'fastsurvey',

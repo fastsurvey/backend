@@ -169,6 +169,9 @@ class AccountManager:
     async def delete(self, admin_name, access_token):
         """Delete the admin including all her surveys from the database."""
         admin_id = self.token_manager.decode(access_token)
+
+    async def _delete(self, admin_id):
+        """Delete the admin including all her surveys from the database."""
         await self.accounts.delete_one({'_id': admin_id})
         cursor = self.configurations.find(
             filter={'admin_id': admin_id},
@@ -180,11 +183,7 @@ class AccountManager:
             in await cursor.to_list(None)
         ]
         for survey_name in survey_names:
-            await self.survey_manager.delete(
-                admin_id,
-                survey_name,
-                access_token,
-            )
+            await self.survey_manager._delete(admin_id, survey_name)
 
     async def fetch_configurations(
             self,
