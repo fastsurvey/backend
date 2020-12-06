@@ -46,47 +46,46 @@ def test_surveys():
 
 
 @pytest.fixture(scope='session')
-def test_accounts():
-    """Provide mapping of test admin names to their test account data."""
-    folder = 'tests/accounts'
-    admin_names = [s[:-5] for s in os.listdir(folder) if s.endswith('.json')]
-    accounts = {}
-    for admin_name in admin_names:
-        with open(f'{folder}/{admin_name}.json', 'r') as e:
-            accounts[admin_name] = json.load(e)
-    return accounts
+def test_account_data():
+    """Provide account data of fastsurvey test admin account data."""
+    path = 'tests/accounts/fastsurvey.json'
+    with open(path, 'r') as e:
+        account_data = json.load(e)
+    return account_data
 
 
 @pytest.fixture(scope='session')
-def test_access_tokens(test_accounts):
-    """Provide mapping of test admin names to valid access tokens."""
-    access_tokens = {}
-    for admin_name, account_data in test_accounts.items():
-        admin_id = account_data['_id']
-        access_tokens[admin_name] = main.token_manager.generate(admin_id)
-    return access_tokens
+def test_access_token(test_account_data):
+    """Provide valid access token for fastsurvey test account."""
+    admin_id = test_account_data['_id']
+    return main.token_manager.generate(admin_id)
 
 
-async def reset(test_surveys):
+async def reset(test_surveys, test_access_token):
     """Purge all survey data locally and remotely and reset configurations."""
     for survey_name in test_surveys.keys():
-        await main.survey_manager.delete('fastsurvey', survey_name)
+        await main.survey_manager.delete(
+            'fastsurvey',
+            survey_name,
+            test_access_token,
+        )
     for survey_name, parameters in test_surveys.items():
         await main.survey_manager.create(
             'fastsurvey',
             survey_name,
             parameters['configuration'],
+            test_access_token,
         )
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def setup(test_surveys):
+async def setup(test_surveys, test_access_token):
     """Reset survey data and configurations before the first test starts."""
-    await reset(test_surveys)
+    await reset(test_surveys, test_access_token)
 
 
 @pytest.fixture(scope='function')
-async def cleanup(test_surveys):
+async def cleanup(test_surveys, test_access_token):
     """Reset survey data and configurations after a single test."""
     yield
-    await reset(test_surveys)
+    await reset(test_surveys, test_access_token)
