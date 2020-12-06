@@ -193,7 +193,7 @@ class AccountManager:
         admin_id = self.token_manager.decode(access_token)
         cursor = self.configurations.find(
             filter={'admin_id': admin_id},
-            projection={'_id': False},
+            projection={'_id': False, 'admin_id': False},
             sort=[('start', DESCENDING)],
             skip=skip,
             limit=limit,

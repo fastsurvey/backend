@@ -61,17 +61,23 @@ def test_access_token(test_account_data):
     return main.token_manager.generate(admin_id)
 
 
-async def reset(test_surveys, test_access_token):
-    """Purge all survey data locally and remotely and reset configurations."""
+async def reset(test_surveys, test_account_data, test_access_token):
+    """Purge all admin and survey data locally and remotely and reset them."""
+    await main.account_manager.delete('fastsurvey', test_access_token)
+    await main.account_manager.create(
+        test_account_data['admin_name'],
+        test_account_data['email_address'],
+        'supersecure',
+    )
     for survey_name in test_surveys.keys():
         await main.survey_manager.delete(
-            'fastsurvey',
+            test_account_data['admin_name'],
             survey_name,
             test_access_token,
         )
     for survey_name, parameters in test_surveys.items():
         await main.survey_manager.create(
-            'fastsurvey',
+            test_account_data['admin_name'],
             survey_name,
             parameters['configuration'],
             test_access_token,
@@ -79,13 +85,13 @@ async def reset(test_surveys, test_access_token):
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def setup(test_surveys, test_access_token):
+async def setup(test_surveys, test_account_data, test_access_token):
     """Reset survey data and configurations before the first test starts."""
-    await reset(test_surveys, test_access_token)
+    await reset(test_surveys, test_account_data, test_access_token)
 
 
 @pytest.fixture(scope='function')
-async def cleanup(test_surveys, test_access_token):
+async def cleanup(test_surveys, test_account_data, test_access_token):
     """Reset survey data and configurations after a single test."""
     yield
-    await reset(test_surveys, test_access_token)
+    await reset(test_surveys, test_account_data, test_access_token)

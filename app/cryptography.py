@@ -56,7 +56,11 @@ class TokenManager:
     def decode(self, token):
         """Decode the given JWT access token and return the user id."""
         try:
-            payload = jwt.decode(token, PUBLIC_RSA_KEY, algorithm='RS256')
+            payload = jwt.decode(
+                token['access_token'],
+                PUBLIC_RSA_KEY,
+                algorithms=['RS256'],
+            )
         except ExpiredSignatureError:
             raise HTTPException(401, 'token expired')
         except InvalidSignatureError:

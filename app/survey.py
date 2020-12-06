@@ -1,11 +1,11 @@
 import secrets
 import os
 import asyncio
-import pymongo
 
 from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 from pymongo.errors import DuplicateKeyError
+from pymongo import ASCENDING
 from cachetools import LRUCache
 
 from app.validation import SubmissionValidator, ConfigurationValidator
@@ -31,20 +31,19 @@ class SurveyManager:
         loop = asyncio.get_event_loop()
 
         loop.run_until_complete(self.database['configurations'].create_index(
-            keys=[
-                ('admin_id', pymongo.ASCENDING),
-                ('survey_name', pymongo.ASCENDING)
-            ],
+            keys=[('admin_id', ASCENDING), ('survey_name', ASCENDING)],
             name='admin_id_survey_name_index',
             unique=True,
         ))
 
     async def _get_admin_id(self, admin_name):
         """Look up the primary admin key from her username."""
-        account_data = self.database['accounts'].find_one(
+        account_data = await self.database['accounts'].find_one(
             filter={'admin_name': admin_name},
             projection={'_id': True},
         )
+        if account_data is None:
+            raise HTTPException(404, 'admin not found')
         admin_id = account_data['_id']
 
         assert set(account_data.keys()) == {'_id'}  # only return admin_id
@@ -53,7 +52,7 @@ class SurveyManager:
 
     async def fetch(self, admin_name, survey_name):
         """Return the survey object corresponding to admin and survey name."""
-        admin_id = self._get_admin_id(admin_name)
+        admin_id = await self._get_admin_id(admin_name)
         survey_id = identify(admin_id, survey_name)
         if survey_id not in self.cache:
             configuration = await self.database['configurations'].find_one(
@@ -78,7 +77,7 @@ class SurveyManager:
             access_token,
         ):
         """Create a new survey configuration in the database and cache."""
-        admin_id = self._get_admin_id(admin_name)
+        admin_id = await self._get_admin_id(admin_name)
         if admin_id != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
         if survey_name != configuration['survey_name']:
@@ -102,7 +101,7 @@ class SurveyManager:
             access_token,
         ):
         """Update a survey configuration in the database and cache."""
-        admin_id = self._get_admin_id(admin_name)
+        admin_id = await self._get_admin_id(admin_name)
         if admin_id != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
         if survey_name != configuration['survey_name']:
@@ -128,7 +127,7 @@ class SurveyManager:
 
     async def reset(self, admin_name, survey_name, access_token):
         """Delete all submission data including the results of a survey."""
-        admin_id = self._get_admin_id(admin_name)
+        admin_id = await self._get_admin_id(admin_name)
         if admin_id != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
         survey_id = identify(admin_id, survey_name)
@@ -138,7 +137,7 @@ class SurveyManager:
 
     async def delete(self, admin_name, survey_name, access_token):
         """Delete the survey and all its data from the database and cache."""
-        admin_id = self._get_admin_id(admin_name)
+        admin_id = await self._get_admin_id(admin_name)
         if admin_id != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
         survey_id = identify(admin_id, survey_name)
