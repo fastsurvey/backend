@@ -37,8 +37,8 @@ class AccountManager:
             unique=True,
         ))
         loop.run_until_complete(self.accounts.create_index(
-            keys='token',
-            name='token_index',
+            keys='verification_token',
+            name='verification_token_index',
             unique=True,
         ))
         loop.run_until_complete(self.accounts.create_index(
@@ -80,7 +80,7 @@ class AccountManager:
             'password_hash': self.password_manager.hash_password(password),
             'creation_time': now(),
             'verified': False,
-            'token': secrets.token_hex(64),
+            'verification_token': secrets.token_hex(64),
         }
         while True:
             try:
@@ -92,8 +92,8 @@ class AccountManager:
                     raise HTTPException(400, f'admin name already taken')
                 if index == 'email_address_index':
                     raise HTTPException(400, f'email already taken')
-                if index == 'token_index':
-                    account_data['token'] = secrets.token_hex(64)
+                if index == 'verification_token_index':
+                    account_data['verification_token'] = secrets.token_hex(64)
                 if index == '_id_':
                     account_data['_id'] = secrets.token_hex(64)
                 else:
@@ -102,7 +102,7 @@ class AccountManager:
         status = await self.letterbox.send_account_verification_email(
             admin_name=admin_name,
             receiver=email_address,
-            token=account_data['token'],
+            verification_token=account_data['verification_token'],
         )
         if status != 200:
             # we do not delete the unverified account here, as the admin could
@@ -110,10 +110,10 @@ class AccountManager:
             # anyways after a few minutes
             raise HTTPException(500, 'email delivery failure')
 
-    async def verify(self, token, password):
+    async def verify(self, verification_token, password):
         """Verify an existing account via its unique verification token."""
         account_data = await self.accounts.find_one(
-            filter={'token': token},
+            filter={'verification_token': verification_token},
             projection={'password_hash': True, 'verified': True},
         )
         if account_data is None:
@@ -124,7 +124,7 @@ class AccountManager:
         if account_data['verified'] is True:
             raise HTTPException(400, 'account already verified')
         result = await self.accounts.update_one(
-            filter={'token': token},
+            filter={'verification_token': verification_token},
             update={'$set': {'verified': True}}
         )
         if result.matched_count == 0:

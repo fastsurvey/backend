@@ -225,7 +225,7 @@ class Survey:
         if self.authentication == 'invitation':
             raise HTTPException(501, 'not implemented')
 
-    async def verify(self, token):
+    async def verify(self, verification_token):
         """Verify the user's email address and save submission as verified."""
         verification_time = now()
         if self.authentication != 'email':
@@ -234,7 +234,9 @@ class Survey:
             raise HTTPException(400, 'survey is not open yet')
         if verification_time >= self.end:
             raise HTTPException(400, 'survey is closed')
-        submission = await self.submissions.find_one({'_id': token})
+        submission = await self.submissions.find_one(
+            {'_id': verification_token},
+        )
         if submission is None:
             raise HTTPException(401, 'invalid token')
         submission['verification_time'] = verification_time

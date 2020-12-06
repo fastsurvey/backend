@@ -63,6 +63,12 @@ async def reset(test_surveys):
         'support@fastsurvey.io',
         'supersecure',
     )
+    verification_token = await main.database['accounts'].find_one(
+        filter={'admin_name': 'fastsurvey'},
+        projection={'_id': False, 'verification_token': True},
+    )
+    verification_token = verification_token['verification_token']
+    await main.account_manager.verify(verification_token, 'supersecure')
     test_access_token = await main.account_manager.authenticate(
         'fastsurvey',
         'supersecure',

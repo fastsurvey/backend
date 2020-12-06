@@ -45,17 +45,19 @@ class Letterbox:
             survey_name,
             title,
             receiver,
-            token,
+            verification_token,
         ):
         """Send confirmation email to verify a submission email address."""
         subject = 'Please verify your submission'
-        # verification url
-        vurl = f'{BACKEND_URL}/{admin_name}/{survey_name}/verification/{token}'
+        verification_url = (
+            f'{BACKEND_URL}/{admin_name}/{survey_name}'
+            f'/verification/{verification_token}'
+        )
         html = (
-            '<p>Hi there, we received your submission!</p>'
-            + f'<p>Survey: <strong>{title}</strong></p>'
-            + f'<p>Please verify your submission by <a href="{vurl}" target="_blank">clicking here</a>.</p>'
-            + '<p>Best, the FastSurvey team</p>'
+            f'<p>Hi there, we received your submission!</p>'
+            f'<p>Survey: <strong>{title}</strong></p>'
+            f'<p>Please verify your submission by <a href="{verification_url}" target="_blank">clicking here</a>.</p>'
+            f'<p>Best, the FastSurvey team</p>'
         )
         return await self.send(receiver, subject, html)
 
@@ -63,7 +65,7 @@ class Letterbox:
             self,
             admin_name,
             receiver,
-            token,
+            verification_token,
         ):
         """Send confirmation email to verify an account email address."""
 
