@@ -99,7 +99,7 @@ class AccountManager:
                 else:
                     raise HTTPException(500, 'account creation error')
 
-        status = await self.letterbox.send_account_verification_mail(
+        status = await self.letterbox.send_account_verification_email(
             admin_name=admin_name,
             receiver=email_address,
             token=account_data['token'],

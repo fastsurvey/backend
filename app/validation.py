@@ -135,7 +135,7 @@ class AccountValidator(Validator):
 
     SCHEMA = {
         'admin_name': {'type': 'string', 'regex': '^[a-z0-9-]{2,20}$'},
-        'email': {'type': 'string'},
+        'email_address': {'type': 'string'},
     }
 
     @classmethod
@@ -154,17 +154,20 @@ class AccountValidator(Validator):
 class ConfigurationValidator(Validator):
     """The custom cerberus validator for validating survey configurations."""
 
-    REGEXES = {  # string validation regexes
+    # string validation regexes
+    REGEXES = {
         'admin_name': '^[a-z0-9-]{2,20}$',
         'survey_name': '^[a-z0-9-]{2,20}$',
     }
-    MXLNS = {  # maximum character lengths (inclusive)
+    # maximum character lengths (inclusive)
+    MXLNS = {
         'title': 100,
         'description': 1000,
         'regex': 100,
         'hint': 100,
     }
-    MXVLS = {  # maximum field values (inclusive)
+    # maximum field values (inclusive)
+    MXVLS = {
         'max_chars': 10000,
     }
 

@@ -138,6 +138,10 @@ class SurveyManager:
     async def delete(self, admin_name, survey_name, access_token):
         """Delete the survey and all its data from the database and cache."""
         admin_id = await self._get_admin_id(admin_name)
+
+        print(admin_id)
+        print(self.token_manager.decode(access_token))
+
         if admin_id != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
         survey_id = identify(admin_id, survey_name)

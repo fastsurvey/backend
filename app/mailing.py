@@ -69,6 +69,7 @@ class Letterbox:
 
         # TODO
 
+        '''
         subject = 'Welcome to FastSurvey!'
         # verification url
         vurl = f'{FRONTEND_URL}/verify?token={token}'
@@ -79,6 +80,9 @@ class Letterbox:
             + '<p>Best, the FastSurvey team</p>'
         )
         return await self.send(receiver, subject, html)
+        '''
+
+        return 200
 
     async def send_password_reset_email(
             self,
@@ -90,6 +94,7 @@ class Letterbox:
 
         # TODO
 
+        '''
         subject = 'Reset Your FastSurvey Password'
         # password reset url
         rurl = f'{FRONTEND_URL}/set-password?token={token}'
@@ -99,3 +104,6 @@ class Letterbox:
             + '<p>Best, the FastSurvey team</p>'
         )
         return await self.send(receiver, subject, html)
+        '''
+
+        return 200
