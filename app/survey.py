@@ -48,7 +48,7 @@ class SurveyManager:
 
     async def _authorize(self, admin_name, access_token):
         """Authorize admin and look up the primary key from her username."""
-        admin_id = self._identify(admin_name)
+        admin_id = await self._identify(admin_name)
         if admin_id != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
         return admin_id
@@ -80,8 +80,8 @@ class SurveyManager:
             access_token,
         ):
         """Create a new survey configuration in the database and cache."""
-        admin_id = self._authorize(admin_name, access_token)
-        self._create(admin_id, survey_name, configuration)
+        admin_id = await self._authorize(admin_name, access_token)
+        await self._create(admin_id, survey_name, configuration)
 
     async def update(
             self,
@@ -91,18 +91,18 @@ class SurveyManager:
             access_token,
         ):
         """Update a survey configuration in the database and cache."""
-        admin_id = self._authorize(admin_name, access_token)
-        self._update(admin_id, survey_name, configuration)
+        admin_id = await self._authorize(admin_name, access_token)
+        await self._update(admin_id, survey_name, configuration)
 
     async def reset(self, admin_name, survey_name, access_token):
         """Delete all submission data including the results of a survey."""
-        admin_id = self._authorize(admin_name, access_token)
-        self._reset(admin_id, survey_name)
+        admin_id = await self._authorize(admin_name, access_token)
+        await self._reset(admin_id, survey_name)
 
     async def delete(self, admin_name, survey_name, access_token):
         """Delete the survey and all its data from the database and cache."""
-        admin_id = self._authorize(admin_name, access_token)
-        self._delete(admin_id, survey_name)
+        admin_id = await self._authorize(admin_name, access_token)
+        await self._delete(admin_id, survey_name)
 
     async def _create(self, admin_id, survey_name, configuration):
         """Create a new survey configuration in the database and cache."""

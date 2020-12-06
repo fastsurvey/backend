@@ -50,18 +50,20 @@ class AccountManager:
 
     async def fetch(self, admin_name, access_token):
         """Return the account data corresponding to given admin name."""
-        admin_id = self.token_manager.decode(access_token)
+        admin_id = self.survey_manager._authorize(admin_name, access_token)
+        return self._fetch(admin_id)
+
+    async def _fetch(self, admin_id):
+        """Return the account data corresponding to given admin name."""
         account_data = await self.accounts.find_one(
             filter={'_id': admin_id},
             projection={'_id': False},
         )
+        if account_data is None:
+            raise HTTPException(404, 'account not found')
 
         # TODO do not return sensitive information e.g. password hash
 
-        if account_data is None:
-            raise HTTPException(404, 'account not found')
-        if account_data['admin_name'] != admin_name:
-            raise HTTPException(401, 'unauthorized')
         return account_data
 
     async def create(self, admin_name, email_address, password):
@@ -153,22 +155,38 @@ class AccountManager:
 
     async def update(self, admin_name, account_data, access_token):
         """Update existing admin account data in the database."""
+        admin_id = self.survey_manager._authorize(admin_name, access_token)
+        self._update(admin_id, account_data)
+
+    async def delete(self, admin_name, access_token):
+        """Delete the admin including all her surveys from the database."""
+        admin_id = self.survey_manager._authorize(admin_name, access_token)
+        self._delete(admin_id)
+
+    async def fetch_configurations(
+            self,
+            admin_name,
+            skip,
+            limit,
+            access_token,
+        ):
+        """Return a list of the admin's survey configurations."""
+        admin_id = self.survey_manager._authorize(admin_name, access_token)
+        return await self._fetch_configurations(admin_id, skip, limit)
+
+    async def _update(self, admin_id, account_data):
+        """Update existing admin account data in the database."""
 
         # TODO handle email change specially, as it needs to be reverified
 
-        admin_id = self.token_manager.decode(access_token)
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
         result = await self.accounts.replace_one(
-            filter={'_id': admin_id, 'admin_name': admin_name},
+            filter={'_id': admin_id},
             replacement=account_data,
         )
         if result.matched_count == 0:
             raise HTTPException(404, 'account not found')
-
-    async def delete(self, admin_name, access_token):
-        """Delete the admin including all her surveys from the database."""
-        admin_id = self.token_manager.decode(access_token)
 
     async def _delete(self, admin_id):
         """Delete the admin including all her surveys from the database."""
@@ -185,15 +203,8 @@ class AccountManager:
         for survey_name in survey_names:
             await self.survey_manager._delete(admin_id, survey_name)
 
-    async def fetch_configurations(
-            self,
-            admin_name,
-            skip,
-            limit,
-            access_token
-        ):
+    async def _fetch_configurations(self, admin_id, skip, limit):
         """Return a list of the admin's survey configurations."""
-        admin_id = self.token_manager.decode(access_token)
         cursor = self.configurations.find(
             filter={'admin_id': admin_id},
             projection={'_id': False, 'admin_id': False},
