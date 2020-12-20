@@ -7,7 +7,7 @@ def test_adding_email_to_aggregation_pipeline(test_admin_id, test_surveys):
     """Test adding an email field to the aggregation pipeline."""
     configuration = test_surveys['email']['configuration']
     alligator = aggregation.Alligator(
-        utils.toid(test_admin_id, configuration['survey_name']),
+        utils.combine(test_admin_id, configuration['survey_name']),
         configuration,
         main.database,
     )
