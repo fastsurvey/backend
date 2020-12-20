@@ -11,7 +11,7 @@ class Alligator:
             if self.configuration['authentication'] == 'open'
             else database[f'surveys.{self.survey_id}.verified-submissions']
         )
-        self.results = database['results']
+        self.resultss = database['resultss']
         self.mapping = {
             'email': self._add_email,
             'option': self._add_option,
@@ -25,7 +25,7 @@ class Alligator:
             'count': {'$sum': 1},
         }
         self.merge = {
-            'into': 'results',
+            'into': 'resultss',
             'on': '_id',
             'whenMatched': 'replace',
             'whenNotMatched': 'insert',
@@ -82,7 +82,7 @@ class Alligator:
 
     async def fetch(self):
         """Aggregate and return the results of the survey."""
-        results = await self.results.find_one(
+        results = await self.resultss.find_one(
             filter={'_id': self.survey_id},
             projection={'_id': False},
         )
