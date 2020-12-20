@@ -3,11 +3,11 @@ import app.aggregation as aggregation
 import app.utils as utils
 
 
-def test_adding_email_to_aggregation_pipeline(test_admin_id, test_surveys):
+def test_adding_email_to_aggregation_pipeline(admin_id, configurations):
     """Test adding an email field to the aggregation pipeline."""
-    configuration = test_surveys['email']['configuration']
+    configuration = configurations['email']
     alligator = aggregation.Alligator(
-        utils.combine(test_admin_id, configuration['survey_name']),
+        utils.combine(admin_id, configuration['survey_name']),
         configuration,
         main.database,
     )
@@ -17,7 +17,7 @@ def test_adding_email_to_aggregation_pipeline(test_admin_id, test_surveys):
     )
     assert alligator.project == {}
     assert alligator.group == {
-        '_id': f'{test_admin_id}.email',
+        '_id': f'{admin_id}.email',
         'count': {'$sum': 1},
     }
 
