@@ -53,24 +53,28 @@ class SurveyManager:
             raise HTTPException(401, 'unauthorized')
         return admin_id
 
+    def _update_cache(self, configuration):
+        """Update survey object in the local cache."""
+        survey_id = combine(
+            configuration['admin_id'],
+            configuration['survey_name'],
+        )
+        self.cache[survey_id] = Survey(
+            survey_id,
+            configuration,
+            self.database,
+            self.letterbox,
+        )
+
     async def fetch(self, admin_name, survey_name):
-        """Return the survey object corresponding to admin and survey name."""
-        admin_id = await self._identify(admin_name)
-        survey_id = combine(admin_id, survey_name)
-        if survey_id not in self.cache:
-            configuration = await self.database['configurations'].find_one(
-                filter={'admin_id': admin_id, 'survey_name': survey_name},
-                projection={'_id': False, 'admin_id': False},
-            )
-            if configuration is None:
-                raise HTTPException(404, 'survey not found')
-            self.cache[survey_id] = Survey(
-                survey_id,
-                configuration,
-                self.database,
-                self.letterbox,
-            )
-        return self.cache[survey_id]
+        """Return survey configuration corresponding to admin/survey name."""
+        survey = await self._fetch(admin_name, survey_name)
+        return {
+            key:survey.configuration[key]
+            for key
+            in survey.configuration.keys()
+            if key not in ['admin_id']
+        }
 
     async def create(
             self,
@@ -104,20 +108,32 @@ class SurveyManager:
         admin_id = await self._authorize(admin_name, access_token)
         await self._delete(admin_id, survey_name)
 
+    async def _fetch(self, admin_name, survey_name):
+        """Return the survey object corresponding to admin and survey name."""
+        admin_id = await self._identify(admin_name)
+        survey_id = combine(admin_id, survey_name)
+        if survey_id not in self.cache:
+            configuration = await self.database['configurations'].find_one(
+                filter={'admin_id': admin_id, 'survey_name': survey_name},
+                projection={'_id': False},
+            )
+            if configuration is None:
+                raise HTTPException(404, 'survey not found')
+            self._update_cache(configuration)
+        return self.cache[survey_id]
+
     async def _create(self, admin_id, survey_name, configuration):
         """Create a new survey configuration in the database and cache."""
         if survey_name != configuration['survey_name']:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
+        configuration['admin_id'] = admin_id
         try:
-            await self.database['configurations'].insert_one({
-                'admin_id': admin_id,
-                **configuration,
-            })
+            await self.database['configurations'].insert_one(configuration)
         except DuplicateKeyError:
             raise HTTPException(400, 'survey exists')
-        self.cache[combine(admin_id, survey_name)] = configuration
+        self._update_cache(configuration)
 
     async def _update(self, admin_id, survey_name, configuration):
         """Update a survey configuration in the database and cache."""
@@ -125,16 +141,17 @@ class SurveyManager:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
+        configuration['admin_id'] = admin_id
         result = await self.database['configurations'].replace_one(
             filter={
-                'admin_id': admin_id,
+                'admin_id': configuration['admin_id'],
                 'survey_name': configuration['survey_name'],
             },
-            replacement={'admin_id': admin_id, **configuration}
+            replacement=configuration,
         )
         if result.matched_count == 0:
             raise HTTPException(400, 'not an existing survey')
-        self.cache[combine(admin_id, survey_name)] = configuration
+        self._update_cache(configuration)
 
     async def _archive(self, admin_id, survey_name):
         """Delete submission data of a survey, but keep the results."""

@@ -115,8 +115,7 @@ async def fetch_configuration(
         survey_name: str = Path(..., description='The name of the survey'),
     ):
     """Fetch the configuration document of a given survey."""
-    survey = await survey_manager.fetch(admin_name, survey_name)
-    return survey.configuration
+    return await survey_manager.fetch(admin_name, survey_name)
 
 
 @app.post('/admins/{admin_name}/surveys/{survey_name}')
@@ -168,7 +167,7 @@ async def submit(
         submission: dict = Body(..., description='The user submission'),
     ):
     """Validate submission and store it under pending submissions."""
-    survey = await survey_manager.fetch(admin_name, survey_name)
+    survey = await survey_manager._fetch(admin_name, survey_name)
     return await survey.submit(submission)
 
 
@@ -189,7 +188,7 @@ async def verify(
         token: str = Path(..., description='The verification token'),
     ):
     """Verify user token and either fail or redirect to success page."""
-    survey = await survey_manager.fetch(admin_name, survey_name)
+    survey = await survey_manager._fetch(admin_name, survey_name)
     return await survey.verify(token)
 
 
@@ -202,7 +201,7 @@ async def aggregate(
 
     # TODO adapt result following authentication
 
-    survey = await survey_manager.fetch(admin_name, survey_name)
+    survey = await survey_manager._fetch(admin_name, survey_name)
     return await survey.aggregate()
 
 
