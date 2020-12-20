@@ -75,6 +75,17 @@ async def admin_id():
 
 async def reset(configurations):
     """Purge all admin and survey data locally and remotely and reset it."""
+
+    '''
+    async with await main.motor_client.start_session() as session:
+        async with session.start_transaction():
+            #await main.database['toast'].rename('toast-reloaded')
+            #await main.database['toast-reloaded'].insert_one({'value': 'hello!'})
+            #await main.database['toast-reloaded'].rename('toast-reloaded-two')
+            #await main.database['toast-reloaded-two'].drop()
+            await main.database['japan'].insert_one({'value': 'what?'})
+    '''
+
     admin_id = await main.survey_manager._identify('fastsurvey')
     await main.account_manager._delete(admin_id)
     await main.account_manager.create(

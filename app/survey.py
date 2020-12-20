@@ -31,36 +31,23 @@ class SurveyManager:
         loop = asyncio.get_event_loop()
 
         loop.run_until_complete(self.database['configurations'].create_index(
-            keys=[('admin_id', ASCENDING), ('survey_name', ASCENDING)],
-            name='admin_id_survey_name_index',
+            keys=[('admin_name', ASCENDING), ('survey_name', ASCENDING)],
+            name='admin_name_survey_name_index',
             unique=True,
         ))
 
-    async def _identify(self, admin_name):
-        """Look up the primary admin key of an admin from her username."""
-        account_data = await self.database['accounts'].find_one(
-            filter={'admin_name': admin_name},
-            projection={'_id': True},
-        )
-        if account_data is None:
-            raise HTTPException(404, 'account not found')
-        return account_data['_id']
-
     async def _authorize(self, admin_name, access_token):
         """Authorize admin and look up the primary key from her username."""
-        admin_id = await self._identify(admin_name)
-        if admin_id != self.token_manager.decode(access_token):
+        if admin_name != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
-        return admin_id
 
     def _update_cache(self, configuration):
         """Update survey object in the local cache."""
         survey_id = combine(
-            configuration['admin_id'],
+            configuration['admin_name'],
             configuration['survey_name'],
         )
         self.cache[survey_id] = Survey(
-            survey_id,
             configuration,
             self.database,
             self.letterbox,
@@ -70,10 +57,10 @@ class SurveyManager:
         """Return survey configuration corresponding to admin/survey name."""
         survey = await self._fetch(admin_name, survey_name)
         return {
-            key:survey.configuration[key]
+            key: survey.configuration[key]
             for key
             in survey.configuration.keys()
-            if key not in ['admin_id']
+            if key not in ['admin_name']
         }
 
     async def create(
@@ -84,8 +71,8 @@ class SurveyManager:
             access_token,
         ):
         """Create a new survey configuration in the database and cache."""
-        admin_id = await self._authorize(admin_name, access_token)
-        await self._create(admin_id, survey_name, configuration)
+        self._authorize(admin_name, access_token)
+        await self._create(admin_name, survey_name, configuration)
 
     async def update(
             self,
@@ -95,26 +82,25 @@ class SurveyManager:
             access_token,
         ):
         """Update a survey configuration in the database and cache."""
-        admin_id = await self._authorize(admin_name, access_token)
-        await self._update(admin_id, survey_name, configuration)
+        await self._authorize(admin_name, access_token)
+        await self._update(admin_name, survey_name, configuration)
 
     async def reset(self, admin_name, survey_name, access_token):
         """Delete all submission data including the results of a survey."""
-        admin_id = await self._authorize(admin_name, access_token)
-        await self._reset(admin_id, survey_name)
+        await self._authorize(admin_name, access_token)
+        await self._reset(admin_name, survey_name)
 
     async def delete(self, admin_name, survey_name, access_token):
         """Delete the survey and all its data from the database and cache."""
-        admin_id = await self._authorize(admin_name, access_token)
-        await self._delete(admin_id, survey_name)
+        await self._authorize(admin_name, access_token)
+        await self._delete(admin_name, survey_name)
 
     async def _fetch(self, admin_name, survey_name):
         """Return the survey object corresponding to admin and survey name."""
-        admin_id = await self._identify(admin_name)
-        survey_id = combine(admin_id, survey_name)
+        survey_id = combine(admin_name, survey_name)
         if survey_id not in self.cache:
             configuration = await self.database['configurations'].find_one(
-                filter={'admin_id': admin_id, 'survey_name': survey_name},
+                filter={'admin_name': admin_name, 'survey_name': survey_name},
                 projection={'_id': False},
             )
             if configuration is None:
@@ -122,29 +108,29 @@ class SurveyManager:
             self._update_cache(configuration)
         return self.cache[survey_id]
 
-    async def _create(self, admin_id, survey_name, configuration):
+    async def _create(self, admin_name, survey_name, configuration):
         """Create a new survey configuration in the database and cache."""
         if survey_name != configuration['survey_name']:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
-        configuration['admin_id'] = admin_id
+        configuration['admin_name'] = admin_name
         try:
             await self.database['configurations'].insert_one(configuration)
+            self._update_cache(configuration)
         except DuplicateKeyError:
             raise HTTPException(400, 'survey exists')
-        self._update_cache(configuration)
 
-    async def _update(self, admin_id, survey_name, configuration):
+    async def _update(self, admin_name, survey_name, configuration):
         """Update a survey configuration in the database and cache."""
         if survey_name != configuration['survey_name']:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
-        configuration['admin_id'] = admin_id
+        configuration['admin_name'] = admin_name
         result = await self.database['configurations'].replace_one(
             filter={
-                'admin_id': configuration['admin_id'],
+                'admin_name': configuration['admin_name'],
                 'survey_name': configuration['survey_name'],
             },
             replacement=configuration,
@@ -153,25 +139,25 @@ class SurveyManager:
             raise HTTPException(400, 'not an existing survey')
         self._update_cache(configuration)
 
-    async def _archive(self, admin_id, survey_name):
+    async def _archive(self, admin_name, survey_name):
         """Delete submission data of a survey, but keep the results."""
-        survey_id = combine(admin_id, survey_name)
+        survey_id = combine(admin_name, survey_name)
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
-    async def _reset(self, admin_id, survey_name):
+    async def _reset(self, admin_name, survey_name):
         """Delete all submission data including the results of a survey."""
-        survey_id = combine(admin_id, survey_name)
+        survey_id = combine(admin_name, survey_name)
         await self.database['results'].delete_one({'_id': survey_id})
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
-    async def _delete(self, admin_id, survey_name):
+    async def _delete(self, admin_name, survey_name):
         """Delete the survey and all its data from the database and cache."""
-        survey_id = combine(admin_id, survey_name)
         await self.database['configurations'].delete_one(
-            filter={'admin_id': admin_id, 'survey_name': survey_name},
+            filter={'admin_name': admin_name, 'survey_name': survey_name},
         )
+        survey_id = combine(admin_name, survey_name)
         if survey_id in self.cache:
             del self.cache[survey_id]
         await self.database['results'].delete_one({'_id': survey_id})
@@ -184,7 +170,6 @@ class Survey:
 
     def __init__(
             self,
-            survey_id,
             configuration,
             database,
             letterbox,
@@ -193,17 +178,16 @@ class Survey:
         self.configuration = configuration
         self.admin_name = self.configuration['admin_name']
         self.survey_name = self.configuration['survey_name']
-        self.survey_id = survey_id
-        self.title = self.configuration['title']
+        self.survey_id = combine(self.admin_name, self.survey_name)
         self.start = self.configuration['start']
         self.end = self.configuration['end']
         self.authentication = self.configuration['authentication']
         self.ei = Survey._get_email_field_index(self.configuration)
         self.validator = SubmissionValidator.create(self.configuration)
         self.letterbox = letterbox
-        self.alligator = Alligator(survey_id, self.configuration, database)
-        self.submissions = database[f'surveys.{survey_id}.submissions']
-        self.vss = database[f'surveys.{survey_id}.verified-submissions']
+        self.alligator = Alligator(self.survey_id, self.configuration, database)
+        self.submissions = database[f'surveys.{self.survey_id}.submissions']
+        self.vss = database[f'surveys.{self.survey_id}.verified-submissions']
         self.results = None
 
     @staticmethod
@@ -240,7 +224,7 @@ class Survey:
             status = await self.letterbox.send_submission_verification_email(
                 self.admin_name,
                 self.survey_name,
-                self.title,
+                self.configuration['title'],
                 submission['data'][str(self.ei + 1)],
                 submission['_id'],
             )

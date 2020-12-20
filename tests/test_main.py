@@ -7,13 +7,13 @@ import app.main as main
 
 
 @pytest.mark.asyncio
-async def test_fetching_configuration_with_valid_identifier(test_surveys):
+async def test_fetching_configuration_with_valid_identifier(configurations):
     """Using valid survey identifier, test that correct config is returned."""
-    for survey_name, parameters in test_surveys.items():
+    for survey_name, configuration in configurations.items():
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
             response = await ac.get(f'/admins/fastsurvey/surveys/{survey_name}')
         assert response.status_code == 200
-        assert response.json() == parameters['configuration']
+        assert response.json() == configuration
 
 
 @pytest.mark.asyncio
