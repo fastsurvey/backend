@@ -3,6 +3,8 @@ import asyncio
 import json
 import os
 
+from copy import deepcopy
+
 import app.main as main
 
 
@@ -45,25 +47,25 @@ def test_survey_parameters():
 
 @pytest.fixture(scope='session')
 def configurations(test_survey_parameters):
-    """Provide mapping of test survey names to their test configuration."""
+    """Map test survey names to their test (exchange) configurations."""
     return test_survey_parameters['configurations']
 
 
 @pytest.fixture(scope='session')
 def resultss(test_survey_parameters):
-    """Provide mapping of test survey names to their test results."""
+    """Map test survey names to their test results."""
     return test_survey_parameters['resultss']
 
 
 @pytest.fixture(scope='session')
 def schemas(test_survey_parameters):
-    """Provide mapping of test survey names to their test schema."""
+    """Map test survey names to their test schema."""
     return test_survey_parameters['schemas']
 
 
 @pytest.fixture(scope='session')
 def submissionss(test_survey_parameters):
-    """Provide mapping of test survey names to their test submissions."""
+    """Map test survey names to their test submissions."""
     return test_survey_parameters['submissionss']
 
 
@@ -96,7 +98,7 @@ async def reset(admin_name, configurations):
         await main.survey_manager._create(
             admin_name=admin_name,
             survey_name=survey_name,
-            configuration=configuration,
+            configuration=deepcopy(configuration),
         )
 
 
@@ -107,7 +109,7 @@ async def setup(admin_name, configurations):
 
 
 @pytest.fixture(scope='function')
-async def cleanup(configurations):
+async def cleanup(admin_name, configurations):
     """Reset survey data and configurations after a single test."""
     yield
     await reset(admin_name, configurations)

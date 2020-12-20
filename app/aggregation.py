@@ -1,3 +1,5 @@
+from app.utils import combine
+
 
 class Alligator:
     """Does it aggregate ... or does it alligate ... ?"""
@@ -5,7 +7,10 @@ class Alligator:
     def __init__(self, survey_id, configuration, database):
         """Initialize alligator with some pipeline parts already defined."""
         self.configuration = configuration
-        self.survey_id = survey_id
+        self.survey_id = combine(
+            configuration['admin_name'],
+            configuration['survey_name'],
+        )
         self.collection = (
             database[f'surveys.{self.survey_id}.submissions']
             if self.configuration['authentication'] == 'open'
@@ -99,7 +104,7 @@ class Alligator:
                 allowDiskUse=True,
             )
             async for _ in cursor: pass  # make sure that the aggregation finished
-            results = await self.results.find_one(
+            results = await self.resultss.find_one(
                 filter={'_id': self.survey_id},
                 projection={'_id': False},
             )

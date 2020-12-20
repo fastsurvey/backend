@@ -7,49 +7,53 @@ import app.main as main
 
 
 @pytest.mark.asyncio
-async def test_fetching_configuration_with_valid_identifier(configurations):
+async def test_fetching_configuration_with_valid_identifier(
+        admin_name,
+        configurations,
+    ):
     """Using valid survey identifier, test that correct config is returned."""
     for survey_name, configuration in configurations.items():
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
-            response = await ac.get(f'/admins/fastsurvey/surveys/{survey_name}')
+            url = f'/admins/{admin_name}/surveys/{survey_name}'
+            response = await ac.get(url)
         assert response.status_code == 200
         assert response.json() == configuration
 
 
 @pytest.mark.asyncio
-async def test_fetching_configuration_with_invalid_identifier():
+async def test_fetching_configuration_with_invalid_identifier(admin_name):
     """Using invalid survey identifier, test that an exception is raised."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get('admins/fastsurvey/surveys/carrot')
+        url = f'/admins/{admin_name}/surveys/carrot'
+        response = await ac.get(url)
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_submitting_valid_submission(test_surveys, cleanup):
+async def test_submitting_valid_submission(admin_name, submissionss, cleanup):
     """Test that submission works with valid submissions for test surveys."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        for survey_name, parameters in test_surveys.items():
-            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-            for submission in parameters['submissions']['valid']:
-                response = await ac.post(
-                    url=f'/admins/fastsurvey/surveys/{survey_name}/submission',
-                    json=submission,
-                )
-                entry = await survey.submissions.find_one({'data': submission})
+        for survey_name, submissions in submissionss.items():
+            survey = await main.survey_manager._fetch(admin_name, survey_name)
+            url = f'/admins/{admin_name}/surveys/{survey_name}/submissions'
+            for submission in submissions['valid']:
+                response = await ac.post(url, json=submission)
                 assert response.status_code == 200
+                entry = await survey.submissions.find_one({'data': submission})
                 assert entry is not None
 
 
 @pytest.mark.asyncio
 async def test_submitting_valid_submission_with_duplicate_validation_token(
         monkeypatch,
-        test_surveys,
+        admin_name,
+        submissionss,
         cleanup,
     ):
     """Test that duplicate tokens in submissions are correctly resolved."""
     survey_name = 'complex-survey'
-    survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-    submissions = test_surveys[survey_name]['submissions']['valid']
+    survey = await main.survey_manager._fetch(admin_name, survey_name)
+    submissions = submissionss[survey_name]['valid']
     tokens = []
 
     def token(length):
@@ -57,15 +61,15 @@ async def test_submitting_valid_submission_with_duplicate_validation_token(
         tokens.append(str(len(tokens) // 3))
         return tokens[-1]
 
-    monkeypatch.setattr(secrets, 'token_hex', token)  # token generation mock
+    monkeypatch.setattr(secrets, 'token_hex', token)  # mock token generation
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         for i, submission in enumerate(submissions):
             response = await ac.post(
-                url=f'/admins/fastsurvey/surveys/{survey_name}/submission',
+                url=f'/admins/{admin_name}/surveys/{survey_name}/submissions',
                 json=submission,
             )
-            entry = await survey.submissions.find_one({'data': submission})
             assert response.status_code == 200
+            entry = await survey.submissions.find_one({'data': submission})
             assert entry is not None
             assert entry['_id'] == str(i)
 

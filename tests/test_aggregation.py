@@ -8,7 +8,7 @@ def test_adding_email_to_aggregation_pipeline(admin_name, configurations):
     configuration = configurations['email']
     alligator = aggregation.Alligator(
         utils.combine(admin_name, configuration['survey_name']),
-        configuration,
+        {'admin_name': admin_name, **configuration},
         main.database,
     )
     alligator._add_email(
@@ -27,7 +27,7 @@ def test_adding_option_to_aggregation_pipeline(admin_name, configurations):
     configuration = configurations['option']
     alligator = aggregation.Alligator(
         utils.combine(admin_name, configuration['survey_name']),
-        configuration,
+        {'admin_name': admin_name, **configuration},
         main.database,
     )
     alligator._add_option(
@@ -49,7 +49,7 @@ def test_adding_radio_to_aggregation_pipeline(admin_name, configurations):
     configuration = configurations['radio']
     alligator = aggregation.Alligator(
         utils.combine(admin_name, configuration['survey_name']),
-        configuration,
+        {'admin_name': admin_name, **configuration},
         main.database,
     )
     alligator._add_radio(
@@ -77,7 +77,7 @@ def test_adding_selection_to_aggregation_pipeline(admin_name, configurations):
     configuration = configurations['selection']
     alligator = aggregation.Alligator(
         utils.combine(admin_name, configuration['survey_name']),
-        configuration,
+        {'admin_name': admin_name, **configuration},
         main.database,
     )
     alligator._add_selection(
@@ -103,7 +103,7 @@ def test_adding_text_to_aggregation_pipeline(admin_name, configurations):
     configuration = configurations['text']
     alligator = aggregation.Alligator(
         utils.combine(admin_name, configuration['survey_name']),
-        configuration,
+        {'admin_name': admin_name, **configuration},
         main.database,
     )
     alligator._add_text(
