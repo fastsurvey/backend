@@ -27,11 +27,6 @@ class AccountManager:
         loop = asyncio.get_event_loop()
 
         loop.run_until_complete(self.accounts.create_index(
-            keys='admin_name',
-            name='admin_name_index',
-            unique=True,
-        ))
-        loop.run_until_complete(self.accounts.create_index(
             keys='email_address',
             name='email_address_index',
             unique=True,
@@ -50,26 +45,13 @@ class AccountManager:
 
     async def fetch(self, admin_name, access_token):
         """Return the account data corresponding to given admin name."""
-        admin_id = self.survey_manager._authorize(admin_name, access_token)
-        return self._fetch(admin_id)
-
-    async def _fetch(self, admin_id):
-        """Return the account data corresponding to given admin name."""
-        account_data = await self.accounts.find_one(
-            filter={'_id': admin_id},
-            projection={'_id': False},
-        )
-        if account_data is None:
-            raise HTTPException(404, 'account not found')
-
-        # TODO do not return sensitive information e.g. password hash
-
-        return account_data
+        self.survey_manager._authorize(admin_name, access_token)
+        return self._fetch(admin_name)
 
     async def create(self, admin_name, email_address, password):
         """Create new admin account with some default account data."""
         account_data = {
-            'admin_name': admin_name,
+            '_id': admin_name,
             'email_address': email_address,
         }
         if not self.validator.validate(account_data):
@@ -77,7 +59,6 @@ class AccountManager:
         if not self.password_manager.validate_password(password):
             raise HTTPException(400, 'invalid password format')
         account_data = {
-            '_id': secrets.token_hex(64),
             **account_data,
             'password_hash': self.password_manager.hash_password(password),
             'creation_time': now(),
@@ -90,14 +71,12 @@ class AccountManager:
                 break
             except DuplicateKeyError as error:
                 index = str(error).split()[7]
-                if index == 'admin_name_index':
+                if index == '_id_':
                     raise HTTPException(400, f'admin name already taken')
                 if index == 'email_address_index':
-                    raise HTTPException(400, f'email already taken')
+                    raise HTTPException(400, f'email address already taken')
                 if index == 'verification_token_index':
                     account_data['verification_token'] = secrets.token_hex(64)
-                if index == '_id_':
-                    account_data['_id'] = secrets.token_hex(64)
                 else:
                     raise HTTPException(500, 'account creation error')
 
@@ -138,7 +117,7 @@ class AccountManager:
         expression = (
             {'email_address': identifier}
             if '@' in identifier
-            else {'admin_name': identifier}
+            else {'_id': identifier}
         )
         account_data = await self.accounts.find_one(
             filter=expression,
@@ -155,8 +134,8 @@ class AccountManager:
 
     async def update(self, admin_name, account_data, access_token):
         """Update existing admin account data in the database."""
-        admin_id = self.survey_manager._authorize(admin_name, access_token)
-        self._update(admin_id, account_data)
+        self.survey_manager._authorize(admin_name, access_token)
+        self._update(admin_name, account_data)
 
     async def delete(self, admin_name, access_token):
         """Delete the admin including all her surveys from the database."""
@@ -171,28 +150,42 @@ class AccountManager:
             access_token,
         ):
         """Return a list of the admin's survey configurations."""
-        admin_id = self.survey_manager._authorize(admin_name, access_token)
+        self.survey_manager._authorize(admin_name, access_token)
         return await self._fetch_configurations(admin_id, skip, limit)
 
-    async def _update(self, admin_id, account_data):
+    async def _fetch(self, admin_name):
+        """Return the account data corresponding to given admin name."""
+        account_data = await self.accounts.find_one(
+            filter={'_id': admin_name},
+            projection={'_id': False},
+        )
+        if account_data is None:
+            raise HTTPException(404, 'account not found')
+
+        # TODO do not return sensitive information e.g. password hash
+
+        return account_data
+
+    async def _update(self, admin_name, account_data):
         """Update existing admin account data in the database."""
 
+        # TODO handle admin_name change with transactions
         # TODO handle email change specially, as it needs to be reverified
 
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
         result = await self.accounts.replace_one(
-            filter={'_id': admin_id},
+            filter={'_id': admin_name},
             replacement=account_data,
         )
         if result.matched_count == 0:
             raise HTTPException(404, 'account not found')
 
-    async def _delete(self, admin_id):
+    async def _delete(self, admin_name):
         """Delete the admin including all her surveys from the database."""
-        await self.accounts.delete_one({'_id': admin_id})
+        await self.accounts.delete_one({'_id': admin_name})
         cursor = self.configurations.find(
-            filter={'admin_id': admin_id},
+            filter={'admin_name': admin_name},
             projection={'_id': False, 'survey_name': True},
         )
         survey_names = [
@@ -201,13 +194,17 @@ class AccountManager:
             in await cursor.to_list(None)
         ]
         for survey_name in survey_names:
-            await self.survey_manager._delete(admin_id, survey_name)
+            await self.survey_manager._delete(admin_name, survey_name)
 
-    async def _fetch_configurations(self, admin_id, skip, limit):
+    async def _fetch_configurations(self, admin_name, skip, limit):
         """Return a list of the admin's survey configurations."""
         cursor = self.configurations.find(
-            filter={'admin_id': admin_id},
-            projection={'_id': False, 'admin_id': False},
+            filter={'admin_name': admin_name},
+            projection={
+                '_id': False,
+                'admin_name': False,
+                'survey_name': False,
+            },
             sort=[('start', DESCENDING)],
             skip=skip,
             limit=limit,

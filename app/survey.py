@@ -20,6 +20,16 @@ FRONTEND_URL = os.getenv('FRONTEND_URL')
 class SurveyManager:
     """The manager manages creating, updating and deleting surveys."""
 
+
+    # TODO make distinction between frontend/backend configuration format
+    # clearer, e.g. move exception handling into public functions and give
+    # private functions only the finished configuration document as
+    # argument.
+
+    # TODO do not expect survey name as part of configuration, but simply
+    # use the one of the route?
+
+
     def __init__(self, database, letterbox, token_manager):
         """Initialize a survey manager instance."""
         self.database = database
@@ -36,7 +46,7 @@ class SurveyManager:
             unique=True,
         ))
 
-    async def _authorize(self, admin_name, access_token):
+    def _authorize(self, admin_name, access_token):
         """Authorize admin and look up the primary key from her username."""
         if admin_name != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
@@ -82,17 +92,17 @@ class SurveyManager:
             access_token,
         ):
         """Update a survey configuration in the database and cache."""
-        await self._authorize(admin_name, access_token)
+        self._authorize(admin_name, access_token)
         await self._update(admin_name, survey_name, configuration)
 
     async def reset(self, admin_name, survey_name, access_token):
         """Delete all submission data including the results of a survey."""
-        await self._authorize(admin_name, access_token)
+        self._authorize(admin_name, access_token)
         await self._reset(admin_name, survey_name)
 
     async def delete(self, admin_name, survey_name, access_token):
         """Delete the survey and all its data from the database and cache."""
-        await self._authorize(admin_name, access_token)
+        self._authorize(admin_name, access_token)
         await self._delete(admin_name, survey_name)
 
     async def _fetch(self, admin_name, survey_name):
@@ -123,6 +133,9 @@ class SurveyManager:
 
     async def _update(self, admin_name, survey_name, configuration):
         """Update a survey configuration in the database and cache."""
+
+        # TODO handle survey_name change with transactions
+
         if survey_name != configuration['survey_name']:
             raise HTTPException(400, 'route/configuration survey names differ')
         if not self.validator.validate(configuration):
