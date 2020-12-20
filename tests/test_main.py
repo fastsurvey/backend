@@ -44,7 +44,25 @@ async def test_submitting_valid_submission(admin_name, submissionss, cleanup):
 
 
 @pytest.mark.asyncio
-async def test_submitting_valid_submission_with_duplicate_validation_token(
+async def test_submitting_invalid_submission(
+        admin_name,
+        submissionss,
+        cleanup,
+    ):
+    """Test that submit correctly fails for invalid test survey submissions."""
+    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        for survey_name, submissions in submissionss.items():
+            survey = await main.survey_manager._fetch(admin_name, survey_name)
+            url = f'/admins/{admin_name}/surveys/{survey_name}/submissions'
+            for submission in submissions['invalid']:
+                response = await ac.post(url, json=submission)
+                assert response.status_code == 400
+                entry = await survey.submissions.find_one()
+                assert entry is None
+
+
+@pytest.mark.asyncio
+async def test_duplicate_validation_token_resolution(
         monkeypatch,
         admin_name,
         submissionss,
@@ -75,27 +93,16 @@ async def test_submitting_valid_submission_with_duplicate_validation_token(
 
 
 @pytest.mark.asyncio
-async def test_submitting_invalid_submission(test_surveys, cleanup):
-    """Test that submit correctly fails for invalid test survey submissions."""
-    for survey_name, parameters in test_surveys.items():
-        for submission in parameters['submissions']['invalid']:
-            async with AsyncClient(app=main.app, base_url='http://test') as ac:
-                response = await ac.post(
-                    url=f'/admins/fastsurvey/surveys/{survey_name}/submission',
-                    json=submission,
-                )
-            survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-            entry = await survey.submissions.find_one()
-            assert response.status_code == 400
-            assert entry is None
-
-
-@pytest.mark.asyncio
-async def test_verifying_valid_token(monkeypatch, test_surveys, cleanup):
+async def test_verifying_valid_token(
+        monkeypatch,
+        admin_name,
+        submissionss,
+        cleanup,
+    ):
     """Test correct verification given a valid submission token."""
     survey_name = 'complex-survey'
-    survey = await main.survey_manager.fetch('fastsurvey', survey_name)
-    base = f'/admins/fastsurvey/surveys/{survey_name}'
+    survey = await main.survey_manager._fetch(admin_name, survey_name)
+    submissions = submissionss[survey_name]['valid']
     tokens = []
 
     def token(length):
@@ -105,14 +112,12 @@ async def test_verifying_valid_token(monkeypatch, test_surveys, cleanup):
 
     monkeypatch.setattr(secrets, 'token_hex', token)  # token generation mock
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        for submission in test_surveys[survey_name]['submissions']['valid']:
-            await ac.post(
-                url=f'{base}/submission',
-                json=submission,
-            )
+        base_url = f'/admins/{admin_name}/surveys/{survey_name}'
+        for submission in submissions:
+            await ac.post(f'{base_url}/submission', json=submission)
         for i, token in enumerate(tokens):
             response = await ac.get(
-                url=f'{base}/verification/{token}',
+                url=f'{base_url}/verification/{token}',
                 allow_redirects=False,
             )
             assert response.status_code == 307
@@ -214,23 +219,23 @@ async def test_verifying_with_no_prior_submission(survey):
 
 
 @pytest.mark.asyncio
-async def test_aggregating(test_surveys, cleanup):
+async def test_aggregating(admin_name, submissionss, resultss, cleanup):
     """Test that aggregation of test submissions returns the correct result."""
-    for survey_name, parameters in test_surveys.items():
+    for survey_name, submissions in submissionss.items():
         # push test submissions
-        survey = await main.survey_manager.fetch('fastsurvey', survey_name)
+        survey = await main.survey_manager._fetch(admin_name, survey_name)
         await survey.alligator.collection.insert_many([
             {'data': submission}
             for submission
-            in parameters['submissions']['valid']
+            in submissions['valid']
         ])
-        # manually close surveys so that we can aggregate
+        # manually close survey so that we can aggregate
         survey.end = 0
         # aggregate and fetch results
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
             response = await ac.get(
-                url=f'/admins/fastsurvey/surveys/{survey_name}/results',
+                url=f'/admins/{admin_name}/surveys/{survey_name}/results',
                 allow_redirects=False,
             )
         assert response.status_code == 200
-        assert response.json() == parameters['results']
+        assert response.json() == resultss[survey_name]
