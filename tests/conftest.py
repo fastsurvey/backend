@@ -67,13 +67,13 @@ def submissionss(test_survey_parameters):
     return test_survey_parameters['submissionss']
 
 
-@pytest.fixture(scope='function')
-async def admin_id():
-    """Provide the admin id of the fastsurvey test account."""
-    return await main.survey_manager._identify('fastsurvey')
+@pytest.fixture(scope='session')
+async def admin_name():
+    """Provide admin_name of test account."""
+    return 'fastsurvey'
 
 
-async def reset(configurations):
+async def reset(admin_name, configurations):
     """Purge all admin and survey data locally and remotely and reset it."""
 
     '''
@@ -86,30 +86,28 @@ async def reset(configurations):
             await main.database['japan'].insert_one({'value': 'what?'})
     '''
 
-    admin_id = await main.survey_manager._identify('fastsurvey')
-    await main.account_manager._delete(admin_id)
+    await main.account_manager._delete(admin_name)
     await main.account_manager.create(
-        'fastsurvey',
-        'support@fastsurvey.io',
-        'supersecure',
+        admin_name=admin_name,
+        email_address='support@fastsurvey.io',
+        password='supersecure',
     )
-    admin_id = await main.survey_manager._identify('fastsurvey')
     for survey_name, configuration in configurations.items():
         await main.survey_manager._create(
-            admin_id,
-            survey_name,
-            configuration,
+            admin_name=admin_name,
+            survey_name=survey_name,
+            configuration=configuration,
         )
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def setup(configurations):
+async def setup(admin_name, configurations):
     """Reset survey data and configurations before the first test starts."""
-    await reset(configurations)
+    await reset(admin_name, configurations)
 
 
 @pytest.fixture(scope='function')
 async def cleanup(configurations):
     """Reset survey data and configurations after a single test."""
     yield
-    await reset(configurations)
+    await reset(admin_name, configurations)
