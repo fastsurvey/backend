@@ -74,7 +74,7 @@ async def admin_id():
 
 
 async def reset(configurations):
-    """Purge all admin and survey data locally and remotely and reset them."""
+    """Purge all admin and survey data locally and remotely and reset it."""
     admin_id = await main.survey_manager._identify('fastsurvey')
     await main.account_manager._delete(admin_id)
     await main.account_manager.create(
@@ -82,9 +82,10 @@ async def reset(configurations):
         'support@fastsurvey.io',
         'supersecure',
     )
+    admin_id = await main.survey_manager._identify('fastsurvey')
     for survey_name, configuration in configurations.items():
         await main.survey_manager._create(
-            await main.survey_manager._identify('fastsurvey'),
+            admin_id,
             survey_name,
             configuration,
         )
