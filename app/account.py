@@ -152,7 +152,7 @@ class AccountManager:
         ):
         """Return a list of the admin's survey configurations."""
         self.survey_manager._authorize(admin_name, access_token)
-        return await self._fetch_configurations(admin_id, skip, limit)
+        return await self._fetch_configurations(admin_name, skip, limit)
 
     async def _fetch(self, admin_name):
         """Return the account data corresponding to given admin name."""

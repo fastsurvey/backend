@@ -32,36 +32,43 @@ class SubmissionValidator(Validator):
 
         """
         return cls(
-            cls._generate_schema(configuration),
+            cls._generate_validation_schema(configuration),
             require_all=True,
         )
 
     @staticmethod
-    def _generate_schema(configuration):
-        """Generate cerberus validation schema from a survey configuration."""
+    def _generate_validation_schema(configuration):
+        """Generate cerberus validation schema from a survey configuration.
 
-        rules = [
-            'min_chars',
-            'max_chars',
-            'min_select',
-            'max_select',
-            'mandatory',
-            'regex',
-        ]
+        The rules dict specifies as keys all validation rule names there are.
+        We map the validation rule names to the dict values while generating
+        the schema in order to avoid collisions with cerberus' predefined
+        rules as e.g. the case with 'required'.
+
+        """
+
+        rules = {
+            'min_chars': 'min_chars',
+            'max_chars': 'max_chars',
+            'min_select': 'min_select',
+            'max_select': 'max_select',
+            'required': 'req',
+            'regex': 'regex',
+        }
 
         def _generate_field_schema(field):
             """Recursively generate the cerberus schemas for a survey field."""
-            fs = {'type': field['type']}
+            schema = {'type': field['type']}
             if 'fields' in field.keys():
-                fs['schema'] = {
+                schema['schema'] = {
                     str(i+1): _generate_field_schema(subfield)
                     for i, subfield
                     in enumerate(field['fields'])
                 }
             for rule, value in field.items():
-                if rule in rules:
-                    fs[rule] = value
-            return fs
+                if rule in rules.keys():
+                    schema[rules[rule]] = value
+            return schema
 
         schema = {
             str(i+1): _generate_field_schema(field)
