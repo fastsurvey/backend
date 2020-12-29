@@ -47,7 +47,7 @@ class SurveyManager:
         ))
 
     def _authorize(self, admin_name, access_token):
-        """Authorize admin and look up the primary key from her username."""
+        """Authorize admin by decoding admin_name contained in access token."""
         if admin_name != self.token_manager.decode(access_token):
             raise HTTPException(401, 'unauthorized')
 

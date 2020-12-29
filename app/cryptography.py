@@ -41,12 +41,12 @@ class PasswordManager:
 class TokenManager:
     """The TokenManager manages encoding and decoding JSON Web Tokens."""
 
-    def generate(self, admin_id):
+    def generate(self, admin_name):
         """Generate a JWT access token containing user id and expiration."""
         timestamp = now()
         payload = {
             'iss': 'FastSurvey',
-            'sub': admin_id,
+            'sub': admin_name,
             'iat': timestamp,
             'exp': timestamp + 2*60*60,  # tokens are valid for 2 hours
         }

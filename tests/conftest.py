@@ -78,6 +78,7 @@ async def admin_name():
 async def reset(admin_name, configurations):
     """Purge all admin and survey data locally and remotely and reset it."""
 
+    # motor transaction example
     '''
     async with await main.motor_client.start_session() as session:
         async with session.start_transaction():

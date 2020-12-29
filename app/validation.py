@@ -134,7 +134,7 @@ class AccountValidator(Validator):
     """The custom cerberus validator for validating admin account data."""
 
     SCHEMA = {
-        '_id': {'type': 'string', 'regex': '^[a-z0-9-]{2,20}$'},
+        'admin_name': {'type': 'string', 'regex': '^[a-z0-9-]{2,20}$'},
         'email_address': {'type': 'string'},
     }
 

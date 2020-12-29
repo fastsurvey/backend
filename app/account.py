@@ -51,7 +51,7 @@ class AccountManager:
     async def create(self, admin_name, email_address, password):
         """Create new admin account with some default account data."""
         account_data = {
-            '_id': admin_name,
+            'admin_name': admin_name,
             'email_address': email_address,
         }
         if not self.validator.validate(account_data):
@@ -59,7 +59,8 @@ class AccountManager:
         if not self.password_manager.validate_password(password):
             raise HTTPException(400, 'invalid password format')
         account_data = {
-            **account_data,
+            '_id': admin_name,
+            'email_address': email_address,
             'password_hash': self.password_manager.hash_password(password),
             'creation_time': now(),
             'verified': False,
@@ -174,6 +175,9 @@ class AccountManager:
 
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
+
+        # TODO cannot do a full replace, think password hash!
+
         result = await self.accounts.replace_one(
             filter={'_id': admin_name},
             replacement=account_data,
