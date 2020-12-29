@@ -15,10 +15,22 @@ def test_generating_schema(configurations, schemas):
 
 
 @pytest.fixture(scope='module')
-def validator(test_surveys):
-    """Provide validator for configuration-independent rule testing."""
-    configuration = test_surveys['option']['configuration']  # generic survey
+def validator(configurations):
+    """Provide generic validator for configuration-independent rule testing."""
+    configuration = configurations['option']  # use a generic survey
     return validation.SubmissionValidator.create(configuration)
+
+
+@pytest.fixture(scope='module')
+def selection():
+    """Provide a sample selection field submission value."""
+    return {
+        '1': False,
+        '2': True,
+        '3': True,
+        '4': False,
+        '5': True,
+    }
 
 
 def test_validate_min_chars_passing(validator):
@@ -55,18 +67,6 @@ def test_validate_max_chars_failing(validator):
         validator._validate_max_chars(1, 'test', 'apple juice')
 
 
-@pytest.fixture(scope='module')
-def selection():
-    """Provide a sample selection field submission value."""
-    return {
-        '1': False,
-        '2': True,
-        '3': True,
-        '4': False,
-        '5': True,
-    }
-
-
 def test_validate_min_select_passing(validator, selection):
     """Test that min_select rule works correctly for some valid values."""
     assert validator._validate_min_select(3, 'test', selection) is None
@@ -95,19 +95,19 @@ def test_validate_max_select_failing(validator, selection):
         validator._validate_max_select(0, 'test', selection)
 
 
-def test_validate_mandatory_passing(validator):
+def test_validate_required_passing(validator):
     """Test that mandatory rule works correctly for some valid values."""
-    assert validator._validate_mandatory(True, 'test', True) is None
-    assert validator._validate_mandatory(False, 'test', True) is None
-    assert validator._validate_mandatory(False, 'test', False) is None
-    assert validator._validate_mandatory(True, 'test', 'chicken') is None
-    assert validator._validate_mandatory(False, 'test', '') is None
-    assert validator._validate_mandatory(False, 'test', 'duck') is None
+    assert validator._validate_req(True, 'test', True) is None
+    assert validator._validate_req(False, 'test', True) is None
+    assert validator._validate_req(False, 'test', False) is None
+    assert validator._validate_req(True, 'test', 'chicken') is None
+    assert validator._validate_req(False, 'test', '') is None
+    assert validator._validate_req(False, 'test', 'duck') is None
 
 
-def test_validate_mandatory_failing(validator):
+def test_validate_required_failing(validator):
     """Test that mandatory rule fails correctly for some invalid values."""
     with pytest.raises(AttributeError):
-        validator._validate_mandatory(True, 'test', False)
+        validator._validate_req(True, 'test', False)
     with pytest.raises(AttributeError):
-        validator._validate_mandatory(True, 'test', '')
+        validator._validate_req(True, 'test', '')
