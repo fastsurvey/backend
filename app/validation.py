@@ -127,14 +127,14 @@ class SubmissionValidator(Validator):
         if self._count_selections(value) > max_select:
             self._error(field, f'must select at most {max_select} options')
 
-    def _validate_mandatory(self, mandatory, field, value):
+    def _validate_req(self, req, field, value):
         """{'type': 'boolean'}"""
         if (
-            mandatory
+            req
             and not (type(value) is bool and value)
             and not (type(value) is str and value != '')
         ):
-            self._error(field, f'this field is mandatory')
+            self._error(field, f'this field is required')
 
 
 class AccountValidator(Validator):

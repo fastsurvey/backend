@@ -1,6 +1,6 @@
 {
     "1": {
         "type": "option",
-        "mandatory": true
+        "req": true
     }
 }

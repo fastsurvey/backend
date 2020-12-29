@@ -6,15 +6,15 @@
         "schema": {
             "1": {
                 "type": "option",
-                "mandatory": false
+                "req": false
             },
             "2": {
                 "type": "option",
-                "mandatory": false
+                "req": false
             },
             "3": {
                 "type": "option",
-                "mandatory": false
+                "req": false
             }
         }
     }
