@@ -27,7 +27,8 @@ class SurveyManager:
     # argument.
 
     # TODO do not expect survey name as part of configuration, but simply
-    # use the one of the route?
+    # use the one of the route? --> No, how do we change the survey name
+    # otherwise?
 
 
     def __init__(self, database, letterbox, token_manager):

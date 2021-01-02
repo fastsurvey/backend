@@ -42,7 +42,7 @@ class TokenManager:
     """The TokenManager manages encoding and decoding JSON Web Tokens."""
 
     def generate(self, admin_name):
-        """Generate a JWT access token containing user id and expiration."""
+        """Generate JWT access token containing admin name and expiration."""
         timestamp = now()
         payload = {
             'iss': 'FastSurvey',
@@ -54,7 +54,7 @@ class TokenManager:
         return {'access_token': access_token, 'token_type': 'bearer'}
 
     def decode(self, access_token):
-        """Decode the given JWT access token and return the user id."""
+        """Decode the given JWT access token and return the admin name."""
         try:
             payload = jwt.decode(
                 access_token['access_token'],
