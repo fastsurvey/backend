@@ -59,7 +59,14 @@ class TokenManager:
             raise HTTPException(401, 'unauthorized')
 
     def decode(self, access_token):
-        """Decode the given JWT access token and return the admin name."""
+        """Decode the given JWT access token and return the admin name.
+
+        We handle every exception that can occur during the decoding process.
+        If the decoding runs through without issues, we trust that the
+        token is from us and skip further format verifications (e.g. if the
+        token has all the required fields).
+
+        """
         try:
             payload = jwt.decode(
                 access_token['access_token'],
@@ -70,6 +77,6 @@ class TokenManager:
             raise HTTPException(401, 'token expired')
         except InvalidSignatureError:
             raise HTTPException(401, 'signature verification failed')
-        except InvalidTokenError:
+        except (TypeError, InvalidTokenError):
             raise HTTPException(400, 'invalid token format')
         return payload['sub']
