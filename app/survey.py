@@ -47,11 +47,6 @@ class SurveyManager:
             unique=True,
         ))
 
-    def _authorize(self, admin_name, access_token):
-        """Authorize admin by decoding admin_name contained in access token."""
-        if admin_name != self.token_manager.decode(access_token):
-            raise HTTPException(401, 'unauthorized')
-
     def _update_cache(self, configuration):
         """Update survey object in the local cache."""
         survey_id = combine(
@@ -82,7 +77,7 @@ class SurveyManager:
             access_token,
         ):
         """Create a new survey configuration in the database and cache."""
-        self._authorize(admin_name, access_token)
+        self.token_manager.authorize(admin_name, access_token)
         await self._create(admin_name, survey_name, configuration)
 
     async def update(
@@ -93,17 +88,17 @@ class SurveyManager:
             access_token,
         ):
         """Update a survey configuration in the database and cache."""
-        self._authorize(admin_name, access_token)
+        self.token_manager.authorize(admin_name, access_token)
         await self._update(admin_name, survey_name, configuration)
 
     async def reset(self, admin_name, survey_name, access_token):
         """Delete all submission data including the results of a survey."""
-        self._authorize(admin_name, access_token)
+        self.token_manager.authorize(admin_name, access_token)
         await self._reset(admin_name, survey_name)
 
     async def delete(self, admin_name, survey_name, access_token):
         """Delete the survey and all its data from the database and cache."""
-        self._authorize(admin_name, access_token)
+        self.token_manager.authorize(admin_name, access_token)
         await self._delete(admin_name, survey_name)
 
     async def _fetch(self, admin_name, survey_name):

@@ -14,7 +14,7 @@ from app.utils import now
 class AccountManager:
     """The manager manages creating, updating and deleting admin accounts."""
 
-    def __init__(self, database, survey_manager, letterbox, token_manager):
+    def __init__(self, database, letterbox, token_manager, survey_manager):
         """Initialize an admin manager instance."""
         self.accounts = database['accounts']
         self.configurations = database['configurations']
@@ -45,7 +45,7 @@ class AccountManager:
 
     async def fetch(self, admin_name, access_token):
         """Return the account data corresponding to given admin name."""
-        self.survey_manager._authorize(admin_name, access_token)
+        self.token_manager.authorize(admin_name, access_token)
         return self._fetch(admin_name)
 
     async def create(self, admin_name, email_address, password):
@@ -135,13 +135,13 @@ class AccountManager:
 
     async def update(self, admin_name, account_data, access_token):
         """Update existing admin account data in the database."""
-        self.survey_manager._authorize(admin_name, access_token)
+        self.token_manager.authorize(admin_name, access_token)
         self._update(admin_name, account_data)
 
     async def delete(self, admin_name, access_token):
         """Delete the admin including all her surveys from the database."""
-        admin_id = self.survey_manager._authorize(admin_name, access_token)
-        self._delete(admin_id)
+        self.token_manager.authorize(admin_name, access_token)
+        self._delete(admin_name)
 
     async def fetch_configurations(
             self,
@@ -151,7 +151,7 @@ class AccountManager:
             access_token,
         ):
         """Return a list of the admin's survey configurations."""
-        self.survey_manager._authorize(admin_name, access_token)
+        self.token_manager.authorize(admin_name, access_token)
         return await self._fetch_configurations(admin_name, skip, limit)
 
     async def _fetch(self, admin_name):

@@ -53,6 +53,11 @@ class TokenManager:
         access_token = jwt.encode(payload, PRIVATE_RSA_KEY, algorithm='RS256')
         return {'access_token': access_token, 'token_type': 'bearer'}
 
+    def authorize(self, admin_name, access_token):
+        """Authorize admin by comparing admin name with access token."""
+        if admin_name != self.decode(access_token):
+            raise HTTPException(401, 'unauthorized')
+
     def decode(self, access_token):
         """Decode the given JWT access token and return the admin name."""
         try:

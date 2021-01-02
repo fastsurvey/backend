@@ -47,9 +47,9 @@ survey_manager = SurveyManager(database, letterbox, token_manager)
 # instantiate admin acount manager
 account_manager = AccountManager(
     database,
-    survey_manager,
     letterbox,
     token_manager,
+    survey_manager,
 )
 # fastapi password bearer
 oauth2_scheme = OAuth2PasswordBearer('/authentication')
