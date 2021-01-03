@@ -27,8 +27,39 @@ def event_loop(request):
 
 
 @pytest.fixture(scope='session')
-def test_survey_parameters():
-    """Provide a dictionary containing parameters for the test surveys."""
+def test_parameters():
+    """Provide some general test parameters like an account admin_name."""
+    with open('tests/parameters.json', 'r') as e:
+        return json.load(e)
+
+
+@pytest.fixture(scope='session')
+def admin_name(test_parameters):
+    """Provide the admin_name value used for testing."""
+    return test_parameters['admin_name']
+
+
+@pytest.fixture(scope='session')
+def email_address(test_parameters):
+    """Provide the email_address value used for testing."""
+    return test_parameters['email_address']
+
+
+@pytest.fixture(scope='session')
+def password(test_parameters):
+    """Provide the password value used for testing."""
+    return test_parameters['password']
+
+
+@pytest.fixture(scope='session')
+def private_rsa_key(test_parameters):
+    """Provide the private_rsa_key value used for testing."""
+    return test_parameters['private_rsa_key']
+
+
+@pytest.fixture(scope='session')
+def test_survey_data():
+    """Provide dict containing configurations etc. for the test surveys."""
     folder = 'tests/surveys'
     survey_names = [s for s in os.listdir(folder) if s[0] != '.']
     survey_parameters = {
@@ -46,36 +77,30 @@ def test_survey_parameters():
 
 
 @pytest.fixture(scope='session')
-def configurations(test_survey_parameters):
+def configurations(test_survey_data):
     """Map test survey names to their test (exchange) configurations."""
-    return test_survey_parameters['configurations']
+    return test_survey_data['configurations']
 
 
 @pytest.fixture(scope='session')
-def resultss(test_survey_parameters):
+def resultss(test_survey_data):
     """Map test survey names to their test results."""
-    return test_survey_parameters['resultss']
+    return test_survey_data['resultss']
 
 
 @pytest.fixture(scope='session')
-def schemas(test_survey_parameters):
+def schemas(test_survey_data):
     """Map test survey names to their test schema."""
-    return test_survey_parameters['schemas']
+    return test_survey_data['schemas']
 
 
 @pytest.fixture(scope='session')
-def submissionss(test_survey_parameters):
+def submissionss(test_survey_data):
     """Map test survey names to their test submissions."""
-    return test_survey_parameters['submissionss']
+    return test_survey_data['submissionss']
 
 
-@pytest.fixture(scope='session')
-async def admin_name():
-    """Provide admin_name of test account."""
-    return 'fastsurvey'
-
-
-async def reset(admin_name, configurations):
+async def reset(admin_name, email_address, password, configurations):
     """Purge all admin and survey data locally and remotely and reset it."""
 
     # motor transaction example
@@ -92,8 +117,8 @@ async def reset(admin_name, configurations):
     await main.account_manager._delete(admin_name)
     await main.account_manager.create(
         admin_name=admin_name,
-        email_address='support@fastsurvey.io',
-        password='supersecure',
+        email_address=email_address,
+        password=password,
     )
     for survey_name, configuration in configurations.items():
         await main.survey_manager._create(
@@ -104,13 +129,13 @@ async def reset(admin_name, configurations):
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def setup(admin_name, configurations):
+async def setup(admin_name, email_address, password, configurations):
     """Reset survey data and configurations before the first test starts."""
-    await reset(admin_name, configurations)
+    await reset(admin_name, email_address, password, configurations)
 
 
 @pytest.fixture(scope='function')
-async def cleanup(admin_name, configurations):
+async def cleanup(admin_name, email_address, password, configurations):
     """Reset survey data and configurations after a single test."""
     yield
-    await reset(admin_name, configurations)
+    await reset(admin_name, email_address, password, configurations)
