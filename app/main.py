@@ -43,7 +43,12 @@ letterbox = Letterbox()
 # create JWT manager
 token_manager = TokenManager()
 # instantiate survey manager
-survey_manager = SurveyManager(database, letterbox, token_manager)
+survey_manager = SurveyManager(
+    motor_client,
+    database,
+    letterbox,
+    token_manager,
+)
 # instantiate admin acount manager
 account_manager = AccountManager(
     database,

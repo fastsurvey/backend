@@ -24,6 +24,8 @@ class AccountManager:
         self.token_manager = token_manager
         self.letterbox = letterbox
 
+        # TODO create all together with create_indexes
+
         loop = asyncio.get_event_loop()
 
         loop.run_until_complete(self.accounts.create_index(

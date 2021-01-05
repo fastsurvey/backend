@@ -4,7 +4,7 @@ from app.utils import combine
 class Alligator:
     """Does it aggregate ... or does it alligate ... ?"""
 
-    def __init__(self, survey_id, configuration, database):
+    def __init__(self, configuration, database):
         """Initialize alligator with some pipeline parts already defined."""
         self.configuration = configuration
         self.survey_id = combine(

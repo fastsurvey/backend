@@ -104,14 +104,25 @@ async def reset(admin_name, email_address, password, configurations):
     """Purge all admin and survey data locally and remotely and reset it."""
 
     # motor transaction example
+
+    print(await main.database.list_collection_names())
+    exit()
+
     '''
+
     async with await main.motor_client.start_session() as session:
         async with session.start_transaction():
             #await main.database['toast'].rename('toast-reloaded')
             #await main.database['toast-reloaded'].insert_one({'value': 'hello!'})
             #await main.database['toast-reloaded'].rename('toast-reloaded-two')
             #await main.database['toast-reloaded-two'].drop()
-            await main.database['japan'].insert_one({'value': 'what?'})
+            #await main.database['japan'].insert_one({'value': 'what?'})
+            result = await main.database['japan'].replace_one(
+                filter={'value': 'what?'},
+                replacement={'password': 'lol'},
+            )
+            await main.database['japan'].insert_one({'value': result.matched_count})
+
     '''
 
     await main.account_manager._delete(admin_name)

@@ -31,8 +31,9 @@ class SurveyManager:
     # otherwise?
 
 
-    def __init__(self, database, letterbox, token_manager):
+    def __init__(self, motor_client, database, letterbox, token_manager):
         """Initialize a survey manager instance."""
+        self.motor_client = motor_client
         self.database = database
         self.letterbox = letterbox
         self.cache = LRUCache(maxsize=256)
@@ -116,11 +117,8 @@ class SurveyManager:
 
     async def _create(self, admin_name, survey_name, configuration):
         """Create a new survey configuration in the database and cache."""
-
-        # TODO handle survey_name change with transactions
         if survey_name != configuration['survey_name']:
-            raise HTTPException(400, 'route/configuration survey names differ')
-
+            raise HTTPException(400, 'invalid configuration')
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
         configuration['admin_name'] = admin_name
@@ -132,24 +130,29 @@ class SurveyManager:
             raise HTTPException(400, 'survey exists')
 
     async def _update(self, admin_name, survey_name, configuration):
-        """Update a survey configuration in the database and cache."""
+        """Update a survey configuration in the database and cache.
 
-        # TODO handle survey_name change with transactions
-        if survey_name != configuration['survey_name']:
-            raise HTTPException(400, 'route/configuration survey names differ')
+        Survey updates are only possible if the survey has not yet started.
+        This means that the only thing to update in the database is the
+        configuration, as there are no existing submissions or results.
 
+        """
         if not self.validator.validate(configuration):
             raise HTTPException(400, 'invalid configuration')
+
+        # TODO make update only possible if survey has not yet started
+
         configuration['admin_name'] = admin_name
         result = await self.database['configurations'].replace_one(
-            filter={
-                'admin_name': configuration['admin_name'],
-                'survey_name': configuration['survey_name'],
-            },
+            filter={'admin_name': admin_name, 'survey_name': survey_name},
             replacement=configuration,
         )
         if result.matched_count == 0:
             raise HTTPException(400, 'not an existing survey')
+
+        assert '_id' not in configuration.keys()
+        assert '_id' in configuration.keys()
+
         self._update_cache(configuration)
 
     async def _archive(self, admin_name, survey_name):
@@ -191,16 +194,23 @@ class Survey:
         self.configuration = configuration
         self.admin_name = self.configuration['admin_name']
         self.survey_name = self.configuration['survey_name']
-        self.survey_id = combine(self.admin_name, self.survey_name)
         self.start = self.configuration['start']
         self.end = self.configuration['end']
         self.authentication = self.configuration['authentication']
         self.ei = Survey._get_email_field_index(self.configuration)
         self.validator = SubmissionValidator.create(self.configuration)
         self.letterbox = letterbox
-        self.alligator = Alligator(self.survey_id, self.configuration, database)
-        self.submissions = database[f'surveys.{self.survey_id}.submissions']
-        self.vss = database[f'surveys.{self.survey_id}.verified-submissions']
+        self.alligator = Alligator(self.configuration, database)
+        self.submissions = database[
+            f'surveys'
+            f'.{combine(self.admin_name, self.survey_name)}'
+            f'.submissions'
+        ]
+        self.verified_submissions = database[
+            f'surveys'
+            f'.{combine(self.admin_name, self.survey_name)}'
+            f'.submissions.verified'
+        ]
         self.results = None
 
     @staticmethod
@@ -262,7 +272,7 @@ class Survey:
             raise HTTPException(401, 'invalid token')
         submission['verification_time'] = verification_time
         submission['_id'] = submission['data'][str(self.ei + 1)]
-        await self.vss.find_one_and_replace(
+        await self.verified_submissions.find_one_and_replace(
             filter={'_id': submission['_id']},
             replacement=submission,
             upsert=True,
