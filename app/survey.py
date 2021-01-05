@@ -26,14 +26,9 @@ class SurveyManager:
     # private functions only the finished configuration document as
     # argument.
 
-    # TODO do not expect survey name as part of configuration, but simply
-    # use the one of the route? --> No, how do we change the survey name
-    # otherwise?
 
-
-    def __init__(self, motor_client, database, letterbox, token_manager):
+    def __init__(self, database, letterbox, token_manager):
         """Initialize a survey manager instance."""
-        self.motor_client = motor_client
         self.database = database
         self.letterbox = letterbox
         self.cache = LRUCache(maxsize=256)
@@ -116,7 +111,13 @@ class SurveyManager:
         return self.cache[survey_id]
 
     async def _create(self, admin_name, survey_name, configuration):
-        """Create a new survey configuration in the database and cache."""
+        """Create a new survey configuration in the database and cache.
+
+        The configuration includes the survey_name despite it already being
+        specified in the route. We do this in order to enable changing the
+        survey_name.
+
+        """
         if survey_name != configuration['survey_name']:
             raise HTTPException(400, 'invalid configuration')
         if not self.validator.validate(configuration):
@@ -137,11 +138,11 @@ class SurveyManager:
         configuration, as there are no existing submissions or results.
 
         """
-        if not self.validator.validate(configuration):
-            raise HTTPException(400, 'invalid configuration')
 
         # TODO make update only possible if survey has not yet started
 
+        if not self.validator.validate(configuration):
+            raise HTTPException(400, 'invalid configuration')
         configuration['admin_name'] = admin_name
         result = await self.database['configurations'].replace_one(
             filter={'admin_name': admin_name, 'survey_name': survey_name},

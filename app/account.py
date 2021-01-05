@@ -172,6 +172,25 @@ class AccountManager:
     async def _update(self, admin_name, account_data):
         """Update existing admin account data in the database."""
 
+        ''' JSON FORMAT
+
+        IN:
+
+        {
+            "admin_name": "fastsurvey",
+            "email_address": "support@fastsurvey.io",
+        }
+
+        OUT:
+
+        {
+            "admin_name": "fastsurvey",
+            "email_address": "support@fastsurvey.io",
+            "verified": true,
+        }
+
+        '''
+
         # TODO handle admin_name change with transactions
         # TODO handle email change specially, as it needs to be reverified
 
