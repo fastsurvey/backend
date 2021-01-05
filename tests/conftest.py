@@ -105,9 +105,6 @@ async def reset(admin_name, email_address, password, configurations):
 
     # motor transaction example
 
-    print(await main.database.list_collection_names())
-    exit()
-
     '''
 
     async with await main.motor_client.start_session() as session:
@@ -122,6 +119,38 @@ async def reset(admin_name, email_address, password, configurations):
                 replacement={'password': 'lol'},
             )
             await main.database['japan'].insert_one({'value': result.matched_count})
+
+
+    async with await self.motor_client.start_session() as session:
+        async with session.start_transaction():
+
+            # TODO rename results
+
+            result = await self.database['configurations'].replace_one(
+                filter=expression,
+                replacement=configuration,
+            )
+            if result.matched_count == 0:
+                raise HTTPException(400, 'not an existing survey')
+
+            collection_names = await self.database.list_collection_names()
+            old_cname = (
+                f'surveys'
+                f'.{combine(admin_name, survey_name)}'
+                f'.submissions'
+            )
+            new_cname = (
+                f'surveys'
+                f'.{combine(admin_name, configuration["survey_name"])}'
+                f'.submissions'
+            )
+            if old_cname in collection_names:
+                self.database[old_cname].rename(new_cname)
+
+            old_cname = f'{old_cname}.verified'
+            new_cname = f'{new_cname}.verified'
+            if old_cname in collection_names:
+                self.database[old_cname].rename(new_cname)
 
     '''
 
