@@ -5,7 +5,6 @@ import asyncio
 from fastapi import HTTPException
 from starlette.responses import RedirectResponse
 from pymongo.errors import DuplicateKeyError
-from pymongo import ASCENDING
 from cachetools import LRUCache
 
 from app.validation import SubmissionValidator, ConfigurationValidator
@@ -34,14 +33,6 @@ class SurveyManager:
         self.cache = LRUCache(maxsize=256)
         self.validator = ConfigurationValidator.create()
         self.token_manager = token_manager
-
-        loop = asyncio.get_event_loop()
-
-        loop.run_until_complete(self.database['configurations'].create_index(
-            keys=[('admin_name', ASCENDING), ('survey_name', ASCENDING)],
-            name='admin_name_survey_name_index',
-            unique=True,
-        ))
 
     def _update_cache(self, configuration):
         """Update survey object in the local cache."""

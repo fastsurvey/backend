@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI, Path, Query, Body, Form, HTTPException, Depends
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.security import OAuth2PasswordBearer
+from pymongo import MongoClient, ASCENDING
 
 from app.mailing import Letterbox
 from app.account import AccountManager
@@ -32,12 +33,40 @@ ENVIRONMENT = os.getenv('ENVIRONMENT')
 MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
 
 
+# connect to mongodb via pymongo
+client = MongoClient(MONGODB_CONNECTION_STRING)
+# get link to development / production / testing database
+database = client[ENVIRONMENT]
+# set up database indices synchronously via pymongo
+database['configurations'].create_index(
+    keys=[('admin_name', ASCENDING), ('survey_name', ASCENDING)],
+    name='admin_name_survey_name_index',
+    unique=True,
+)
+database['accounts'].create_index(
+    keys='email_address',
+    name='email_address_index',
+    unique=True,
+)
+database['accounts'].create_index(
+    keys='verification_token',
+    name='verification_token_index',
+    unique=True,
+)
+database['accounts'].create_index(
+    keys='creation_time',
+    name='creation_time_index',
+    expireAfterSeconds=10*60,  # delete draft accounts after 10 mins
+    partialFilterExpression={'verified': {'$eq': False}},
+)
+
+
 # create fastapi app
 app = FastAPI()
-# connect to mongodb via pymongo and motor
-motor_client = AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
+# connect to mongodb via motor
+client = AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
 # get link to development / production / testing database
-database = motor_client[ENVIRONMENT]
+database = client[ENVIRONMENT]
 # create email client
 letterbox = Letterbox()
 # create JWT manager

@@ -16,34 +16,12 @@ class AccountManager:
 
     def __init__(self, database, letterbox, token_manager, survey_manager):
         """Initialize an admin manager instance."""
-        self.accounts = database['accounts']
-        self.configurations = database['configurations']
+        self.database = database
         self.survey_manager = survey_manager
         self.validator = AccountValidator.create()
         self.password_manager = PasswordManager()
         self.token_manager = token_manager
         self.letterbox = letterbox
-
-        # TODO create all together with create_indexes
-
-        loop = asyncio.get_event_loop()
-
-        loop.run_until_complete(self.accounts.create_index(
-            keys='email_address',
-            name='email_address_index',
-            unique=True,
-        ))
-        loop.run_until_complete(self.accounts.create_index(
-            keys='verification_token',
-            name='verification_token_index',
-            unique=True,
-        ))
-        loop.run_until_complete(self.accounts.create_index(
-            keys='creation_time',
-            name='creation_time_index',
-            expireAfterSeconds=10*60,  # delete draft accounts after 10 mins
-            partialFilterExpression={'verified': {'$eq': False}},
-        ))
 
     async def fetch(self, admin_name, access_token):
         """Return the account data corresponding to given admin name."""
@@ -70,7 +48,7 @@ class AccountManager:
         }
         while True:
             try:
-                await self.accounts.insert_one(account_data)
+                await self.database['accounts'].insert_one(account_data)
                 break
             except DuplicateKeyError as error:
                 index = str(error).split()[7]
@@ -96,7 +74,7 @@ class AccountManager:
 
     async def verify(self, verification_token, password):
         """Verify an existing account via its unique verification token."""
-        account_data = await self.accounts.find_one(
+        account_data = await self.database['accounts'].find_one(
             filter={'verification_token': verification_token},
             projection={'password_hash': True, 'verified': True},
         )
@@ -107,7 +85,7 @@ class AccountManager:
             raise HTTPException(401, 'invalid password')
         if account_data['verified'] is True:
             raise HTTPException(400, 'account already verified')
-        result = await self.accounts.update_one(
+        result = await self.database['accounts'].update_one(
             filter={'verification_token': verification_token},
             update={'$set': {'verified': True}}
         )
@@ -122,7 +100,7 @@ class AccountManager:
             if '@' in identifier
             else {'_id': identifier}
         )
-        account_data = await self.accounts.find_one(
+        account_data = await self.database['accounts'].find_one(
             filter=expression,
             projection={'password_hash': True, 'verified': True},
         )
@@ -158,7 +136,7 @@ class AccountManager:
 
     async def _fetch(self, admin_name):
         """Return the account data corresponding to given admin name."""
-        account_data = await self.accounts.find_one(
+        account_data = await self.database['accounts'].find_one(
             filter={'_id': admin_name},
             projection={'_id': False},
         )
@@ -199,7 +177,7 @@ class AccountManager:
 
         # TODO cannot do a full replace, think password hash!
 
-        result = await self.accounts.replace_one(
+        result = await self.database['accounts'].replace_one(
             filter={'_id': admin_name},
             replacement=account_data,
         )
@@ -208,8 +186,8 @@ class AccountManager:
 
     async def _delete(self, admin_name):
         """Delete the admin including all her surveys from the database."""
-        await self.accounts.delete_one({'_id': admin_name})
-        cursor = self.configurations.find(
+        await self.database['accounts'].delete_one({'_id': admin_name})
+        cursor = self.database['configurations'].find(
             filter={'admin_name': admin_name},
             projection={'_id': False, 'survey_name': True},
         )
@@ -223,7 +201,7 @@ class AccountManager:
 
     async def _fetch_configurations(self, admin_name, skip, limit):
         """Return a list of the admin's survey configurations."""
-        cursor = self.configurations.find(
+        cursor = self.database['configurations'].find(
             filter={'admin_name': admin_name},
             projection={
                 '_id': False,
