@@ -84,7 +84,22 @@ account_manager = AccountManager(
 oauth2_scheme = OAuth2PasswordBearer('/authentication')
 
 
-@app.get('/users/{username}')
+@app.get(
+    path='/users/{username}',
+    responses={
+        200: {
+            'content': {
+                'application/json': {
+                    'example': {
+                        'username': 'fastsurvey',
+                        'email_address': 'info@fastsurvey.io',
+                        'verified': True,
+                    }
+                }
+            }
+        }
+    },
+)
 async def fetch_user(
         username: str = Path(..., description='The username of the user'),
         access_token: str = Depends(oauth2_scheme),
