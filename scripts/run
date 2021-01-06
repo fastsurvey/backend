@@ -1,3 +1,8 @@
 #!/bin/sh
 
+if ! docker info >/dev/null 2>&1; then
+    echo "ERROR: docker does not seem to be running, please run it and retry."
+    exit 1
+fi
+
 docker run -p 8000:8000 --rm --env-file .env backend

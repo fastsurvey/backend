@@ -1,4 +1,9 @@
 #!/bin/sh
 
+if ! docker info >/dev/null 2>&1; then
+    echo "ERROR: docker does not seem to be running, please run it and retry."
+    exit 1
+fi
+
 docker build -t backend .
 yes | docker image prune
