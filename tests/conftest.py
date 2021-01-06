@@ -28,15 +28,15 @@ def event_loop(request):
 
 @pytest.fixture(scope='session')
 def test_parameters():
-    """Provide some general test parameters like an account admin_name."""
+    """Provide some general test parameters like an account username."""
     with open('tests/parameters.json', 'r') as e:
         return json.load(e)
 
 
 @pytest.fixture(scope='session')
-def admin_name(test_parameters):
-    """Provide the admin_name value used for testing."""
-    return test_parameters['admin_name']
+def username(test_parameters):
+    """Provide the username value used for testing."""
+    return test_parameters['username']
 
 
 @pytest.fixture(scope='session')
@@ -100,8 +100,8 @@ def submissionss(test_survey_data):
     return test_survey_data['submissionss']
 
 
-async def reset(admin_name, email_address, password, configurations):
-    """Purge all admin and survey data locally and remotely and reset it."""
+async def reset(username, email_address, password, configurations):
+    """Purge all user and survey data locally and remotely and reset it."""
 
     # motor transaction example
 
@@ -136,12 +136,12 @@ async def reset(admin_name, email_address, password, configurations):
             collection_names = await self.database.list_collection_names()
             old_cname = (
                 f'surveys'
-                f'.{combine(admin_name, survey_name)}'
+                f'.{combine(username, survey_name)}'
                 f'.submissions'
             )
             new_cname = (
                 f'surveys'
-                f'.{combine(admin_name, configuration["survey_name"])}'
+                f'.{combine(username, configuration["survey_name"])}'
                 f'.submissions'
             )
             if old_cname in collection_names:
@@ -154,28 +154,28 @@ async def reset(admin_name, email_address, password, configurations):
 
     '''
 
-    await main.account_manager._delete(admin_name)
+    await main.account_manager._delete(username)
     await main.account_manager.create(
-        admin_name=admin_name,
+        username=username,
         email_address=email_address,
         password=password,
     )
     for survey_name, configuration in configurations.items():
         await main.survey_manager._create(
-            admin_name=admin_name,
+            username=username,
             survey_name=survey_name,
             configuration=deepcopy(configuration),
         )
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def setup(admin_name, email_address, password, configurations):
+async def setup(username, email_address, password, configurations):
     """Reset survey data and configurations before the first test starts."""
-    await reset(admin_name, email_address, password, configurations)
+    await reset(username, email_address, password, configurations)
 
 
 @pytest.fixture(scope='function')
-async def cleanup(admin_name, email_address, password, configurations):
+async def cleanup(username, email_address, password, configurations):
     """Reset survey data and configurations after a single test."""
     yield
-    await reset(admin_name, email_address, password, configurations)
+    await reset(username, email_address, password, configurations)

@@ -41,7 +41,7 @@ class Letterbox:
 
     async def send_submission_verification_email(
             self,
-            admin_name,
+            username,
             survey_name,
             title,
             receiver,
@@ -50,7 +50,7 @@ class Letterbox:
         """Send confirmation email to verify a submission email address."""
         subject = 'Please verify your submission'
         verification_url = (
-            f'{BACKEND_URL}/{admin_name}/{survey_name}'
+            f'{BACKEND_URL}/{username}/{survey_name}'
             f'/verification/{verification_token}'
         )
         html = (
@@ -63,7 +63,7 @@ class Letterbox:
 
     async def send_account_verification_email(
             self,
-            admin_name,
+            username,
             receiver,
             verification_token,
         ):
@@ -76,7 +76,7 @@ class Letterbox:
         # verification url
         vurl = f'{FRONTEND_URL}/verify?token={token}'
         html = (
-            f'<p>Welcome to FastSurvey, {admin_name}!</p>'
+            f'<p>Welcome to FastSurvey, {username}!</p>'
             + f'<p>Please verify your email address by <a href="{vurl}" target="_blank">clicking here</a>.</p>'
             + '<p>The verification link is valid for 10 minutes.</p>'
             + '<p>Best, the FastSurvey team</p>'
@@ -88,7 +88,7 @@ class Letterbox:
 
     async def send_password_reset_email(
             self,
-            admin_name,
+            username,
             receiver,
             token,
         ):
@@ -101,7 +101,7 @@ class Letterbox:
         # password reset url
         rurl = f'{FRONTEND_URL}/set-password?token={token}'
         html = (
-            f'<p>Hello {admin_name}!</p>'
+            f'<p>Hello {username}!</p>'
             + f'<p>You can set your new password by <a href="{rurl}" target="_blank">clicking here</a>.</p>'
             + '<p>Best, the FastSurvey team</p>'
         )

@@ -8,34 +8,34 @@ import app.main as main
 
 @pytest.mark.asyncio
 async def test_fetching_configuration_with_valid_identifier(
-        admin_name,
+        username,
         configurations,
     ):
     """Using valid survey identifier, test that correct config is returned."""
     for survey_name, configuration in configurations.items():
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
-            url = f'/admins/{admin_name}/surveys/{survey_name}'
+            url = f'/users/{username}/surveys/{survey_name}'
             response = await ac.get(url)
         assert response.status_code == 200
         assert response.json() == configuration
 
 
 @pytest.mark.asyncio
-async def test_fetching_configuration_with_invalid_identifier(admin_name):
+async def test_fetching_configuration_with_invalid_identifier(username):
     """Using invalid survey identifier, test that an exception is raised."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        url = f'/admins/{admin_name}/surveys/carrot'
+        url = f'/users/{username}/surveys/carrot'
         response = await ac.get(url)
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
-async def test_submitting_valid_submission(admin_name, submissionss, cleanup):
+async def test_submitting_valid_submission(username, submissionss, cleanup):
     """Test that submission works with valid submissions for test surveys."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         for survey_name, submissions in submissionss.items():
-            survey = await main.survey_manager._fetch(admin_name, survey_name)
-            url = f'/admins/{admin_name}/surveys/{survey_name}/submissions'
+            survey = await main.survey_manager._fetch(username, survey_name)
+            url = f'/users/{username}/surveys/{survey_name}/submissions'
             for submission in submissions['valid']:
                 response = await ac.post(url, json=submission)
                 assert response.status_code == 200
@@ -45,15 +45,15 @@ async def test_submitting_valid_submission(admin_name, submissionss, cleanup):
 
 @pytest.mark.asyncio
 async def test_submitting_invalid_submission(
-        admin_name,
+        username,
         submissionss,
         cleanup,
     ):
     """Test that submit correctly fails for invalid test survey submissions."""
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         for survey_name, submissions in submissionss.items():
-            survey = await main.survey_manager._fetch(admin_name, survey_name)
-            url = f'/admins/{admin_name}/surveys/{survey_name}/submissions'
+            survey = await main.survey_manager._fetch(username, survey_name)
+            url = f'/users/{username}/surveys/{survey_name}/submissions'
             for submission in submissions['invalid']:
                 response = await ac.post(url, json=submission)
                 assert response.status_code == 400
@@ -64,13 +64,13 @@ async def test_submitting_invalid_submission(
 @pytest.mark.asyncio
 async def test_duplicate_validation_token_resolution(
         monkeypatch,
-        admin_name,
+        username,
         submissionss,
         cleanup,
     ):
     """Test that duplicate tokens in submissions are correctly resolved."""
     survey_name = 'complex-survey'
-    survey = await main.survey_manager._fetch(admin_name, survey_name)
+    survey = await main.survey_manager._fetch(username, survey_name)
     submissions = submissionss[survey_name]['valid']
     tokens = []
 
@@ -83,7 +83,7 @@ async def test_duplicate_validation_token_resolution(
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
         for i, submission in enumerate(submissions):
             response = await ac.post(
-                url=f'/admins/{admin_name}/surveys/{survey_name}/submissions',
+                url=f'/users/{username}/surveys/{survey_name}/submissions',
                 json=submission,
             )
             assert response.status_code == 200
@@ -95,13 +95,13 @@ async def test_duplicate_validation_token_resolution(
 @pytest.mark.asyncio
 async def test_verifying_valid_token(
         monkeypatch,
-        admin_name,
+        username,
         submissionss,
         cleanup,
     ):
     """Test correct verification given a valid submission token."""
     survey_name = 'complex-survey'
-    survey = await main.survey_manager._fetch(admin_name, survey_name)
+    survey = await main.survey_manager._fetch(username, survey_name)
     submissions = submissionss[survey_name]['valid']
     tokens = []
 
@@ -112,7 +112,7 @@ async def test_verifying_valid_token(
 
     monkeypatch.setattr(secrets, 'token_hex', token)  # token generation mock
     async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        base_url = f'/admins/{admin_name}/surveys/{survey_name}'
+        base_url = f'/users/{username}/surveys/{survey_name}'
         for submission in submissions:
             await ac.post(f'{base_url}/submission', json=submission)
         for i, token in enumerate(tokens):
@@ -219,11 +219,11 @@ async def test_verifying_with_no_prior_submission(survey):
 
 
 @pytest.mark.asyncio
-async def test_aggregating(admin_name, submissionss, resultss, cleanup):
+async def test_aggregating(username, submissionss, resultss, cleanup):
     """Test that aggregation of test submissions returns the correct result."""
     for survey_name, submissions in submissionss.items():
         # push test submissions
-        survey = await main.survey_manager._fetch(admin_name, survey_name)
+        survey = await main.survey_manager._fetch(username, survey_name)
         await survey.alligator.collection.insert_many([
             {'data': submission}
             for submission
@@ -234,7 +234,7 @@ async def test_aggregating(admin_name, submissionss, resultss, cleanup):
         # aggregate and fetch results
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
             response = await ac.get(
-                url=f'/admins/{admin_name}/surveys/{survey_name}/results',
+                url=f'/users/{username}/surveys/{survey_name}/results',
                 allow_redirects=False,
             )
         assert response.status_code == 200

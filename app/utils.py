@@ -2,9 +2,9 @@ import re
 import time
 
 
-def combine(admin_name, survey_name):
-    """Build unique survey identifier from admin_name and survey_name."""
-    return f'{admin_name}.{survey_name}'
+def combine(username, survey_name):
+    """Build unique survey identifier from username and survey_name."""
+    return f'{username}.{survey_name}'
 
 
 def isregex(value):

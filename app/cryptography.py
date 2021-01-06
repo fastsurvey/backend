@@ -41,25 +41,25 @@ class PasswordManager:
 class TokenManager:
     """The TokenManager manages encoding and decoding JSON Web Tokens."""
 
-    def generate(self, admin_name):
-        """Generate JWT access token containing admin name and expiration."""
+    def generate(self, username):
+        """Generate JWT access token containing username and expiration."""
         timestamp = now()
         payload = {
             'iss': 'FastSurvey',
-            'sub': admin_name,
+            'sub': username,
             'iat': timestamp,
             'exp': timestamp + 2*60*60,  # tokens are valid for 2 hours
         }
         access_token = jwt.encode(payload, PRIVATE_RSA_KEY, algorithm='RS256')
         return {'access_token': access_token, 'token_type': 'bearer'}
 
-    def authorize(self, admin_name, access_token):
-        """Authorize admin by comparing admin name with access token."""
-        if admin_name != self.decode(access_token):
+    def authorize(self, username, access_token):
+        """Authorize user by comparing username with access token."""
+        if username != self.decode(access_token):
             raise HTTPException(401, 'unauthorized')
 
     def decode(self, access_token):
-        """Decode the given JWT access token and return the admin name.
+        """Decode the given JWT access token and return the username.
 
         We handle every exception that can occur during the decoding process.
         If the decoding runs through without issues, we trust that the

@@ -12,10 +12,10 @@ from app.utils import now
 
 
 class AccountManager:
-    """The manager manages creating, updating and deleting admin accounts."""
+    """The manager manages creating, updating and deleting user accounts."""
 
     def __init__(self, database, letterbox, token_manager, survey_manager):
-        """Initialize an admin manager instance."""
+        """Initialize an user manager instance."""
         self.database = database
         self.survey_manager = survey_manager
         self.validator = AccountValidator.create()
@@ -23,15 +23,15 @@ class AccountManager:
         self.token_manager = token_manager
         self.letterbox = letterbox
 
-    async def fetch(self, admin_name, access_token):
-        """Return the account data corresponding to given admin name."""
-        self.token_manager.authorize(admin_name, access_token)
-        return self._fetch(admin_name)
+    async def fetch(self, username, access_token):
+        """Return the account data corresponding to given user name."""
+        self.token_manager.authorize(username, access_token)
+        return self._fetch(username)
 
-    async def create(self, admin_name, email_address, password):
-        """Create new admin account with some default account data."""
+    async def create(self, username, email_address, password):
+        """Create new user account with some default account data."""
         account_data = {
-            'admin_name': admin_name,
+            'username': username,
             'email_address': email_address,
         }
         if not self.validator.validate(account_data):
@@ -39,7 +39,7 @@ class AccountManager:
         if not self.password_manager.validate_password(password):
             raise HTTPException(400, 'invalid password format')
         account_data = {
-            '_id': admin_name,
+            '_id': username,
             'email_address': email_address,
             'password_hash': self.password_manager.hash_password(password),
             'creation_time': now(),
@@ -53,7 +53,7 @@ class AccountManager:
             except DuplicateKeyError as error:
                 index = str(error).split()[7]
                 if index == '_id_':
-                    raise HTTPException(400, f'admin name already taken')
+                    raise HTTPException(400, f'username already taken')
                 if index == 'email_address_index':
                     raise HTTPException(400, f'email address already taken')
                 if index == 'verification_token_index':
@@ -62,12 +62,12 @@ class AccountManager:
                     raise HTTPException(500, 'account creation error')
 
         status = await self.letterbox.send_account_verification_email(
-            admin_name=admin_name,
+            username=username,
             receiver=email_address,
             verification_token=account_data['verification_token'],
         )
         if status != 200:
-            # we do not delete the unverified account here, as the admin could
+            # we do not delete the unverified account here, as the user could
             # request a new verification email, and the account gets deleted
             # anyways after a few minutes
             raise HTTPException(500, 'email delivery failure')
@@ -94,7 +94,7 @@ class AccountManager:
         return self.token_manager.generate(account_data['_id'])
 
     async def authenticate(self, identifier, password):
-        """Authenticate admin by her admin_name or email and her password."""
+        """Authenticate user by her username or email and her password."""
         expression = (
             {'email_address': identifier}
             if '@' in identifier
@@ -113,31 +113,31 @@ class AccountManager:
             raise HTTPException(400, 'account not verified')
         return self.token_manager.generate(account_data['_id'])
 
-    async def update(self, admin_name, account_data, access_token):
-        """Update existing admin account data in the database."""
-        self.token_manager.authorize(admin_name, access_token)
-        self._update(admin_name, account_data)
+    async def update(self, username, account_data, access_token):
+        """Update existing user account data in the database."""
+        self.token_manager.authorize(username, access_token)
+        self._update(username, account_data)
 
-    async def delete(self, admin_name, access_token):
-        """Delete the admin including all her surveys from the database."""
-        self.token_manager.authorize(admin_name, access_token)
-        self._delete(admin_name)
+    async def delete(self, username, access_token):
+        """Delete the user including all her surveys from the database."""
+        self.token_manager.authorize(username, access_token)
+        self._delete(username)
 
     async def fetch_configurations(
             self,
-            admin_name,
+            username,
             skip,
             limit,
             access_token,
         ):
-        """Return a list of the admin's survey configurations."""
-        self.token_manager.authorize(admin_name, access_token)
-        return await self._fetch_configurations(admin_name, skip, limit)
+        """Return a list of the user's survey configurations."""
+        self.token_manager.authorize(username, access_token)
+        return await self._fetch_configurations(username, skip, limit)
 
-    async def _fetch(self, admin_name):
-        """Return the account data corresponding to given admin name."""
+    async def _fetch(self, username):
+        """Return the account data corresponding to given user name."""
         account_data = await self.database['accounts'].find_one(
-            filter={'_id': admin_name},
+            filter={'_id': username},
             projection={'_id': False},
         )
         if account_data is None:
@@ -147,29 +147,29 @@ class AccountManager:
 
         return account_data
 
-    async def _update(self, admin_name, account_data):
-        """Update existing admin account data in the database."""
+    async def _update(self, username, account_data):
+        """Update existing user account data in the database."""
 
         ''' JSON FORMAT
 
         IN:
 
         {
-            "admin_name": "fastsurvey",
+            "username": "fastsurvey",
             "email_address": "support@fastsurvey.io",
         }
 
         OUT:
 
         {
-            "admin_name": "fastsurvey",
+            "username": "fastsurvey",
             "email_address": "support@fastsurvey.io",
             "verified": true,
         }
 
         '''
 
-        # TODO handle admin_name change with transactions
+        # TODO handle username change with transactions
         # TODO handle email change specially, as it needs to be reverified
 
         if not self.validator.validate(account_data):
@@ -178,17 +178,17 @@ class AccountManager:
         # TODO cannot do a full replace, think password hash!
 
         result = await self.database['accounts'].replace_one(
-            filter={'_id': admin_name},
+            filter={'_id': username},
             replacement=account_data,
         )
         if result.matched_count == 0:
             raise HTTPException(404, 'account not found')
 
-    async def _delete(self, admin_name):
-        """Delete the admin including all her surveys from the database."""
-        await self.database['accounts'].delete_one({'_id': admin_name})
+    async def _delete(self, username):
+        """Delete the user including all her surveys from the database."""
+        await self.database['accounts'].delete_one({'_id': username})
         cursor = self.database['configurations'].find(
-            filter={'admin_name': admin_name},
+            filter={'username': username},
             projection={'_id': False, 'survey_name': True},
         )
         survey_names = [
@@ -197,15 +197,15 @@ class AccountManager:
             in await cursor.to_list(None)
         ]
         for survey_name in survey_names:
-            await self.survey_manager._delete(admin_name, survey_name)
+            await self.survey_manager._delete(username, survey_name)
 
-    async def _fetch_configurations(self, admin_name, skip, limit):
-        """Return a list of the admin's survey configurations."""
+    async def _fetch_configurations(self, username, skip, limit):
+        """Return a list of the user's survey configurations."""
         cursor = self.database['configurations'].find(
-            filter={'admin_name': admin_name},
+            filter={'username': username},
             projection={
                 '_id': False,
-                'admin_name': False,
+                'username': False,
                 'survey_name': False,
             },
             sort=[('start', DESCENDING)],

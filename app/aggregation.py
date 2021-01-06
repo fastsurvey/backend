@@ -8,7 +8,7 @@ class Alligator:
         """Initialize alligator with some pipeline parts already defined."""
         self.configuration = configuration
         self.survey_id = combine(
-            configuration['admin_name'],
+            configuration['username'],
             configuration['survey_name'],
         )
         self.collection = (

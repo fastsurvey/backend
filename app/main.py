@@ -39,8 +39,8 @@ client = MongoClient(MONGODB_CONNECTION_STRING)
 database = client[ENVIRONMENT]
 # set up database indices synchronously via pymongo
 database['configurations'].create_index(
-    keys=[('admin_name', ASCENDING), ('survey_name', ASCENDING)],
-    name='admin_name_survey_name_index',
+    keys=[('username', ASCENDING), ('survey_name', ASCENDING)],
+    name='username_survey_name_index',
     unique=True,
 )
 database['accounts'].create_index(
@@ -73,7 +73,7 @@ letterbox = Letterbox()
 token_manager = TokenManager()
 # instantiate survey manager
 survey_manager = SurveyManager(database, letterbox, token_manager)
-# instantiate admin acount manager
+# instantiate account manager
 account_manager = AccountManager(
     database,
     letterbox,
@@ -84,153 +84,153 @@ account_manager = AccountManager(
 oauth2_scheme = OAuth2PasswordBearer('/authentication')
 
 
-@app.get('/admins/{admin_name}')
-async def fetch_admin(
-        admin_name: str = Path(..., description='The username of the admin'),
+@app.get('/users/{username}')
+async def fetch_user(
+        username: str = Path(..., description='The username of the user'),
         access_token: str = Depends(oauth2_scheme),
     ):
-    """Fetch the given admin's account data."""
-    return await account_manager.fetch(admin_name, access_token)
+    """Fetch the given user's account data."""
+    return await account_manager.fetch(username, access_token)
 
 
-@app.post('/admins/{admin_name}')
-async def create_admin(
-        admin_name: str = Path(..., description='The username of the admin'),
-        email: str = Form(..., description='The admin\'s email address'),
+@app.post('/users/{username}')
+async def create_user(
+        username: str = Path(..., description='The username of the user'),
+        email: str = Form(..., description='The users\'s email address'),
         password: str = Form(..., description='The account password'),
     ):
-    """Create a new admin with default account data."""
-    await account_manager.create(admin_name, email, password)
+    """Create a new user with default account data."""
+    await account_manager.create(username, email, password)
 
 
-@app.put('/admins/{admin_name}')
-async def update_admin(
-        admin_name: str = Path(..., description='The username of the admin'),
+@app.put('/users/{username}')
+async def update_user(
+        username: str = Path(..., description='The username of the user'),
         account_data: dict = Body(..., description='The updated account data'),
         access_token: str = Depends(oauth2_scheme),
     ):
-    """Update the given admin's account data."""
-    return await account_manager.update(admin_name, account_data, access_token)
+    """Update the given user's account data."""
+    return await account_manager.update(username, account_data, access_token)
 
 
-@app.delete('/admins/{admin_name}')
-async def delete_admin(
-        admin_name: str = Path(..., description='The username of the admin'),
+@app.delete('/users/{username}')
+async def delete_user(
+        username: str = Path(..., description='The username of the user'),
         access_token: str = Depends(oauth2_scheme),
     ):
-    """Delete the admin and all her surveys from the database."""
-    return await account_manager.delete(admin_name, access_token)
+    """Delete the user and all her surveys from the database."""
+    return await account_manager.delete(username, access_token)
 
 
-@app.get('/admins/{admin_name}/surveys')
+@app.get('/users/{username}/surveys')
 async def fetch_configurations(
-        admin_name: str = Path(..., description='The username of the admin'),
+        username: str = Path(..., description='The username of the user'),
         skip: int = Query(0, description='Index of the first configuration'),
         limit: int = Query(10, description='Query limit; 0 means no limit'),
         access_token: str = Depends(oauth2_scheme),
     ):
-    """Fetch the admin's configurations sorted by the start date."""
+    """Fetch the user's configurations sorted by the start date."""
     return await account_manager.fetch_configurations(
-        admin_name,
+        username,
         skip,
         limit,
         access_token,
     )
 
 
-@app.get('/admins/{admin_name}/surveys/{survey_name}')
+@app.get('/users/{username}/surveys/{survey_name}')
 async def fetch_configuration(
-        admin_name: str = Path(..., description='The username of the admin'),
+        username: str = Path(..., description='The username of the user'),
         survey_name: str = Path(..., description='The name of the survey'),
     ):
     """Fetch the configuration document of a given survey."""
-    return await survey_manager.fetch(admin_name, survey_name)
+    return await survey_manager.fetch(username, survey_name)
 
 
-@app.post('/admins/{admin_name}/surveys/{survey_name}')
+@app.post('/users/{username}/surveys/{survey_name}')
 async def create_survey(
-        admin_name: str = Path(..., description='The username of the admin'),
+        username: str = Path(..., description='The username of the user'),
         survey_name: str = Path(..., description='The name of the survey'),
         configuration: dict = Body(..., description='The new configuration'),
         access_token: str = Depends(oauth2_scheme),
     ):
     """Create new survey with given configuration."""
     await survey_manager.create(
-        admin_name,
+        username,
         survey_name,
         configuration,
         access_token,
     )
 
 
-@app.put('/admins/{admin_name}/surveys/{survey_name}')
+@app.put('/users/{username}/surveys/{survey_name}')
 async def update_survey(
-        admin_name: str = Path(..., description='The username of the admin'),
+        username: str = Path(..., description='The username of the user'),
         survey_name: str = Path(..., description='The name of the survey'),
         configuration: dict = Body(..., description='Updated configuration'),
         access_token: str = Depends(oauth2_scheme),
     ):
     """Update survey with given configuration."""
     await survey_manager.update(
-        admin_name,
+        username,
         survey_name,
         configuration,
         access_token,
     )
 
 
-@app.delete('/admins/{admin_name}/surveys/{survey_name}')
+@app.delete('/users/{username}/surveys/{survey_name}')
 async def delete_survey(
-        admin_name: str = Path(..., description='The username of the admin'),
+        username: str = Path(..., description='The username of the user'),
         survey_name: str = Path(..., description='The name of the survey'),
         access_token: str = Depends(oauth2_scheme),
     ):
     """Delete given survey including all its submissions and other data."""
-    await survey_manager.delete(admin_name, survey_name, access_token)
+    await survey_manager.delete(username, survey_name, access_token)
 
 
-@app.post('/admins/{admin_name}/surveys/{survey_name}/submissions')
+@app.post('/users/{username}/surveys/{survey_name}/submissions')
 async def submit(
-        admin_name: str = Path(..., description='The username of the admin'),
+        username: str = Path(..., description='The username of the user'),
         survey_name: str = Path(..., description='The name of the survey'),
         submission: dict = Body(..., description='The user submission'),
     ):
     """Validate submission and store it under pending submissions."""
-    survey = await survey_manager._fetch(admin_name, survey_name)
+    survey = await survey_manager._fetch(username, survey_name)
     return await survey.submit(submission)
 
 
-@app.delete('/admins/{admin_name}/surveys/{survey_name}/submissions')
+@app.delete('/users/{username}/surveys/{survey_name}/submissions')
 async def reset_survey(
-        admin_name: str = Path(..., description='The username of the admin'),
+        username: str = Path(..., description='The username of the user'),
         survey_name: str = Path(..., description='The name of the survey'),
         access_token: str = Depends(oauth2_scheme),
     ):
     """Reset a survey by delete all submission data including any results."""
-    await survey_manager.reset(admin_name, survey_name, access_token)
+    await survey_manager.reset(username, survey_name, access_token)
 
 
-@app.get('/admins/{admin_name}/surveys/{survey_name}/verification/{token}')
+@app.get('/users/{username}/surveys/{survey_name}/verification/{token}')
 async def verify(
-        admin_name: str = Path(..., description='The username of the admin'),
+        username: str = Path(..., description='The username of the user'),
         survey_name: str = Path(..., description='The name of the survey'),
         token: str = Path(..., description='The verification token'),
     ):
     """Verify user token and either fail or redirect to success page."""
-    survey = await survey_manager._fetch(admin_name, survey_name)
+    survey = await survey_manager._fetch(username, survey_name)
     return await survey.verify(token)
 
 
-@app.get('/admins/{admin_name}/surveys/{survey_name}/results')
+@app.get('/users/{username}/surveys/{survey_name}/results')
 async def aggregate(
-        admin_name: str = Path(..., description='The username of the admin'),
+        username: str = Path(..., description='The username of the user'),
         survey_name: str = Path(..., description='The name of the survey'),
     ):
     """Fetch the results of the given survey."""
 
     # TODO adapt result following authentication
 
-    survey = await survey_manager._fetch(admin_name, survey_name)
+    survey = await survey_manager._fetch(username, survey_name)
     return await survey.aggregate()
 
 

@@ -20,43 +20,43 @@ def test_password_hashing():
 
 def test_valid_access_token_procedure(test_parameters):
     """Test JWT access token generation and decoding procedure."""
-    admin_name = test_parameters['admin_name']
-    access_token = main.token_manager.generate(admin_name)
-    assert main.token_manager.authorize(admin_name, access_token) is None
+    username = test_parameters['username']
+    access_token = main.token_manager.generate(username)
+    assert main.token_manager.authorize(username, access_token) is None
 
 
-def test_invalid_access_token_procedure(admin_name, private_rsa_key):
+def test_invalid_access_token_procedure(username, private_rsa_key):
     """Test that JWT decoding fails for some example invalid tokens."""
     with pytest.raises(HTTPException, match='unauthorized'):
         access_token = main.token_manager.generate('orange')
-        main.token_manager.authorize(admin_name, access_token)
+        main.token_manager.authorize(username, access_token)
     with pytest.raises(HTTPException, match='invalid token format'):
         access_token = 'hello world'
-        main.token_manager.authorize(admin_name, access_token)
+        main.token_manager.authorize(username, access_token)
     with pytest.raises(HTTPException, match='invalid token format'):
         access_token = None
-        main.token_manager.authorize(admin_name, access_token)
+        main.token_manager.authorize(username, access_token)
     with pytest.raises(HTTPException, match='invalid token format'):
         access_token = {'access_token': 'abc', 'token_type': 'bearer'}
-        main.token_manager.authorize(admin_name, access_token)
+        main.token_manager.authorize(username, access_token)
     with pytest.raises(HTTPException, match='token expired'):
         access_token = {
             'access_token': jwt.encode(
-                {'iss': 'FastSurvey', 'sub': admin_name, 'iat': 0, 'exp': 0},
+                {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 0},
                 key=cryptography.PRIVATE_RSA_KEY,
                 algorithm='RS256',
             ),
             'token_type': 'bearer',
         }
-        main.token_manager.authorize(admin_name, access_token)
+        main.token_manager.authorize(username, access_token)
     with pytest.raises(HTTPException, match='signature verification failed'):
         access_token = {
             'access_token': jwt.encode(
-                {'iss': 'FastSurvey', 'sub': admin_name, 'iat': 0, 'exp': 0},
+                {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 0},
                 key=base64.b64decode(private_rsa_key),
                 algorithm='RS256',
             ),
             'token_type': 'bearer',
         }
-        main.token_manager.authorize(admin_name, access_token)
+        main.token_manager.authorize(username, access_token)
 

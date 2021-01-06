@@ -3,11 +3,11 @@ import app.aggregation as aggregation
 import app.utils as utils
 
 
-def test_adding_email_to_aggregation_pipeline(admin_name, configurations):
+def test_adding_email_to_aggregation_pipeline(username, configurations):
     """Test adding an email field to the aggregation pipeline."""
     configuration = configurations['email']
     alligator = aggregation.Alligator(
-        configuration={'admin_name': admin_name, **configuration},
+        configuration={'username': username, **configuration},
         database=main.database,
     )
     alligator._add_email(
@@ -16,16 +16,16 @@ def test_adding_email_to_aggregation_pipeline(admin_name, configurations):
     )
     assert alligator.project == {}
     assert alligator.group == {
-        '_id': f'{admin_name}.email',
+        '_id': f'{username}.email',
         'count': {'$sum': 1},
     }
 
 
-def test_adding_option_to_aggregation_pipeline(admin_name, configurations):
+def test_adding_option_to_aggregation_pipeline(username, configurations):
     """Test adding an option field to the aggregation pipeline."""
     configuration = configurations['option']
     alligator = aggregation.Alligator(
-        configuration={'admin_name': admin_name, **configuration},
+        configuration={'username': username, **configuration},
         database=main.database,
     )
     alligator._add_option(
@@ -36,17 +36,17 @@ def test_adding_option_to_aggregation_pipeline(admin_name, configurations):
         'data.1': {'$toInt': '$data.1'},
     }
     assert alligator.group == {
-        '_id': f'{admin_name}.option',
+        '_id': f'{username}.option',
         'count': {'$sum': 1},
         '1': {'$sum': '$data.1'},
     }
 
 
-def test_adding_radio_to_aggregation_pipeline(admin_name, configurations):
+def test_adding_radio_to_aggregation_pipeline(username, configurations):
     """Test adding a radio field to the aggregation pipeline."""
     configuration = configurations['radio']
     alligator = aggregation.Alligator(
-        configuration={'admin_name': admin_name, **configuration},
+        configuration={'username': username, **configuration},
         database=main.database,
     )
     alligator._add_radio(
@@ -60,7 +60,7 @@ def test_adding_radio_to_aggregation_pipeline(admin_name, configurations):
         'data.1.4': {'$toInt': '$data.1.4'},
     }
     assert alligator.group == {
-        '_id': f'{admin_name}.radio',
+        '_id': f'{username}.radio',
         'count': {'$sum': 1},
         '1+1': {'$sum': '$data.1.1'},
         '1+2': {'$sum': '$data.1.2'},
@@ -69,11 +69,11 @@ def test_adding_radio_to_aggregation_pipeline(admin_name, configurations):
     }
 
 
-def test_adding_selection_to_aggregation_pipeline(admin_name, configurations):
+def test_adding_selection_to_aggregation_pipeline(username, configurations):
     """Test adding a selection field to the aggregation pipeline."""
     configuration = configurations['selection']
     alligator = aggregation.Alligator(
-        configuration={'admin_name': admin_name, **configuration},
+        configuration={'username': username, **configuration},
         database=main.database,
     )
     alligator._add_selection(
@@ -86,7 +86,7 @@ def test_adding_selection_to_aggregation_pipeline(admin_name, configurations):
         'data.1.3': {'$toInt': '$data.1.3'},
     }
     assert alligator.group == {
-        '_id': f'{admin_name}.selection',
+        '_id': f'{username}.selection',
         'count': {'$sum': 1},
         '1+1': {'$sum': '$data.1.1'},
         '1+2': {'$sum': '$data.1.2'},
@@ -94,11 +94,11 @@ def test_adding_selection_to_aggregation_pipeline(admin_name, configurations):
     }
 
 
-def test_adding_text_to_aggregation_pipeline(admin_name, configurations):
+def test_adding_text_to_aggregation_pipeline(username, configurations):
     """Test adding a text field to the aggregation pipeline."""
     configuration = configurations['text']
     alligator = aggregation.Alligator(
-        configuration={'admin_name': admin_name, **configuration},
+        configuration={'username': username, **configuration},
         database=main.database,
     )
     alligator._add_text(
@@ -111,6 +111,6 @@ def test_adding_text_to_aggregation_pipeline(admin_name, configurations):
     )
     assert alligator.project == {}
     assert alligator.group == {
-        '_id': f'{admin_name}.text',
+        '_id': f'{username}.text',
         'count': {'$sum': 1},
     }
