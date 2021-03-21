@@ -4,6 +4,7 @@ from fastapi import FastAPI, Path, Query, Body, Form, HTTPException, Depends
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.security import OAuth2PasswordBearer
 from pymongo import MongoClient, ASCENDING
+from pydantic import BaseModel
 
 from app.mailing import Letterbox
 from app.account import AccountManager
@@ -84,6 +85,10 @@ account_manager = AccountManager(
 oauth2_scheme = OAuth2PasswordBearer('/authentication')
 
 
+class Message(BaseModel):
+    message: str
+
+
 PAR_USERNAME = Path(
     ...,
     description='The name of the user',
@@ -117,10 +122,10 @@ PAR_CONFIGURATION = Body(..., description='The new configuration')
                         'username': 'fastsurvey',
                         'email_address': 'support@fastsurvey.io',
                         'verified': True,
-                    }
-                }
-            }
-        }
+                    },
+                },
+            },
+        },
     },
 )
 async def fetch_user(
@@ -147,11 +152,15 @@ async def update_user(
         account_data: dict = Body(
             ...,
             description='The updated account data',
+            example={
+                'username': 'fastsurvey',
+                'email_address': 'support@fastsurvey.io',
+            },
         ),
         access_token: str = Depends(oauth2_scheme),
     ):
     """Update the given user's account data."""
-    return await account_manager.update(username, account_data, access_token)
+    await account_manager.update(username, account_data, access_token)
 
 
 @app.delete('/users/{username}')
@@ -160,7 +169,7 @@ async def delete_user(
         access_token: str = Depends(oauth2_scheme),
     ):
     """Delete the user and all her surveys from the database."""
-    return await account_manager.delete(username, access_token)
+    await account_manager.delete(username, access_token)
 
 
 @app.get('/users/{username}/surveys')
@@ -239,7 +248,7 @@ async def delete_survey(
 
 
 @app.post('/users/{username}/surveys/{survey_name}/submissions')
-async def submit(
+async def submit_submission(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
         submission: dict = Body(
@@ -263,7 +272,7 @@ async def reset_survey(
 
 
 @app.get('/users/{username}/surveys/{survey_name}/verification/{token}')
-async def verify(
+async def verify_submission(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
         token: str = Path(..., description='The verification token'),
@@ -274,7 +283,7 @@ async def verify(
 
 
 @app.get('/users/{username}/surveys/{survey_name}/results')
-async def aggregate(
+async def fetch_results(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
     ):
@@ -286,8 +295,34 @@ async def aggregate(
     return await survey.aggregate()
 
 
-@app.post('/authentication')
-async def authenticate(
+@app.post(
+    path='/authentication',
+    responses={
+        200: {
+            'content': {
+                'application/json': {
+                    'example': {
+                        'access_token': b'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJGYXN0U3VydmV5Iiwic3ViIjoiYXBwbGUiLCJpYXQiOjE2MTYzNTA5NjAsImV4cCI6MTYxNjM1ODE2MH0.Vl8ndfMgE-LKcH5GOZZ_JEn2rL87Mg9wpihTvo-Cfukqr3vBI6I49EP109B2ZnEASnoXSzDRQSM438Pxxpm6aFMGSaxCJvVbPN3YhxKDKWel-3t7cslF5iwE8AlsYHQV6_6JZv-bZolUmScnGjXKEUBWn3x72AeFBm5I4O4VRWDt96umGfgtaPkBvXwW0eDIbGDIXR-MQF0vjiGnEd0GYwexgCj0uO80QTlN2oIH1kFtb612oqWJ3_Ipb2Ui6jwo0wVZW_I7zi5rKGrELsdGManwt7wUgp-V4779XXZ33IuojgS6kO45-aAkppBycv3cDqQdR_yjoRy6sZ4nryHEPzYKPtumtuY28Va2d9RpSxVHo1DkiyXmlrVWnmzyOuFVUxAMmblwaslc0es4igWtX_bZ141Vb6Vj96xk6pR6Wq9jjEhw9RsfyIVr2TwplzZZayVDl_9Pou3b8cZGRlotAYgWlYj9h0ZiI7hUvvXD24sFykx_HV3-hBPJJDmW3jwPRvRUtZEMic-1jAy-gMJs-irmeVOW6_Mh8LLncTRfutwJI4k6TqnPguX3LKEWu3uyGKT5zT2ZXanaTmBRVuFbON7-xb6ZvncdI5ttALixff2O67gXUjM7E9OrbauVWN6xqQ4-Wv70VJvtJa1MEvZOtC-JGwaF6C2WFNYKbnvB6hY',
+                        'token_type': 'bearer',
+                    },
+                },
+            },
+        },
+        400: {
+            'model': Message,
+            'description': 'Account Not Verified',
+        },
+        401: {
+            'model': Message,
+            'description': 'Invalid Password',
+        },
+        404: {
+            'model': Message,
+            'description': 'Account Not Found',
+        },
+    },
+)
+async def authenticate_user(
         identifier: str = Form(
             ...,
             description='The account email or the username',
