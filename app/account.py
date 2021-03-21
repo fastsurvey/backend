@@ -35,12 +35,12 @@ class AccountManager:
         }
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
-        if not self.password_manager.validate_password(password):
+        if not self.password_manager.validate(password):
             raise HTTPException(400, 'invalid password format')
         account_data = {
             '_id': username,
             'email_address': email_address,
-            'password_hash': self.password_manager.hash_password(password),
+            'password_hash': self.password_manager.hash(password),
             'creation_time': now(),
             'verified': False,
             'verification_token': vtoken(),
@@ -80,7 +80,7 @@ class AccountManager:
         if account_data is None:
             raise HTTPException(401, 'invalid token')
         password_hash = account_data['password_hash']
-        if not self.password_manager.verify_password(password, password_hash):
+        if not self.password_manager.verify(password, password_hash):
             raise HTTPException(401, 'invalid password')
         if account_data['verified'] is True:
             raise HTTPException(400, 'account already verified')
@@ -106,7 +106,7 @@ class AccountManager:
         if account_data is None:
             raise HTTPException(404, 'account not found')
         password_hash = account_data['password_hash']
-        if not self.password_manager.verify_password(password, password_hash):
+        if not self.password_manager.verify(password, password_hash):
             raise HTTPException(401, 'invalid password')
         if account_data['verified'] is False:
             raise HTTPException(400, 'account not verified')

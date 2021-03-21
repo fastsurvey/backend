@@ -26,17 +26,15 @@ class PasswordManager:
             deprecated='auto',
         )
 
-    # TODO rename to without _password
-
-    def hash_password(self, password):
+    def hash(self, password):
         """Hash the given password and return the hash as string."""
         return self.context.hash(password)
 
-    def verify_password(self, password, pwdhash):
+    def verify(self, password, pwdhash):
         """Return true if the password results in the hash, else False."""
         return self.context.verify(password, pwdhash)
 
-    def validate_password(self, password):
+    def validate(self, password):
         """Validate that the password has the right format."""
         return 8 <= len(password) <= 64
 
