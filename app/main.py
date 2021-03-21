@@ -8,7 +8,7 @@ from pymongo import MongoClient, ASCENDING
 from app.mailing import Letterbox
 from app.account import AccountManager
 from app.survey import SurveyManager
-from app.cryptography import TokenManager
+from app.cryptography import JWTManager
 
 
 # check that required environment variables are set
@@ -70,18 +70,41 @@ database = client[ENVIRONMENT]
 # create email client
 letterbox = Letterbox()
 # create JWT manager
-token_manager = TokenManager()
+jwt_manager = JWTManager()
 # instantiate survey manager
-survey_manager = SurveyManager(database, letterbox, token_manager)
+survey_manager = SurveyManager(database, letterbox, jwt_manager)
 # instantiate account manager
 account_manager = AccountManager(
     database,
     letterbox,
-    token_manager,
+    jwt_manager,
     survey_manager,
 )
 # fastapi password bearer
 oauth2_scheme = OAuth2PasswordBearer('/authentication')
+
+
+PAR_USERNAME = Path(
+    ...,
+    description='The name of the user',
+    example='fastsurvey',
+)
+PAR_EMAIL = Form(
+    ...,
+    description='The users\'s email address',
+    example='support@fastsurvey.io',
+)
+PAR_PASSWORD = Form(
+    ...,
+    description='The account password',
+    example='12345678',
+)
+PAR_SURVEY_NAME = Path(
+    ...,
+    description='The name of the survey',
+    example='hello-world',
+)
+PAR_CONFIGURATION = Body(..., description='The new configuration')
 
 
 @app.get(
@@ -92,7 +115,7 @@ oauth2_scheme = OAuth2PasswordBearer('/authentication')
                 'application/json': {
                     'example': {
                         'username': 'fastsurvey',
-                        'email_address': 'info@fastsurvey.io',
+                        'email_address': 'support@fastsurvey.io',
                         'verified': True,
                     }
                 }
@@ -101,7 +124,7 @@ oauth2_scheme = OAuth2PasswordBearer('/authentication')
     },
 )
 async def fetch_user(
-        username: str = Path(..., description='The username of the user'),
+        username: str = PAR_USERNAME,
         access_token: str = Depends(oauth2_scheme),
     ):
     """Fetch the given user's account data."""
@@ -110,9 +133,9 @@ async def fetch_user(
 
 @app.post('/users/{username}')
 async def create_user(
-        username: str = Path(..., description='The username of the user'),
-        email: str = Form(..., description='The users\'s email address'),
-        password: str = Form(..., description='The account password'),
+        username: str = PAR_USERNAME,
+        email: str = PAR_EMAIL,
+        password: str = PAR_PASSWORD,
     ):
     """Create a new user with default account data."""
     await account_manager.create(username, email, password)
@@ -120,8 +143,11 @@ async def create_user(
 
 @app.put('/users/{username}')
 async def update_user(
-        username: str = Path(..., description='The username of the user'),
-        account_data: dict = Body(..., description='The updated account data'),
+        username: str = PAR_USERNAME,
+        account_data: dict = Body(
+            ...,
+            description='The updated account data',
+        ),
         access_token: str = Depends(oauth2_scheme),
     ):
     """Update the given user's account data."""
@@ -130,7 +156,7 @@ async def update_user(
 
 @app.delete('/users/{username}')
 async def delete_user(
-        username: str = Path(..., description='The username of the user'),
+        username: str = PAR_USERNAME,
         access_token: str = Depends(oauth2_scheme),
     ):
     """Delete the user and all her surveys from the database."""
@@ -139,9 +165,17 @@ async def delete_user(
 
 @app.get('/users/{username}/surveys')
 async def fetch_configurations(
-        username: str = Path(..., description='The username of the user'),
-        skip: int = Query(0, description='Index of the first configuration'),
-        limit: int = Query(10, description='Query limit; 0 means no limit'),
+        username: str = PAR_USERNAME,
+        skip: int = Query(
+            0,
+            description='The index of the first returned configuration',
+            example=0,
+        ),
+        limit: int = Query(
+            10,
+            description='The query result count limit; 0 means no limit',
+            example=10,
+        ),
         access_token: str = Depends(oauth2_scheme),
     ):
     """Fetch the user's configurations sorted by the start date."""
@@ -155,8 +189,8 @@ async def fetch_configurations(
 
 @app.get('/users/{username}/surveys/{survey_name}')
 async def fetch_configuration(
-        username: str = Path(..., description='The username of the user'),
-        survey_name: str = Path(..., description='The name of the survey'),
+        username: str = PAR_USERNAME,
+        survey_name: str = PAR_SURVEY_NAME,
     ):
     """Fetch the configuration document of a given survey."""
     return await survey_manager.fetch(username, survey_name)
@@ -164,9 +198,9 @@ async def fetch_configuration(
 
 @app.post('/users/{username}/surveys/{survey_name}')
 async def create_survey(
-        username: str = Path(..., description='The username of the user'),
-        survey_name: str = Path(..., description='The name of the survey'),
-        configuration: dict = Body(..., description='The new configuration'),
+        username: str = PAR_USERNAME,
+        survey_name: str = PAR_SURVEY_NAME,
+        configuration: dict = PAR_CONFIGURATION,
         access_token: str = Depends(oauth2_scheme),
     ):
     """Create new survey with given configuration."""
@@ -180,9 +214,9 @@ async def create_survey(
 
 @app.put('/users/{username}/surveys/{survey_name}')
 async def update_survey(
-        username: str = Path(..., description='The username of the user'),
-        survey_name: str = Path(..., description='The name of the survey'),
-        configuration: dict = Body(..., description='Updated configuration'),
+        username: str = PAR_USERNAME,
+        survey_name: str = PAR_SURVEY_NAME,
+        configuration: dict = PAR_CONFIGURATION,
         access_token: str = Depends(oauth2_scheme),
     ):
     """Update survey with given configuration."""
@@ -196,8 +230,8 @@ async def update_survey(
 
 @app.delete('/users/{username}/surveys/{survey_name}')
 async def delete_survey(
-        username: str = Path(..., description='The username of the user'),
-        survey_name: str = Path(..., description='The name of the survey'),
+        username: str = PAR_USERNAME,
+        survey_name: str = PAR_SURVEY_NAME,
         access_token: str = Depends(oauth2_scheme),
     ):
     """Delete given survey including all its submissions and other data."""
@@ -206,9 +240,12 @@ async def delete_survey(
 
 @app.post('/users/{username}/surveys/{survey_name}/submissions')
 async def submit(
-        username: str = Path(..., description='The username of the user'),
-        survey_name: str = Path(..., description='The name of the survey'),
-        submission: dict = Body(..., description='The user submission'),
+        username: str = PAR_USERNAME,
+        survey_name: str = PAR_SURVEY_NAME,
+        submission: dict = Body(
+            ...,
+            description='The user submission',
+        ),
     ):
     """Validate submission and store it under pending submissions."""
     survey = await survey_manager._fetch(username, survey_name)
@@ -217,8 +254,8 @@ async def submit(
 
 @app.delete('/users/{username}/surveys/{survey_name}/submissions')
 async def reset_survey(
-        username: str = Path(..., description='The username of the user'),
-        survey_name: str = Path(..., description='The name of the survey'),
+        username: str = PAR_USERNAME,
+        survey_name: str = PAR_SURVEY_NAME,
         access_token: str = Depends(oauth2_scheme),
     ):
     """Reset a survey by delete all submission data including any results."""
@@ -227,8 +264,8 @@ async def reset_survey(
 
 @app.get('/users/{username}/surveys/{survey_name}/verification/{token}')
 async def verify(
-        username: str = Path(..., description='The username of the user'),
-        survey_name: str = Path(..., description='The name of the survey'),
+        username: str = PAR_USERNAME,
+        survey_name: str = PAR_SURVEY_NAME,
         token: str = Path(..., description='The verification token'),
     ):
     """Verify user token and either fail or redirect to success page."""
@@ -238,8 +275,8 @@ async def verify(
 
 @app.get('/users/{username}/surveys/{survey_name}/results')
 async def aggregate(
-        username: str = Path(..., description='The username of the user'),
-        survey_name: str = Path(..., description='The name of the survey'),
+        username: str = PAR_USERNAME,
+        survey_name: str = PAR_SURVEY_NAME,
     ):
     """Fetch the results of the given survey."""
 
@@ -251,15 +288,19 @@ async def aggregate(
 
 @app.post('/authentication')
 async def authenticate(
-        identifier: str = Form(..., description='The email or username'),
-        password: str = Form(..., description='The account password'),
+        identifier: str = Form(
+            ...,
+            description='The account email or the username',
+            example='fastsurvey',
+        ),
+        password: str = PAR_PASSWORD,
     ):
     return await account_manager.authenticate(identifier, password)
 
 
-@app.post('/authentication/email-verification')
+@app.post('/verification')
 async def verify_email_address(
         token: str = Form(..., description='The account verification token'),
-        password: str = Form(..., description='The account password'),
+        password: str = PAR_PASSWORD,
     ):
     return await account_manager.verify(token, password)
