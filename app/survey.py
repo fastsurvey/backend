@@ -1,4 +1,3 @@
-import secrets
 import os
 import asyncio
 
@@ -10,6 +9,7 @@ from cachetools import LRUCache
 from app.validation import SubmissionValidator, ConfigurationValidator
 from app.aggregation import Alligator
 from app.utils import combine, now
+from app.cryptography import vtoken
 
 
 # frontend url
@@ -26,13 +26,13 @@ class SurveyManager:
     # argument.
 
 
-    def __init__(self, database, letterbox, token_manager):
+    def __init__(self, database, letterbox, jwt_manager):
         """Initialize a survey manager instance."""
         self.database = database
         self.letterbox = letterbox
         self.cache = LRUCache(maxsize=256)
         self.validator = ConfigurationValidator.create()
-        self.token_manager = token_manager
+        self.jwt_manager = jwt_manager
 
     def _update_cache(self, configuration):
         """Update survey object in the local cache."""
@@ -64,7 +64,7 @@ class SurveyManager:
             access_token,
         ):
         """Create a new survey configuration in the database and cache."""
-        self.token_manager.authorize(username, access_token)
+        self.jwt_manager.authorize(username, access_token)
         await self._create(username, survey_name, configuration)
 
     async def update(
@@ -75,17 +75,17 @@ class SurveyManager:
             access_token,
         ):
         """Update a survey configuration in the database and cache."""
-        self.token_manager.authorize(username, access_token)
+        self.jwt_manager.authorize(username, access_token)
         await self._update(username, survey_name, configuration)
 
     async def reset(self, username, survey_name, access_token):
         """Delete all submission data including the results of a survey."""
-        self.token_manager.authorize(username, access_token)
+        self.jwt_manager.authorize(username, access_token)
         await self._reset(username, survey_name)
 
     async def delete(self, username, survey_name, access_token):
         """Delete the survey and all its data from the database and cache."""
-        self.token_manager.authorize(username, access_token)
+        self.jwt_manager.authorize(username, access_token)
         await self._delete(username, survey_name)
 
     async def _fetch(self, username, survey_name):
@@ -229,13 +229,13 @@ class Survey:
         if self.authentication == 'open':
             await self.submissions.insert_one(submission)
         if self.authentication == 'email':
-            submission['_id'] = secrets.token_hex(32)
+            submission['_id'] = vtoken()
             while True:
                 try:
                     await self.submissions.insert_one(submission)
                     break
                 except DuplicateKeyError:
-                    submission['_id'] = secrets.token_hex(32)
+                    submission['_id'] = vtoken()
             status = await self.letterbox.send_submission_verification_email(
                 self.username,
                 self.survey_name,

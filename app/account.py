@@ -1,4 +1,3 @@
-import secrets
 import time
 import asyncio
 
@@ -7,25 +6,25 @@ from pymongo.errors import DuplicateKeyError
 from pymongo import DESCENDING
 
 from app.validation import AccountValidator
-from app.cryptography import PasswordManager
+from app.cryptography import PasswordManager, vtoken
 from app.utils import now
 
 
 class AccountManager:
     """The manager manages creating, updating and deleting user accounts."""
 
-    def __init__(self, database, letterbox, token_manager, survey_manager):
+    def __init__(self, database, letterbox, jwt_manager, survey_manager):
         """Initialize an user manager instance."""
         self.database = database
         self.survey_manager = survey_manager
         self.validator = AccountValidator.create()
         self.password_manager = PasswordManager()
-        self.token_manager = token_manager
+        self.jwt_manager = jwt_manager
         self.letterbox = letterbox
 
     async def fetch(self, username, access_token):
         """Return the account data corresponding to given user name."""
-        self.token_manager.authorize(username, access_token)
+        self.jwt_manager.authorize(username, access_token)
         return self._fetch(username)
 
     async def create(self, username, email_address, password):
@@ -44,7 +43,7 @@ class AccountManager:
             'password_hash': self.password_manager.hash_password(password),
             'creation_time': now(),
             'verified': False,
-            'verification_token': secrets.token_hex(64),
+            'verification_token': vtoken(),
         }
         while True:
             try:
@@ -57,7 +56,7 @@ class AccountManager:
                 if index == 'email_address_index':
                     raise HTTPException(400, f'email address already taken')
                 if index == 'verification_token_index':
-                    account_data['verification_token'] = secrets.token_hex(64)
+                    account_data['verification_token'] = vtoken()
                 else:
                     raise HTTPException(500, 'account creation error')
 
@@ -91,7 +90,7 @@ class AccountManager:
         )
         if result.matched_count == 0:
             raise HTTPException(401, 'invalid token')
-        return self.token_manager.generate(account_data['_id'])
+        return self.jwt_manager.generate(account_data['_id'])
 
     async def authenticate(self, identifier, password):
         """Authenticate user by her username or email and her password."""
@@ -111,16 +110,16 @@ class AccountManager:
             raise HTTPException(401, 'invalid password')
         if account_data['verified'] is False:
             raise HTTPException(400, 'account not verified')
-        return self.token_manager.generate(account_data['_id'])
+        return self.jwt_manager.generate(account_data['_id'])
 
     async def update(self, username, account_data, access_token):
         """Update existing user account data in the database."""
-        self.token_manager.authorize(username, access_token)
+        self.jwt_manager.authorize(username, access_token)
         self._update(username, account_data)
 
     async def delete(self, username, access_token):
         """Delete the user including all her surveys from the database."""
-        self.token_manager.authorize(username, access_token)
+        self.jwt_manager.authorize(username, access_token)
         self._delete(username)
 
     async def fetch_configurations(
@@ -131,7 +130,7 @@ class AccountManager:
             access_token,
         ):
         """Return a list of the user's survey configurations."""
-        self.token_manager.authorize(username, access_token)
+        self.jwt_manager.authorize(username, access_token)
         return await self._fetch_configurations(username, skip, limit)
 
     async def _fetch(self, username):

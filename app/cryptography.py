@@ -1,6 +1,7 @@
 import jwt
 import os
 import base64
+import secrets
 
 from passlib.context import CryptContext
 from fastapi import HTTPException
@@ -25,6 +26,8 @@ class PasswordManager:
             deprecated='auto',
         )
 
+    # TODO rename to without _password
+
     def hash_password(self, password):
         """Hash the given password and return the hash as string."""
         return self.context.hash(password)
@@ -38,8 +41,8 @@ class PasswordManager:
         return 8 <= len(password) <= 64
 
 
-class TokenManager:
-    """The TokenManager manages encoding and decoding JSON Web Tokens."""
+class JWTManager:
+    """The JWTManager manages encoding and decoding JSON Web Tokens."""
 
     def generate(self, username):
         """Generate JWT access token containing username and expiration."""
@@ -80,3 +83,8 @@ class TokenManager:
         except (TypeError, InvalidTokenError):
             raise HTTPException(400, 'invalid token format')
         return payload['sub']
+
+
+def vtoken():
+    """Create and return a random hex string useful in verification flows."""
+    return secrets.token_hex(64)
