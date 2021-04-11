@@ -14,7 +14,7 @@ class AccountManager:
     """The manager manages creating, updating and deleting user accounts."""
 
     def __init__(self, database, letterbox, jwt_manager, survey_manager):
-        """Initialize an user manager instance."""
+        """Initialize an account manager instance."""
         self.database = database
         self.survey_manager = survey_manager
         self.validator = AccountValidator.create()
@@ -23,7 +23,7 @@ class AccountManager:
         self.letterbox = letterbox
 
     async def fetch(self, username, access_token):
-        """Return the account data corresponding to given user name."""
+        """Return the account data corresponding to given username."""
         self.jwt_manager.authorize(username, access_token)
         return self._fetch(username)
 
@@ -78,7 +78,7 @@ class AccountManager:
             projection={'password_hash': True, 'verified': True},
         )
         if account_data is None:
-            raise HTTPException(401, 'invalid token')
+            raise HTTPException(401, 'invalid verification token')
         password_hash = account_data['password_hash']
         if not self.password_manager.verify(password, password_hash):
             raise HTTPException(401, 'invalid password')
@@ -89,7 +89,7 @@ class AccountManager:
             update={'$set': {'verified': True}}
         )
         if result.matched_count == 0:
-            raise HTTPException(401, 'invalid token')
+            raise HTTPException(401, 'invalid verification token')
         return self.jwt_manager.generate(account_data['_id'])
 
     async def authenticate(self, identifier, password):
@@ -184,11 +184,7 @@ class AccountManager:
         """Return a list of the user's survey configurations."""
         cursor = self.database['configurations'].find(
             filter={'username': username},
-            projection={
-                '_id': False,
-                'username': False,
-                'survey_name': False,
-            },
+            projection={'_id': False, 'username': False},
             sort=[('start', DESCENDING)],
             skip=skip,
             limit=limit,

@@ -88,6 +88,29 @@ class ExceptionResponse(BaseModel):
     detail: str
 
 
+configuration_example = {
+    'survey_name': 'option',
+    'title': 'Option Test',
+    'description': '',
+    'start': 1000000000,
+    'end': 2000000000,
+    'draft': False,
+    'authentication': 'open',
+    'limit': 0,
+    'fields': [
+        {
+            'type': 'option',
+            'title': 'I have read and agree to the terms and conditions',
+            'description': '',
+            'required': True
+        }
+    ],
+}
+submission_example = {
+    '1': True,
+}
+
+
 PAR_USERNAME = Path(
     ...,
     description='The name of the user',
@@ -111,6 +134,7 @@ PAR_SURVEY_NAME = Path(
 PAR_CONFIGURATION = Body(
     ...,
     description='The new configuration',
+    example=configuration_example
 )
 
 
@@ -270,8 +294,29 @@ async def delete_user(
     await account_manager.delete(username, access_token)
 
 
-@app.get('/users/{username}/surveys')
-async def fetch_configurations(
+@app.get(
+    path='/users/{username}/surveys',
+    responses={
+        200: {
+            'content': {
+                'application/json': {
+                    'example': [configuration_example],
+                },
+            },
+        },
+        401: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'invalid access token',
+                    },
+                },
+            },
+        },
+    },
+)
+async def fetch_surveys(
         username: str = PAR_USERNAME,
         skip: int = Query(
             0,
@@ -285,7 +330,7 @@ async def fetch_configurations(
         ),
         access_token: str = Depends(oauth2_scheme),
     ):
-    """Fetch the user's configurations sorted by the start date."""
+    """Fetch the user's survey configurations sorted by the start date."""
     return await account_manager.fetch_configurations(
         username,
         skip,
@@ -294,16 +339,70 @@ async def fetch_configurations(
     )
 
 
-@app.get('/users/{username}/surveys/{survey_name}')
-async def fetch_configuration(
+@app.get(
+    path='/users/{username}/surveys/{survey_name}',
+    responses={
+        200: {
+            'content': {
+                'application/json': {
+                    'example': configuration_example,
+                },
+            },
+        },
+        404: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'survey not found',
+                    },
+                },
+            },
+        },
+    },
+)
+async def fetch_survey(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
     ):
-    """Fetch the configuration document of a given survey."""
+    """Fetch a survey configuration."""
     return await survey_manager.fetch(username, survey_name)
 
 
-@app.post('/users/{username}/surveys/{survey_name}')
+@app.post(
+    path='/users/{username}/surveys/{survey_name}',
+    responses={
+        400: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'examples': {
+                        'invalid configuration': {
+                            'value': {
+                                'detail': 'invalid configuration',
+                            },
+                        },
+                        'survey exists': {
+                            'value': {
+                                'detail': 'survey exists',
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        401: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'invalid access token',
+                    },
+                },
+            },
+        },
+    },
+)
 async def create_survey(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
@@ -319,7 +418,40 @@ async def create_survey(
     )
 
 
-@app.put('/users/{username}/surveys/{survey_name}')
+@app.put(
+    path='/users/{username}/surveys/{survey_name}',
+    responses={
+        400: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'examples': {
+                        'invalid configuration': {
+                            'value': {
+                                'detail': 'invalid configuration',
+                            },
+                        },
+                        'survey exists': {
+                            'value': {
+                                'detail': 'not an existing survey',
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        401: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'invalid access token',
+                    },
+                },
+            },
+        },
+    },
+)
 async def update_survey(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
@@ -335,7 +467,21 @@ async def update_survey(
     )
 
 
-@app.delete('/users/{username}/surveys/{survey_name}')
+@app.delete(
+    path='/users/{username}/surveys/{survey_name}',
+    responses={
+        401: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'invalid access token',
+                    },
+                },
+            },
+        },
+    },
+)
 async def delete_survey(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
@@ -345,13 +491,52 @@ async def delete_survey(
     await survey_manager.delete(username, survey_name, access_token)
 
 
-@app.post('/users/{username}/surveys/{survey_name}/submissions')
-async def submit_submission(
+@app.post(
+    path='/users/{username}/surveys/{survey_name}/submissions',
+    responses={
+        400: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'examples': {
+                        'survey is not open yet': {
+                            'value': {
+                                'detail': 'survey is not open yet',
+                            },
+                        },
+                        'survey is closed': {
+                            'value': {
+                                'detail': 'survey is closed',
+                            },
+                        },
+                        'invalid submission': {
+                            'value': {
+                                'detail': 'invalid submission',
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        404: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'survey not found',
+                    },
+                },
+            },
+        },
+    },
+)
+async def create_submission(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
         submission: dict = Body(
             ...,
             description='The user submission',
+            example=submission_example,
         ),
     ):
     """Validate submission and store it under pending submissions."""
@@ -359,17 +544,79 @@ async def submit_submission(
     return await survey.submit(submission)
 
 
-@app.delete('/users/{username}/surveys/{survey_name}/submissions')
+@app.delete(
+    path='/users/{username}/surveys/{survey_name}/submissions',
+    responses={
+        401: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'invalid access token',
+                    },
+                },
+            },
+        },
+    },
+)
 async def reset_survey(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
         access_token: str = Depends(oauth2_scheme),
     ):
-    """Reset a survey by delete all submission data including any results."""
+    """Reset a survey by deleting all submission data including any results."""
     await survey_manager.reset(username, survey_name, access_token)
 
 
-@app.get('/users/{username}/surveys/{survey_name}/verification/{token}')
+@app.get(
+    path='/users/{username}/surveys/{survey_name}/verification/{token}',
+    responses={
+        400: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'examples': {
+                        'invalid token': {
+                            'value': {
+                                'detail': 'survey does not verify email addresses',
+                            },
+                        },
+                        'survey is not open yet': {
+                            'value': {
+                                'detail': 'survey is not open yet',
+                            },
+                        },
+                        'survey is closed': {
+                            'value': {
+                                'detail': 'survey is closed',
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        401: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'invalid verification token',
+                    },
+                },
+            },
+        },
+        404: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'survey not found',
+                    },
+                },
+            },
+        },
+    },
+)
 async def verify_submission(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
@@ -380,7 +627,41 @@ async def verify_submission(
     return await survey.verify(token)
 
 
-@app.get('/users/{username}/surveys/{survey_name}/results')
+@app.get(
+    path='/users/{username}/surveys/{survey_name}/results',
+    responses={
+        200: {
+            'content': {
+                'application/json': {
+                    'example': {
+                        'count': 1,
+                        '1': 1,
+                    },
+                },
+            },
+        },
+        400: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'survey is not yet closed',
+                    },
+                },
+            },
+        },
+        404: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'survey not found',
+                    },
+                },
+            },
+        },
+    },
+)
 async def fetch_results(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
@@ -441,7 +722,7 @@ async def fetch_results(
 async def authenticate_user(
         identifier: str = Form(
             ...,
-            description='The account email or the username',
+            description='The email address or username',
             example='fastsurvey',
         ),
         password: str = PAR_PASSWORD,
@@ -479,7 +760,7 @@ async def authenticate_user(
                     'examples': {
                         'invalid token': {
                             'value': {
-                                'detail': 'invalid token',
+                                'detail': 'invalid verification token',
                             },
                         },
                         'invalid password': {

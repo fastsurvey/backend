@@ -117,6 +117,11 @@ class SurveyManager:
         try:
             await self.database['configurations'].insert_one(configuration)
             del configuration['_id']
+
+            # TODO also delete the username from the configuration here?
+            # like this the configuration in the survey is the same as
+            # the one that is sent around in the routes
+
             self._update_cache(configuration)
         except DuplicateKeyError:
             raise HTTPException(400, 'survey exists')
@@ -261,7 +266,7 @@ class Survey:
             {'_id': verification_token},
         )
         if submission is None:
-            raise HTTPException(401, 'invalid token')
+            raise HTTPException(401, 'invalid verification token')
         submission['verification_time'] = verification_time
         submission['_id'] = submission['data'][str(self.ei + 1)]
         await self.verified_submissions.find_one_and_replace(
