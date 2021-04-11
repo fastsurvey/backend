@@ -4,6 +4,7 @@ import os
 import base64
 
 from fastapi import HTTPException
+from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
 
 import app.main as main
 import app.cryptography as cryptography
@@ -27,19 +28,18 @@ def test_valid_access_token_procedure(test_parameters):
 
 def test_invalid_access_token_procedure(username, private_rsa_key):
     """Test that JWT decoding fails for some example invalid tokens."""
-    with pytest.raises(HTTPException, match='unauthorized'):
-        access_token = main.jwt_manager.generate('orange')
+    with pytest.raises(HTTPException):
+        access_token = main.jwt_manager.generate(username + '+')
         main.jwt_manager.authorize(username, access_token)
-    with pytest.raises(HTTPException, match='invalid token format'):
-        access_token = 'hello world'
-        main.jwt_manager.authorize(username, access_token)
-    with pytest.raises(HTTPException, match='invalid token format'):
-        access_token = None
-        main.jwt_manager.authorize(username, access_token)
-    with pytest.raises(HTTPException, match='invalid token format'):
-        access_token = {'access_token': 'abc', 'token_type': 'bearer'}
-        main.jwt_manager.authorize(username, access_token)
-    with pytest.raises(HTTPException, match='token expired'):
+    with pytest.raises(TypeError):
+        main.jwt_manager.decode('hello world')
+    with pytest.raises(TypeError):
+        main.jwt_manager.decode(None)
+    with pytest.raises(InvalidTokenError):
+        access_token = main.jwt_manager.generate(username)
+        access_token['access_token'] = access_token['access_token'][:-1]
+        main.jwt_manager.decode(access_token)
+    with pytest.raises(ExpiredSignatureError):
         access_token = {
             'access_token': jwt.encode(
                 {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 0},
@@ -48,8 +48,8 @@ def test_invalid_access_token_procedure(username, private_rsa_key):
             ),
             'token_type': 'bearer',
         }
-        main.jwt_manager.authorize(username, access_token)
-    with pytest.raises(HTTPException, match='signature verification failed'):
+        main.jwt_manager.decode(access_token)
+    with pytest.raises(InvalidSignatureError):
         access_token = {
             'access_token': jwt.encode(
                 {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 0},
@@ -58,5 +58,4 @@ def test_invalid_access_token_procedure(username, private_rsa_key):
             ),
             'token_type': 'bearer',
         }
-        main.jwt_manager.authorize(username, access_token)
-
+        main.jwt_manager.decode(access_token)

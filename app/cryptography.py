@@ -58,12 +58,7 @@ class JWTManager:
         return {'access_token': access_token, 'token_type': 'bearer'}
 
     def authorize(self, username, access_token):
-        """Authorize user by comparing username with access token."""
-        if username != self.decode(access_token):
-            raise HTTPException(401, 'invalid access token')
-
-    def decode(self, access_token):
-        """Decode the given JWT access token and return the username.
+        """Authorize user by comparing username with access token.
 
         We handle every exception that can occur during the decoding process.
         If the decoding runs through without issues, we trust that the
@@ -72,17 +67,23 @@ class JWTManager:
 
         """
         try:
-            payload = jwt.decode(
-                access_token['access_token'],
-                PUBLIC_RSA_KEY,
-                algorithms=['RS256'],
-            )
-        except ExpiredSignatureError:
-            raise HTTPException(401, 'token expired')
-        except InvalidSignatureError:
-            raise HTTPException(401, 'signature verification failed')
-        except (TypeError, InvalidTokenError):
-            raise HTTPException(400, 'invalid token format')
+            assert username == self.decode(access_token)
+        except (
+            ExpiredSignatureError,
+            InvalidSignatureError,
+            TypeError,
+            InvalidTokenError,
+            AssertionError,
+        ):
+            raise HTTPException(401, 'invalid access token')
+
+    def decode(self, access_token):
+        """Decode the given JWT access token and return the username."""
+        payload = jwt.decode(
+            access_token['access_token'],
+            PUBLIC_RSA_KEY,
+            algorithms=['RS256'],
+        )
         return payload['sub']
 
 
