@@ -158,7 +158,35 @@ async def fetch_user(
     return await account_manager.fetch(username, access_token)
 
 
-@app.post('/users/{username}')
+@app.post(
+    path='/users/{username}',
+    responses={
+        400: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'examples': {
+                        'invalid account data': {
+                            'value': {
+                                'detail': 'invalid account data',
+                            },
+                        },
+                        'username already taken': {
+                            'value': {
+                                'detail': 'username already taken',
+                            },
+                        },
+                        'email address already taken': {
+                            'value': {
+                                'detail': 'email address already taken',
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    },
+)
 async def create_user(
         username: str = PAR_USERNAME,
         email: str = PAR_EMAIL,
@@ -168,7 +196,41 @@ async def create_user(
     await account_manager.create(username, email, password)
 
 
-@app.put('/users/{username}')
+@app.put(
+    path='/users/{username}',
+    responses={
+        400: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'invalid account data',
+                    },
+                },
+            },
+        },
+        401: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'invalid access token',
+                    },
+                },
+            },
+        },
+        404: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'account not found',
+                    },
+                },
+            },
+        },
+    },
+)
 async def update_user(
         username: str = PAR_USERNAME,
         account_data: dict = Body(
@@ -185,7 +247,21 @@ async def update_user(
     await account_manager.update(username, account_data, access_token)
 
 
-@app.delete('/users/{username}')
+@app.delete(
+    path='/users/{username}',
+    responses={
+        401: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'invalid access token',
+                    },
+                },
+            },
+        },
+    },
+)
 async def delete_user(
         username: str = PAR_USERNAME,
         access_token: str = Depends(oauth2_scheme),

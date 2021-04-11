@@ -36,7 +36,7 @@ class AccountManager:
         if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
         if not self.password_manager.validate(password):
-            raise HTTPException(400, 'invalid password format')
+            raise HTTPException(400, 'invalid account data')
         account_data = {
             '_id': username,
             'email_address': email_address,
@@ -149,26 +149,8 @@ class AccountManager:
     async def _update(self, username, account_data):
         """Update existing user account data in the database."""
 
-        ''' JSON FORMAT
-
-        IN:
-
-        {
-            "username": "fastsurvey",
-            "email_address": "support@fastsurvey.io",
-        }
-
-        OUT:
-
-        {
-            "username": "fastsurvey",
-            "email_address": "support@fastsurvey.io",
-            "verified": true,
-        }
-
-        '''
-
         # TODO handle username change with transactions
+        # TODO how to change password?
         # TODO handle email change specially, as it needs to be reverified
 
         if not self.validator.validate(account_data):
