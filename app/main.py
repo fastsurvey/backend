@@ -1,5 +1,20 @@
 import os
 
+
+# check that required environment variables are set
+envs = [
+    'ENVIRONMENT',
+    'FRONTEND_URL',
+    'BACKEND_URL',
+    'PUBLIC_RSA_KEY',
+    'PRIVATE_RSA_KEY',
+    'MONGODB_CONNECTION_STRING',
+    'MAILGUN_API_KEY',
+]
+for env in envs:
+    assert os.getenv(env), f'environment variable {env} not set'
+
+
 from fastapi import FastAPI, Path, Query, Body, Form, HTTPException, Depends
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.security import OAuth2PasswordBearer
@@ -10,22 +25,6 @@ from app.mailing import Letterbox
 from app.account import AccountManager
 from app.survey import SurveyManager
 from app.cryptography import JWTManager
-
-
-# check that required environment variables are set
-assert all([
-    os.getenv(var)
-    for var
-    in [
-        'ENVIRONMENT',
-        'FRONTEND_URL',
-        'BACKEND_URL',
-        'PUBLIC_RSA_KEY',
-        'PRIVATE_RSA_KEY',
-        'MONGODB_CONNECTION_STRING',
-        'MAILGUN_API_KEY',
-    ]
-])
 
 
 # development / production / testing environment
@@ -109,7 +108,10 @@ PAR_SURVEY_NAME = Path(
     description='The name of the survey',
     example='hello-world',
 )
-PAR_CONFIGURATION = Body(..., description='The new configuration')
+PAR_CONFIGURATION = Body(
+    ...,
+    description='The new configuration',
+)
 
 
 @app.get(
