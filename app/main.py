@@ -35,7 +35,7 @@ MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
 
 # connect to mongodb via pymongo
 client = MongoClient(MONGODB_CONNECTION_STRING)
-# get link to development / production / testing database
+# get link to development / production / testing database via pymongo
 database = client[ENVIRONMENT]
 # set up database indices synchronously via pymongo
 database['configurations'].create_index(
@@ -65,7 +65,7 @@ database['accounts'].create_index(
 app = FastAPI()
 # connect to mongodb via motor
 client = AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
-# get link to development / production / testing database
+# get link to development / production / testing database via motor
 database = client[ENVIRONMENT]
 # create email client
 letterbox = Letterbox()
@@ -124,6 +124,26 @@ PAR_CONFIGURATION = Body(
                         'username': 'fastsurvey',
                         'email_address': 'support@fastsurvey.io',
                         'verified': True,
+                    },
+                },
+            },
+        },
+        401: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'invalid access token',
+                    },
+                },
+            },
+        },
+        404: {
+            'model': ExceptionResponse,
+            'content': {
+                'application/json': {
+                    'example': {
+                        'detail': 'account not found',
                     },
                 },
             },
@@ -312,7 +332,6 @@ async def fetch_results(
         },
         400: {
             'model': ExceptionResponse,
-            'description': 'Account Not Verified',
             'content': {
                 'application/json': {
                     'example': {
@@ -323,7 +342,6 @@ async def fetch_results(
         },
         401: {
             'model': ExceptionResponse,
-            'description': 'Invalid Password',
             'content': {
                 'application/json': {
                     'example': {
@@ -334,7 +352,6 @@ async def fetch_results(
         },
         404: {
             'model': ExceptionResponse,
-            'description': 'Account Not Found',
             'content': {
                 'application/json': {
                     'example': {
@@ -371,7 +388,6 @@ async def authenticate_user(
         },
         400: {
             'model': ExceptionResponse,
-            'description': 'Account Already Verified',
             'content': {
                 'application/json': {
                     'example': {
@@ -382,11 +398,19 @@ async def authenticate_user(
         },
         401: {
             'model': ExceptionResponse,
-            'description': 'Invalid Token or Password',
             'content': {
                 'application/json': {
-                    'example': {
-                        'detail': 'invalid token',
+                    'examples': {
+                        'invalid token': {
+                            'value': {
+                                'detail': 'invalid token',
+                            },
+                        },
+                        'invalid password': {
+                            'value': {
+                                'detail': 'invalid password',
+                            },
+                        },
                     },
                 },
             },

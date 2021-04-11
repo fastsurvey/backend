@@ -42,6 +42,9 @@ class PasswordManager:
 class JWTManager:
     """The JWTManager manages encoding and decoding JSON Web Tokens."""
 
+    # TODO would it be better to use the same private key for en-/decryption
+    # here instead of a public/private keypair?
+
     def generate(self, username):
         """Generate JWT access token containing username and expiration."""
         timestamp = now()
@@ -57,7 +60,7 @@ class JWTManager:
     def authorize(self, username, access_token):
         """Authorize user by comparing username with access token."""
         if username != self.decode(access_token):
-            raise HTTPException(401, 'unauthorized')
+            raise HTTPException(401, 'invalid access token')
 
     def decode(self, access_token):
         """Decode the given JWT access token and return the username.
