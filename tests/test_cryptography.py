@@ -28,7 +28,7 @@ def test_valid_access_token_procedure(test_parameters):
 
 def test_invalid_access_token_procedure(username, private_rsa_key):
     """Test that JWT decoding fails for some example invalid tokens."""
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException, match='invalid access token'):
         access_token = main.jwt_manager.generate(username + '+')
         main.jwt_manager.authorize(username, access_token)
     with pytest.raises(TypeError):

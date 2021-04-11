@@ -62,7 +62,12 @@ database['accounts'].create_index(
 
 
 # create fastapi app
-app = FastAPI()
+app = FastAPI(
+    title='FastSurvey',
+    version='0.3.0',
+    docs_url='/documentation/swagger',
+    redoc_url='/documentation/redoc',
+)
 # connect to mongodb via motor
 client = AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
 # get link to development / production / testing database via motor
@@ -620,7 +625,11 @@ async def reset_survey(
 async def verify_submission(
         username: str = PAR_USERNAME,
         survey_name: str = PAR_SURVEY_NAME,
-        token: str = Path(..., description='The verification token'),
+        token: str = Path(
+            ...,
+            description='The verification token',
+            example='cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
+        ),
     ):
     """Verify user token and either fail or redirect to success page."""
     survey = await survey_manager._fetch(username, survey_name)
