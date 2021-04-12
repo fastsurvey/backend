@@ -60,7 +60,7 @@ class AccountManager:
                 else:
                     raise HTTPException(500, 'account creation error')
 
-        status = await self.letterbox.send_email_address_verification_email(
+        status = await self.letterbox.send_account_verification_email(
             username=username,
             receiver=email_address,
             verification_token=account_data['verification_token'],
@@ -137,13 +137,15 @@ class AccountManager:
         """Return the account data corresponding to given user name."""
         account_data = await self.database['accounts'].find_one(
             filter={'_id': username},
-            projection={'_id': False},
+            projection={
+                '_id': False,
+                'email_address': True,
+                'creation_time': True,
+                'verified': True,
+            },
         )
         if account_data is None:
             raise HTTPException(404, 'user not found')
-
-        # TODO do not return sensitive information e.g. password hash
-
         return account_data
 
     async def _update(self, username, account_data):

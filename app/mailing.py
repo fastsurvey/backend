@@ -45,7 +45,7 @@ class Letterbox:
             survey_name,
             title,
             receiver,
-            token,
+            verification_token,
         ):
         """Send confirmation email to verify a submission email address."""
         subject = 'Please verify your submission'
@@ -53,7 +53,7 @@ class Letterbox:
         # TODO check with moritz what this link should be
         link = (
             f'{FRONTEND_URL}/{username}/{survey_name}'
-            f'/verification/{token}'
+            f'/verification/{verification_token}'
         )
 
         html = (
@@ -64,17 +64,17 @@ class Letterbox:
         )
         return await self.send(receiver, subject, html)
 
-    async def send_email_address_verification_email(
+    async def send_account_verification_email(
             self,
             username,
             receiver,
-            token,
+            verification_token,
         ):
         """Send confirmation email to verify an account email address."""
         subject = 'Welcome to FastSurvey!'
 
         # TODO check with moritz what this link should be
-        link = f'{FRONTEND_URL}/verification/{token}'
+        link = f'{FRONTEND_URL}/verification/{verification_token}'
 
         html = (
             f'<p>Welcome to FastSurvey, {username}!</p>'
