@@ -161,7 +161,7 @@ class SurveyManager:
     async def _reset(self, username, survey_name):
         """Delete all submission data including the results of a survey."""
         survey_id = combine(username, survey_name)
-        await self.database['results'].delete_one({'_id': survey_id})
+        await self.database['resultss'].delete_one({'_id': survey_id})
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
@@ -173,7 +173,7 @@ class SurveyManager:
         survey_id = combine(username, survey_name)
         if survey_id in self.cache:
             del self.cache[survey_id]
-        await self.database['results'].delete_one({'_id': survey_id})
+        await self.database['resultss'].delete_one({'_id': survey_id})
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
