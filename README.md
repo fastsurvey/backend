@@ -6,5 +6,5 @@
 - test via `./scripts/test`
 - build with docker via `./scripts/build`
 - run locally with docker via `./scripts/run`
-- Swagger and ReDoc API documentations lie at `localhost:8000/docs` and `localhost:8000/redoc`
+- Swagger and ReDoc API documentations lie at `localhost:8000/documentation/swagger` and `localhost:8000/documentation/redoc`
 - more documentation is available at [docs.fastsurvey.io](https://docs.fastsurvey.io/)
