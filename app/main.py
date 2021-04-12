@@ -16,8 +16,9 @@ for env in envs:
 
 
 from fastapi import FastAPI, Path, Query, Body, Form, HTTPException, Depends
-from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
+from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient, ASCENDING
 from pydantic import BaseModel
 
@@ -67,6 +68,18 @@ app = FastAPI(
     version='0.3.0',
     docs_url='/documentation/swagger',
     redoc_url='/documentation/redoc',
+)
+# configure cross-origin resource sharing
+origins = [
+    'https://fastsurvey.io',
+    'https://localhost:3000',
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
 )
 # connect to mongodb via motor
 client = AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
