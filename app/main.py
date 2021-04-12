@@ -114,6 +114,10 @@ configuration_example = {
 submission_example = {
     '1': True,
 }
+results_example = {
+    'count': 1,
+    '1': 1,
+}
 
 
 PAR_USERNAME = Path(
@@ -172,7 +176,7 @@ PAR_CONFIGURATION = Body(
             'content': {
                 'application/json': {
                     'example': {
-                        'detail': 'account not found',
+                        'detail': 'user not found',
                     },
                 },
             },
@@ -253,7 +257,7 @@ async def create_user(
             'content': {
                 'application/json': {
                     'example': {
-                        'detail': 'account not found',
+                        'detail': 'user not found',
                     },
                 },
             },
@@ -642,10 +646,7 @@ async def verify_submission(
         200: {
             'content': {
                 'application/json': {
-                    'example': {
-                        'count': 1,
-                        '1': 1,
-                    },
+                    'example': results_example,
                 },
             },
         },
@@ -721,7 +722,7 @@ async def fetch_results(
             'content': {
                 'application/json': {
                     'example': {
-                        'detail': 'account not found',
+                        'detail': 'user not found',
                     },
                 },
             },
@@ -784,7 +785,11 @@ async def authenticate_user(
     },
 )
 async def verify_email_address(
-        token: str = Form(..., description='The account verification token'),
+        token: str = Form(
+            ...,
+            description='The verification token',
+            example='cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
+        ),
         password: str = PAR_PASSWORD,
     ):
     return await account_manager.verify(token, password)

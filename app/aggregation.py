@@ -103,7 +103,7 @@ class Alligator:
                 pipeline=self._build_pipeline(),
                 allowDiskUse=True,
             )
-            async for _ in cursor: pass  # make sure that the aggregation finished
+            async for _ in cursor: pass  # make sure that aggregation finished
             results = await self.resultss.find_one(
                 filter={'_id': self.survey_id},
                 projection={'_id': False},

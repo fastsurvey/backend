@@ -60,7 +60,7 @@ class AccountManager:
                 else:
                     raise HTTPException(500, 'account creation error')
 
-        status = await self.letterbox.send_account_verification_email(
+        status = await self.letterbox.send_email_address_verification_email(
             username=username,
             receiver=email_address,
             verification_token=account_data['verification_token'],
@@ -104,7 +104,7 @@ class AccountManager:
             projection={'password_hash': True, 'verified': True},
         )
         if account_data is None:
-            raise HTTPException(404, 'account not found')
+            raise HTTPException(404, 'user not found')
         password_hash = account_data['password_hash']
         if not self.password_manager.verify(password, password_hash):
             raise HTTPException(401, 'invalid password')
@@ -140,7 +140,7 @@ class AccountManager:
             projection={'_id': False},
         )
         if account_data is None:
-            raise HTTPException(404, 'account not found')
+            raise HTTPException(404, 'user not found')
 
         # TODO do not return sensitive information e.g. password hash
 
@@ -163,7 +163,7 @@ class AccountManager:
             replacement=account_data,
         )
         if result.matched_count == 0:
-            raise HTTPException(404, 'account not found')
+            raise HTTPException(404, 'user not found')
 
     async def _delete(self, username):
         """Delete the user including all her surveys from the database."""
