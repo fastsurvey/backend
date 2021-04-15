@@ -5,7 +5,7 @@ import httpx
 # development / production / testing environment
 ENVIRONMENT = os.getenv('ENVIRONMENT')
 # backend url
-FRONTEND_URL = os.getenv('BACKEND_URL')
+FRONTEND_URL = os.getenv('FRONTEND_URL')
 # mailgun api key
 MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
 
@@ -74,7 +74,7 @@ class Letterbox:
         subject = 'Welcome to FastSurvey!'
 
         # TODO check with moritz what this link should be
-        link = f'{FRONTEND_URL}/verification/{verification_token}'
+        link = f'{FRONTEND_URL}/verify?token={verification_token}'
 
         html = (
             f'<p>Welcome to FastSurvey, {username}!</p>'
