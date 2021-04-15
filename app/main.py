@@ -1,6 +1,5 @@
 import os
 
-
 # check that required environment variables are set
 envs = [
     'ENVIRONMENT',
@@ -30,6 +29,12 @@ from app.cryptography import JWTManager
 
 # development / production / testing environment
 ENVIRONMENT = os.getenv('ENVIRONMENT')
+
+if ENVIRONMENT != "production":
+    import certifi
+    # Set correct SSL certificate path
+    os.environ['SSL_CERT_FILE'] = certifi.where()
+
 # MongoDB connection string
 MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
 
