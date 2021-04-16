@@ -74,13 +74,13 @@ class JWTManager:
             TypeError,
             InvalidTokenError,
             AssertionError,
-        ):
+        ):  
             raise HTTPException(401, 'invalid access token')
 
     def decode(self, access_token):
         """Decode the given JWT access token and return the username."""
         payload = jwt.decode(
-            access_token['access_token'],
+            access_token,
             PUBLIC_RSA_KEY,
             algorithms=['RS256'],
         )
