@@ -5,7 +5,12 @@ import secrets
 
 from passlib.context import CryptContext
 from fastapi import HTTPException
-from jwt import ExpiredSignatureError, InvalidSignatureError, InvalidTokenError
+from jwt import (
+    ExpiredSignatureError,
+    InvalidSignatureError,
+    DecodeError,
+    InvalidTokenError,
+)
 
 from app.utils import now
 
@@ -46,7 +51,13 @@ class JWTManager:
     # here instead of a public/private keypair?
 
     def generate(self, username):
-        """Generate JWT access token containing username and expiration."""
+        """Generate JWT access token containing username and expiration.
+
+        Note that the backend returns the access_token in the form
+        {'access_token': 'tomato', 'token_type': 'bearer'} but expects only
+        the actual 'tomato' value for any routes that require authorization.
+
+        """
         timestamp = now()
         payload = {
             'iss': 'FastSurvey',
@@ -71,7 +82,7 @@ class JWTManager:
         except (
             ExpiredSignatureError,
             InvalidSignatureError,
-            TypeError,
+            DecodeError,
             InvalidTokenError,
             AssertionError,
         ):
