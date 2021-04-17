@@ -74,7 +74,7 @@ class JWTManager:
             TypeError,
             InvalidTokenError,
             AssertionError,
-        ):  
+        ):
             raise HTTPException(401, 'invalid access token')
 
     def decode(self, access_token):
