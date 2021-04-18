@@ -248,8 +248,18 @@ async def fetch_results(
     return await survey.aggregate()
 
 
-@app.post(**specifications['authenticate_user'])
-async def authenticate_user(
+@app.get(**specifications['decode_access_token'])
+async def decode_access_token(
+        access_token: str = Depends(oauth2_scheme),
+    ):
+
+    # TODO adapt decode function so we get nice HTTPExceptions on fail
+
+    return jwt_manager.decode(access_token)
+
+
+@app.post(**specifications['generate_access_token'])
+async def generate_access_token(
         identifier: str = Form(..., **parameters['identifier']),
         password: str = Form(..., **parameters['password']),
     ):

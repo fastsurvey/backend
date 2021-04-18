@@ -461,8 +461,30 @@ specifications = {
             },
         },
     },
-    'authenticate_user': {
-        'path': 'authentication',
+    'decode_access_token': {
+        'path': '/authentication',
+        'responses': {
+            200: {
+                'content': {
+                    'application/json': {
+                        'example': 'fastsurvey',
+                    },
+                },
+            },
+            401: {
+                'model': ExceptionResponse,
+                'content': {
+                    'application/json': {
+                        'example': {
+                            'detail': 'invalid access token',
+                        },
+                    },
+                },
+            },
+        },
+    },
+    'generate_access_token': {
+        'path': '/authentication',
         'responses': {
             200: {
                 'content': {
@@ -507,7 +529,7 @@ specifications = {
         },
     },
     'verify_email_address': {
-        'path': 'authentication',
+        'path': '/verification',
         'responses': {
             200: {
                 'content': {
