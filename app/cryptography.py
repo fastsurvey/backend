@@ -63,7 +63,7 @@ class JWTManager:
             'iss': 'FastSurvey',
             'sub': username,
             'iat': timestamp,
-            'exp': timestamp + 2*60*60,  # tokens are valid for 2 hours
+            'exp': timestamp + 7*24*60*60,  # tokens are valid for 7 days
         }
         access_token = jwt.encode(payload, PRIVATE_RSA_KEY, algorithm='RS256')
         return {'access_token': access_token, 'token_type': 'bearer'}
