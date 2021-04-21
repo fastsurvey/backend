@@ -252,9 +252,6 @@ async def fetch_results(
 async def decode_access_token(
         access_token: str = Depends(oauth2_scheme),
     ):
-
-    # TODO adapt decode function so we get nice HTTPExceptions on fail
-
     return jwt_manager.decode(access_token)
 
 

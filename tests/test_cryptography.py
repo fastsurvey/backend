@@ -36,21 +36,21 @@ def test_invalid_access_token_procedure(username, private_rsa_key):
     with pytest.raises(HTTPException, match='invalid access token'):
         access_token = main.jwt_manager.generate('orange')['access_token']
         main.jwt_manager.authorize(username, access_token)
-    with pytest.raises(DecodeError):
+    with pytest.raises(HTTPException, match='invalid access token'):
         main.jwt_manager.decode(42)
-    with pytest.raises(DecodeError):
+    with pytest.raises(HTTPException, match='invalid access token'):
         main.jwt_manager.decode(None)
-    with pytest.raises(InvalidTokenError):
+    with pytest.raises(HTTPException, match='invalid access token'):
         access_token = main.jwt_manager.generate(username)['access_token'][:-1]
         main.jwt_manager.decode(access_token)
-    with pytest.raises(ExpiredSignatureError):
+    with pytest.raises(HTTPException, match='invalid access token'):
         access_token = jwt.encode(
             {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 0},
             key=cryptography.PRIVATE_RSA_KEY,
             algorithm='RS256',
         )
         main.jwt_manager.decode(access_token)
-    with pytest.raises(InvalidSignatureError):
+    with pytest.raises(HTTPException, match='invalid access token'):
         access_token = jwt.encode(
             {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 0},
             key=base64.b64decode(private_rsa_key),

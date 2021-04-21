@@ -77,25 +77,25 @@ class JWTManager:
         token has all the required fields).
 
         """
+        if username != self.decode(access_token):
+            raise HTTPException(401, 'invalid access token')
+
+    def decode(self, access_token):
+        """Decode the given JWT access token and return the username."""
         try:
-            assert username == self.decode(access_token)
+            payload = jwt.decode(
+                access_token,
+                PUBLIC_RSA_KEY,
+                algorithms=['RS256'],
+            )
+            return payload['sub']
         except (
             ExpiredSignatureError,
             InvalidSignatureError,
             DecodeError,
             InvalidTokenError,
-            AssertionError,
         ):
             raise HTTPException(401, 'invalid access token')
-
-    def decode(self, access_token):
-        """Decode the given JWT access token and return the username."""
-        payload = jwt.decode(
-            access_token,
-            PUBLIC_RSA_KEY,
-            algorithms=['RS256'],
-        )
-        return payload['sub']
 
 
 def vtoken():
