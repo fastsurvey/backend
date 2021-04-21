@@ -25,7 +25,7 @@ class AccountManager:
     async def fetch(self, username, access_token):
         """Return the account data corresponding to given username."""
         self.jwt_manager.authorize(username, access_token)
-        return self._fetch(username)
+        return await self._fetch(username)
 
     async def create(self, username, email_address, password):
         """Create new user account with some default account data."""
