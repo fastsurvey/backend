@@ -91,8 +91,8 @@ specifications = {
                 'content': {
                     'application/json': {
                         'example': {
-                            'username': 'fastsurvey',
                             'email_address': 'support@fastsurvey.io',
+                            'creation_time': 1618530873,
                             'verified': True,
                         },
                     },
