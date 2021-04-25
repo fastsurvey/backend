@@ -140,13 +140,12 @@ class AccountManager:
             projection={
                 '_id': False,
                 'email_address': True,
-                'creation_time': True,
                 'verified': True,
             },
         )
         if account_data is None:
             raise HTTPException(404, 'user not found')
-        return account_data
+        return {**account_data, "username": username}
 
     async def _update(self, username, account_data):
         """Update existing user account data in the database."""
