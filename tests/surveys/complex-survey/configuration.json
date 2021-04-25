@@ -56,7 +56,7 @@
             "type": "selection",
             "title": "What are your favorite ice cream flavors?",
             "description": "",
-            "min_select": 0,
+            "min_select": 1,
             "max_select": 2,
             "fields": [
                 {
@@ -75,7 +75,7 @@
                     "type": "option",
                     "title": "Chocolate",
                     "description": "",
-                    "required": false
+                    "required": true
                 }
             ]
         },

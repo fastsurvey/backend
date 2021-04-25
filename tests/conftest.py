@@ -59,7 +59,7 @@ def private_rsa_key(test_parameters):
 
 @pytest.fixture(scope='session')
 def test_survey_data():
-    """Provide dict containing configurations etc. for the test surveys."""
+    """Provide test survey example data (configurations, submissions, ...)."""
     folder = 'tests/surveys'
     survey_names = [s for s in os.listdir(folder) if s[0] != '.']
     survey_parameters = {
@@ -78,25 +78,25 @@ def test_survey_data():
 
 @pytest.fixture(scope='session')
 def configurations(test_survey_data):
-    """Map test survey names to their test (exchange) configurations."""
+    """Convenience method to access test survey configurations."""
     return test_survey_data['configurations']
 
 
 @pytest.fixture(scope='session')
 def resultss(test_survey_data):
-    """Map test survey names to their test results."""
+    """Convenience method to access test survey results."""
     return test_survey_data['resultss']
 
 
 @pytest.fixture(scope='session')
 def schemas(test_survey_data):
-    """Map test survey names to their test schema."""
+    """Convenience method to access test survey cerberus validation schemas."""
     return test_survey_data['schemas']
 
 
 @pytest.fixture(scope='session')
 def submissionss(test_survey_data):
-    """Map test survey names to their test submissions."""
+    """Convenience method to access test survey submissions."""
     return test_survey_data['submissionss']
 
 
