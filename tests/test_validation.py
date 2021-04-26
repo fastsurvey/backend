@@ -6,6 +6,18 @@ import app.validation as validation
 
 
 @pytest.fixture(scope='module')
+def account_validator():
+    """Provide an instance of the account validator."""
+    return validation.AccountValidator.create()
+
+
+@pytest.fixture(scope='module')
+def configuration_validator():
+    """Provide an instance of the configuration validator."""
+    return validation.ConfigurationValidator.create()
+
+
+@pytest.fixture(scope='module')
 def submission_validators(configurations):
     """Provide submission validator for every test survey."""
     return {
@@ -14,6 +26,26 @@ def submission_validators(configurations):
         in configurations.items()
     }
 
+################################################################################
+# Account Validation
+################################################################################
+
+
+def test_accounts_passing(account_validator, account_datas):
+    """Test that account validator passes some valid submissions."""
+    for account_data in account_datas['valid']:
+        assert account_validator.validate(account_data)
+
+
+def test_accounts_failing(account_validator, account_datas):
+    """Test that account validator fails some invalid submissions."""
+    for account_data in account_datas['invalid']:
+        assert not account_validator.validate(account_data)
+
+
+################################################################################
+# Configuration Validation
+################################################################################
 
 ################################################################################
 # Submission Validation

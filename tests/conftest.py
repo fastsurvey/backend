@@ -26,41 +26,15 @@ def event_loop(request):
     loop.close()
 
 
-@pytest.fixture(scope='session')
-def test_parameters():
-    """Provide some general test parameters like an account username."""
-    with open('tests/parameters.json', 'r') as e:
-        return json.load(e)
-
-
-@pytest.fixture(scope='session')
-def username(test_parameters):
-    """Provide the username value used for testing."""
-    return test_parameters['username']
-
-
-@pytest.fixture(scope='session')
-def email_address(test_parameters):
-    """Provide the email_address value used for testing."""
-    return test_parameters['email_address']
-
-
-@pytest.fixture(scope='session')
-def password(test_parameters):
-    """Provide the password value used for testing."""
-    return test_parameters['password']
-
-
-@pytest.fixture(scope='session')
-def private_rsa_key(test_parameters):
-    """Provide the private_rsa_key value used for testing."""
-    return test_parameters['private_rsa_key']
+################################################################################
+# Test Data Loading
+################################################################################
 
 
 @pytest.fixture(scope='session')
 def test_survey_data():
     """Provide test survey example data (configurations, submissions, ...)."""
-    folder = 'tests/surveys'
+    folder = 'tests/data/surveys'
     survey_names = [s for s in os.listdir(folder) if s[0] != '.']
     survey_parameters = {
         'configurations': dict(),
@@ -98,6 +72,43 @@ def schemas(test_survey_data):
 def submissionss(test_survey_data):
     """Convenience method to access test survey submissions."""
     return test_survey_data['submissionss']
+
+
+@pytest.fixture(scope='session')
+def accounts():
+    """Provide some valid and invalid example test accounts."""
+    with open('tests/data/accounts.json', 'r') as e:
+        return json.load(e)
+
+
+@pytest.fixture(scope='session')
+def username(accounts):
+    """Convenience method to access a valid test username."""
+    return accounts['valid'][0]['username']
+
+
+@pytest.fixture(scope='session')
+def email_address(accounts):
+    """Convenience method to access a valid test email address."""
+    return accounts['valid'][0]['email_address']
+
+
+@pytest.fixture(scope='session')
+def password(accounts):
+    """Convenience method to access a valid test email address."""
+    return accounts['valid'][0]['password']
+
+
+@pytest.fixture(scope='session')
+def private_rsa_key(test_parameters):
+    """Provide the private_rsa_key value used for testing."""
+    with open('tests/data/other.json', 'r') as e:
+        return json.load(e)['private_rsa_key']
+
+
+################################################################################
+# Setup/Teardown Fixtures
+################################################################################
 
 
 async def reset(username, email_address, password, configurations):

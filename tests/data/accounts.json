@@ -1,0 +1,16 @@
+{
+    "valid": [
+        {
+            "username": "fastsurvey",
+            "email_address": "support@fastsurvey.io",
+            "password": "password"
+        }
+    ],
+    "invalid": [
+        {
+            "username": "fastsurvey",
+            "email_address": "support@fastsurvey.io",
+            "password": "1234"
+        }
+    ]
+}
