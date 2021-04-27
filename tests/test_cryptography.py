@@ -24,9 +24,8 @@ def test_password_hashing():
         assert password_manager.verify(password, password_hash)
 
 
-def test_valid_access_token_procedure(test_parameters):
+def test_valid_access_token_procedure(username):
     """Test JWT access token generation and decoding procedure."""
-    username = test_parameters['username']
     access_token = main.jwt_manager.generate(username)['access_token']
     assert main.jwt_manager.authorize(username, access_token) is None
 

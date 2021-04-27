@@ -30,7 +30,14 @@ MXVLS = {
 
 
 class AccountValidator(Validator):
-    """The custom cerberus validator for validating user account data."""
+    """The custom cerberus validator for validating user account data.
+
+    We could use pydantic to validate the account data instead, as the data
+    model is static and relatively easy. We do it with cerberus though in
+    order to validate everything similarly and because we can test better
+    using cerberus.
+
+    """
 
     SCHEMA = {
         'username': {

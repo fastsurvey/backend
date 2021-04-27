@@ -3,7 +3,7 @@
         {
             "username": "fastsurvey",
             "email_address": "support@fastsurvey.io",
-            "password": "password"
+            "password": "12345678"
         }
     ],
     "invalid": [

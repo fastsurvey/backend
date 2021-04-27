@@ -82,25 +82,19 @@ def accounts():
 
 
 @pytest.fixture(scope='session')
-def username(accounts):
-    """Convenience method to access a valid test username."""
-    return accounts['valid'][0]['username']
+def account_data(accounts):
+    """Convenience method to access the account data of the test account."""
+    return accounts['valid'][0]
 
 
 @pytest.fixture(scope='session')
-def email_address(accounts):
-    """Convenience method to access a valid test email address."""
-    return accounts['valid'][0]['email_address']
+def username(account_data):
+    """Convenience method to access the username of the test account."""
+    return account_data['username']
 
 
 @pytest.fixture(scope='session')
-def password(accounts):
-    """Convenience method to access a valid test email address."""
-    return accounts['valid'][0]['password']
-
-
-@pytest.fixture(scope='session')
-def private_rsa_key(test_parameters):
+def private_rsa_key():
     """Provide the private_rsa_key value used for testing."""
     with open('tests/data/other.json', 'r') as e:
         return json.load(e)['private_rsa_key']
@@ -111,7 +105,7 @@ def private_rsa_key(test_parameters):
 ################################################################################
 
 
-async def reset(username, email_address, password, configurations):
+async def reset(username, account_data, configurations):
     """Purge all user and survey data locally and remotely and reset it."""
 
     # motor transaction example
@@ -166,11 +160,7 @@ async def reset(username, email_address, password, configurations):
     '''
 
     await main.account_manager._delete(username)
-    await main.account_manager.create(
-        username=username,
-        email_address=email_address,
-        password=password,
-    )
+    await main.account_manager.create(username, account_data)
     for survey_name, configuration in configurations.items():
         await main.survey_manager._create(
             username=username,
@@ -180,13 +170,13 @@ async def reset(username, email_address, password, configurations):
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def setup(username, email_address, password, configurations):
+async def setup(username, account_data, configurations):
     """Reset survey data and configurations before the first test starts."""
-    await reset(username, email_address, password, configurations)
+    await reset(username, account_data, configurations)
 
 
 @pytest.fixture(scope='function')
-async def cleanup(username, email_address, password, configurations):
+async def cleanup(username, account_data, configurations):
     """Reset survey data and configurations after a single test."""
     yield
-    await reset(username, email_address, password, configurations)
+    await reset(username, account_data, configurations)
