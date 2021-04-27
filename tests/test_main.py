@@ -9,15 +9,15 @@ import app.main as main
 @pytest.mark.asyncio
 async def test_fetching_configuration_with_valid_identifier(
         username,
-        configurations,
+        configurationss,
     ):
     """Using valid survey identifier, test that correct config is returned."""
-    for survey_name, configuration in configurations.items():
+    for survey_name, configurations in configurationss.items():
         async with AsyncClient(app=main.app, base_url='http://test') as ac:
             url = f'/users/{username}/surveys/{survey_name}'
             response = await ac.get(url)
         assert response.status_code == 200
-        assert response.json() == configuration
+        assert response.json() == configurations['valid']
 
 
 @pytest.mark.asyncio

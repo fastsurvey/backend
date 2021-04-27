@@ -37,7 +37,7 @@ def test_survey_data():
     folder = 'tests/data/surveys'
     survey_names = [s for s in os.listdir(folder) if s[0] != '.']
     survey_parameters = {
-        'configurations': dict(),
+        'configurationss': dict(),
         'resultss': dict(),
         'schemas': dict(),
         'submissionss': dict(),
@@ -51,9 +51,9 @@ def test_survey_data():
 
 
 @pytest.fixture(scope='session')
-def configurations(test_survey_data):
+def configurationss(test_survey_data):
     """Convenience method to access test survey configurations."""
-    return test_survey_data['configurations']
+    return test_survey_data['configurationss']
 
 
 @pytest.fixture(scope='session')
@@ -105,7 +105,7 @@ def variables():
 ################################################################################
 
 
-async def reset(username, account_data, configurations):
+async def reset(username, account_data, configurationss):
     """Purge all user and survey data locally and remotely and reset it."""
 
     # motor transaction example
@@ -161,22 +161,22 @@ async def reset(username, account_data, configurations):
 
     await main.account_manager._delete(username)
     await main.account_manager.create(username, account_data)
-    for survey_name, configuration in configurations.items():
+    for survey_name, configurations in configurationss.items():
         await main.survey_manager._create(
             username=username,
             survey_name=survey_name,
-            configuration=deepcopy(configuration),
+            configuration=deepcopy(configurations['valid']),
         )
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def setup(username, account_data, configurations):
+async def setup(username, account_data, configurationss):
     """Reset survey data and configurations before the first test starts."""
-    await reset(username, account_data, configurations)
+    await reset(username, account_data, configurationss)
 
 
 @pytest.fixture(scope='function')
-async def cleanup(username, account_data, configurations):
+async def cleanup(username, account_data, configurationss):
     """Reset survey data and configurations after a single test."""
     yield
-    await reset(username, account_data, configurations)
+    await reset(username, account_data, configurationss)

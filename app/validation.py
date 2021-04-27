@@ -280,7 +280,8 @@ class SubmissionValidator(Validator):
 
         A more elegant way to achieve this would be to override the __init__
         method of the Validator class. Contrary to the other validators, I
-        didn't get this to work here, due to the added function parameter.
+        didn't get this to work here, somehow connected to the additional
+        function parameter that was needed.
 
         """
         return cls(

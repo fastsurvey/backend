@@ -2,28 +2,33 @@ import pytest
 import copy
 
 import app.main as main
-import app.validation as validation
+
+from app.validation import (
+    AccountValidator,
+    ConfigurationValidator,
+    SubmissionValidator,
+)
 
 
 @pytest.fixture(scope='module')
 def account_validator():
     """Provide an instance of the account validator."""
-    return validation.AccountValidator()
+    return AccountValidator()
 
 
 @pytest.fixture(scope='module')
 def configuration_validator():
     """Provide an instance of the configuration validator."""
-    return validation.ConfigurationValidator.create()
+    return ConfigurationValidator()
 
 
 @pytest.fixture(scope='module')
-def submission_validators(configurations):
+def submission_validators(configurationss):
     """Provide submission validator for every test survey."""
     return {
-        survey_name: validation.SubmissionValidator.create(configuration)
-        for survey_name, configuration
-        in configurations.items()
+        survey_name: SubmissionValidator.create(configurations['valid'])
+        for survey_name, configurations
+        in configurationss.items()
     }
 
 ################################################################################
@@ -31,14 +36,14 @@ def submission_validators(configurations):
 ################################################################################
 
 
-def test_accounts_passing(account_validator, accounts):
-    """Test that account validator passes some valid submissions."""
+def test_account_data_passing(account_validator, accounts):
+    """Test that account validator passes some valid account data."""
     for account_data in accounts['valid']:
         assert account_validator.validate(account_data)
 
 
-def test_accounts_failing(account_validator, accounts):
-    """Test that account validator fails some invalid submissions."""
+def test_account_data_failing(account_validator, accounts):
+    """Test that account validator fails some invalid account data."""
     for account_data in accounts['invalid']:
         assert not account_validator.validate(account_data)
 
@@ -47,16 +52,30 @@ def test_accounts_failing(account_validator, accounts):
 # Configuration Validation
 ################################################################################
 
+
+def test_configurations_passing(configuration_validator, configurationss):
+    """Test that configuration validator passes some valid configurations."""
+    for configurations in configurationss.values():
+        assert configuration_validator.validate(configurations['valid'])
+
+
+def test_accounts_failing(configuration_validator, configurationss):
+    """Test that configuration validator fails some invalid configurations."""
+    for configurations in configurationss.values():
+        for configuration in configurations['invalid']:
+            assert not configuration_validator.validate(configuration)
+
+
 ################################################################################
 # Submission Validation
 ################################################################################
 
 
-def test_generating_submission_validation_schema(configurations, schemas):
+def test_generating_submission_validation_schema(configurationss, schemas):
     """Test that the schema generation function returns the correct result."""
-    for survey_name, configuration in configurations.items():
-        schema = validation.SubmissionValidator._generate_validation_schema(
-            configuration
+    for survey_name, configurations in configurationss.items():
+        schema = SubmissionValidator._generate_validation_schema(
+            configurations['valid']
         )
         assert schema == schemas[survey_name]
 
