@@ -50,7 +50,7 @@ def test_invalid_access_token_procedure(username, variables):
         ),
         jwt.encode(
             {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 4102444800},
-            key=base64.b64decode(variables['private_rsa_key']),
+            key=base64.b64decode(variables['wrong_private_rsa_key']),
             algorithm='RS256',
         ),
         jwt.encode(
