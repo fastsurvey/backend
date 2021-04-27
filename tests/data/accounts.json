@@ -2,15 +2,45 @@
     "valid": [
         {
             "username": "fastsurvey",
-            "email_address": "support@fastsurvey.io",
+            "email_address": "support@fastsurvey.de",
             "password": "12345678"
+        },
+        {
+            "username": "tomato-man",
+            "email_address": "tomato-man@gmail.com",
+            "password": "best-password-on-earth"
+        },
+        {
+            "username": "someguy",
+            "email_address": "tomato-man-sucks@tutanota.de",
+            "password": "iamsomeguy###"
         }
     ],
     "invalid": [
         {
             "username": "fastsurvey",
-            "email_address": "support@fastsurvey.io",
+            "email_address": "support@fastsurvey.de",
             "password": "1234"
+        },
+        {
+            "1": "fastsurvey",
+            "email_address": "support@fastsurvey.de",
+            "password": "12345678"
+        },
+        {
+            "username": "fastsurvey",
+            "email_address": "email",
+            "password": "12345678"
+        },
+        {
+            "username": "x",
+            "email_address": "support@fastsurvey.de",
+            "password": "12345678"
+        },
+        {
+            "username": "fastsurvey",
+            "email_address": "support@fastsurvey.de",
+            "password": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
         }
     ]
 }
