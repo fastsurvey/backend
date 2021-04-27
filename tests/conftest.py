@@ -94,10 +94,10 @@ def username(account_data):
 
 
 @pytest.fixture(scope='session')
-def private_rsa_key():
-    """Provide the private_rsa_key value used for testing."""
-    with open('tests/data/other.json', 'r') as e:
-        return json.load(e)['private_rsa_key']
+def variables():
+    """Provide the some miscellaneous values used for testing."""
+    with open('tests/data/variables.json', 'r') as e:
+        return json.load(e)
 
 
 ################################################################################

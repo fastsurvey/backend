@@ -30,29 +30,40 @@ def test_valid_access_token_procedure(username):
     assert main.jwt_manager.authorize(username, access_token) is None
 
 
-def test_invalid_access_token_procedure(username, private_rsa_key):
+def test_invalid_access_token_procedure(username, variables):
     """Test that JWT decoding fails for some example invalid tokens."""
-    with pytest.raises(HTTPException, match='invalid access token'):
-        access_token = main.jwt_manager.generate('orange')['access_token']
-        main.jwt_manager.authorize(username, access_token)
-    with pytest.raises(HTTPException, match='invalid access token'):
-        main.jwt_manager.decode(42)
-    with pytest.raises(HTTPException, match='invalid access token'):
-        main.jwt_manager.decode(None)
-    with pytest.raises(HTTPException, match='invalid access token'):
-        access_token = main.jwt_manager.generate(username)['access_token'][:-1]
-        main.jwt_manager.decode(access_token)
-    with pytest.raises(HTTPException, match='invalid access token'):
-        access_token = jwt.encode(
+    access_tokens = [
+        42,
+        3.14,
+        None,
+        '',
+        'password',
+        [],
+        {},
+        main.jwt_manager.generate(username)['access_token'][:-1],
+        main.jwt_manager.generate(username.upper())['access_token'],
+        main.jwt_manager.generate(f'{username}+')['access_token'],
+        jwt.encode(
             {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 0},
             key=cryptography.PRIVATE_RSA_KEY,
             algorithm='RS256',
-        )
-        main.jwt_manager.decode(access_token)
-    with pytest.raises(HTTPException, match='invalid access token'):
-        access_token = jwt.encode(
-            {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 0},
-            key=base64.b64decode(private_rsa_key),
+        ),
+        jwt.encode(
+            {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 4102444800},
+            key=base64.b64decode(variables['private_rsa_key']),
             algorithm='RS256',
-        )
-        main.jwt_manager.decode(access_token)
+        ),
+        jwt.encode(
+            {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 4102444800},
+            key=cryptography.PRIVATE_RSA_KEY,
+            algorithm='HS256',
+        ),
+        jwt.encode(
+            {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 4102444800},
+            key=cryptography.PRIVATE_RSA_KEY,
+            algorithm='RS512',
+        ),
+    ]
+    for access_token in access_tokens:
+        with pytest.raises(HTTPException, match='invalid access token'):
+            main.jwt_manager.authorize(username, access_token)
