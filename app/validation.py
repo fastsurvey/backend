@@ -5,6 +5,25 @@ from cerberus import Validator, TypeDefinition
 from app.utils import isregex
 
 
+# string validation regexes
+REGEXES = {
+    'username': r'^[a-z0-9-]{2,20}$',
+    'email_address': r'^.+@.+\..+$',
+    'survey_name': r'^[a-z0-9-]{2,20}$',
+}
+# maximum character lengths (inclusive)
+MXLNS = {
+    'title': 100,
+    'description': 1000,
+    'regex': 100,
+    'hint': 100,
+}
+# maximum field values (inclusive)
+MXVLS = {
+    'max_chars': 10000,
+}
+
+
 ################################################################################
 # Account Validation
 ################################################################################
@@ -14,8 +33,20 @@ class AccountValidator(Validator):
     """The custom cerberus validator for validating user account data."""
 
     SCHEMA = {
-        'username': {'type': 'string', 'regex': '^[a-z0-9-]{2,20}$'},
-        'email_address': {'type': 'string'},
+        'username': {
+            'type': 'string',
+            'regex': REGEXES['username'],
+        },
+        'email_address': {
+            'type': 'string',
+            'maxlength': 1024,
+            'regex': REGEXES['email_address'],
+        },
+        'password': {
+            'type': 'string',
+            'minlength': 8,
+            'maxlength': 64,
+        },
     }
 
     @classmethod
@@ -38,22 +69,6 @@ class AccountValidator(Validator):
 
 class ConfigurationValidator(Validator):
     """The custom cerberus validator for validating survey configurations."""
-
-    # string validation regexes
-    REGEXES = {
-        'survey_name': '^[a-z0-9-]{2,20}$',
-    }
-    # maximum character lengths (inclusive)
-    MXLNS = {
-        'title': 100,
-        'description': 1000,
-        'regex': 100,
-        'hint': 100,
-    }
-    # maximum field values (inclusive)
-    MXVLS = {
-        'max_chars': 10000,
-    }
 
     @classmethod
     def create(cls):
@@ -107,14 +122,14 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'email'
             and type(value['title']) == str
-            and len(value['title']) <= self.MXLNS['title']
+            and len(value['title']) <= MXLNS['title']
             and type(value['description']) == str
-            and len(value['description']) <= self.MXLNS['description']
+            and len(value['description']) <= MXLNS['description']
             and type(value['regex']) == str
-            and len(value['regex']) <= self.MXLNS['regex']
+            and len(value['regex']) <= MXLNS['regex']
             and isregex(value['regex'])
             and type(value['hint']) == str
-            and len(value['hint']) <= self.MXLNS['hint']
+            and len(value['hint']) <= MXLNS['hint']
         )
 
     def _validate_type_option(self, value):
@@ -125,9 +140,9 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'option'
             and type(value['title']) == str
-            and len(value['title']) <= self.MXLNS['title']
+            and len(value['title']) <= MXLNS['title']
             and type(value['description']) == str
-            and len(value['description']) <= self.MXLNS['description']
+            and len(value['description']) <= MXLNS['description']
             and type(value['required']) == bool
         )
 
@@ -139,10 +154,13 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'radio'
             and type(value['title']) == str
-            and len(value['title']) <= self.MXLNS['title']
+            and len(value['title']) <= MXLNS['title']
             and type(value['description']) == str
-            and len(value['description']) <= self.MXLNS['description']
+            and len(value['description']) <= MXLNS['description']
             and type(value['fields']) == list
+
+            # TODO check length of fields list (same for selection)
+
             and all([
                 self._validate_type_option(field)
                 for field
@@ -165,9 +183,9 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'selection'
             and type(value['title']) == str
-            and len(value['title']) <= self.MXLNS['title']
+            and len(value['title']) <= MXLNS['title']
             and type(value['description']) == str
-            and len(value['description']) <= self.MXLNS['description']
+            and len(value['description']) <= MXLNS['description']
             and type(value['fields']) == list
             and all([
                 self._validate_type_option(field)
@@ -187,12 +205,12 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'text'
             and type(value['title']) == str
-            and len(value['title']) <= self.MXLNS['title']
+            and len(value['title']) <= MXLNS['title']
             and type(value['description']) == str
-            and len(value['description']) <= self.MXLNS['description']
+            and len(value['description']) <= MXLNS['description']
             and type(value['min_chars']) == type(value['max_chars']) == int
             and 0 <= value['min_chars'] <= value['max_chars']
-            and value['max_chars'] <= self.MXVLS['max_chars']
+            and value['max_chars'] <= MXVLS['max_chars']
         )
 
     def _validate_type_configuration(self, value):
@@ -212,11 +230,11 @@ class ConfigurationValidator(Validator):
             type(value) is dict
             and set(value.keys()) == keys
             and type(value['survey_name']) == str
-            and re.match(self.REGEXES['survey_name'], value['survey_name'])
+            and re.match(REGEXES['survey_name'], value['survey_name'])
             and type(value['title']) == str
-            and len(value['title']) <= self.MXLNS['title']
+            and len(value['title']) <= MXLNS['title']
             and type(value['description']) == str
-            and len(value['description']) <= self.MXLNS['description']
+            and len(value['description']) <= MXLNS['description']
             and type(value['start']) == type(value['end']) == int
             and value['start'] <= value['end']
             and type(value['draft']) == bool
@@ -324,10 +342,11 @@ class SubmissionValidator(Validator):
 
 
     def _validate_type_email(self, value):
-        """Validate the structure of a submission for the selection field."""
+        """Validate the structure of a submission for the email field."""
         return (
             type(value) is str
-            and 0 < len(value) < 1000
+            and len(value) <= 1024
+            and re.match(REGEXES['email_address'], value)
         )
 
     def _validate_type_selection(self, value):

@@ -15,11 +15,12 @@ for env in envs:
     assert os.getenv(env), f'environment variable {env} not set'
 
 
-from fastapi import FastAPI, Path, Query, Body, Form, HTTPException, Depends
+from fastapi import FastAPI, Path, Query, Body, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import MongoClient, ASCENDING
+from pydantic import BaseModel
 
 from app.mailing import Letterbox
 from app.account import AccountManager
@@ -98,6 +99,32 @@ account_manager = AccountManager(
 oauth2_scheme = OAuth2PasswordBearer('/authentication')
 
 
+################################################################################
+# Pydantic Type Definitions
+################################################################################
+
+
+class AccountData(BaseModel):
+    username: str
+    email_address: str
+    password: str
+
+
+class LoginCredentials(BaseModel):
+    identifier: str
+    password: str
+
+
+class VerificationCredentials(BaseModel):
+    token: str
+    password: str
+
+
+################################################################################
+# Routes
+################################################################################
+
+
 @app.get(**specifications['fetch_user'])
 async def fetch_user(
         username: str = Path(..., **parameters['username']),
@@ -110,17 +137,16 @@ async def fetch_user(
 @app.post(**specifications['create_user'])
 async def create_user(
         username: str = Path(..., **parameters['username']),
-        email: str = Form(..., **parameters['email']),
-        password: str = Form(..., **parameters['password']),
+        account_data: AccountData = Body(..., **parameters['account_data'])
     ):
     """Create a new user with default account data."""
-    await account_manager.create(username, email, password)
+    await account_manager.create(username, account_data)
 
 
 @app.put(**specifications['update_user'])
 async def update_user(
         username: str = Path(..., **parameters['username']),
-        account_data: dict = Body(..., **parameters['account_data']),
+        account_data: AccountData = Body(..., **parameters['account_data']),
         access_token: str = Depends(oauth2_scheme),
     ):
     """Update the given user's account data."""
@@ -257,15 +283,25 @@ async def decode_access_token(
 
 @app.post(**specifications['generate_access_token'])
 async def generate_access_token(
-        identifier: str = Form(..., **parameters['identifier']),
-        password: str = Form(..., **parameters['password']),
+        login_credentials: LoginCredentials = Body(
+            ...,
+            **parameters['login_credentials'],
+        ),
     ):
-    return await account_manager.authenticate(identifier, password)
+    return await account_manager.authenticate(
+        login_credentials['identifier'],
+        login_credentials['password'],
+    )
 
 
 @app.post(**specifications['verify_email_address'])
 async def verify_email_address(
-        token: str = Form(..., **parameters['token']),
-        password: str = Form(..., **parameters['password']),
+        verification_credentials: VerificationCredentials = Body(
+            ...,
+            **parameters['verification_credentials'],
+        ),
     ):
-    return await account_manager.verify(token, password)
+    return await account_manager.verify(
+        verification_credentials['token'],
+        verification_credentials['password'],
+    )

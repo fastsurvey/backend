@@ -27,20 +27,18 @@ class AccountManager:
         self.jwt_manager.authorize(username, access_token)
         return await self._fetch(username)
 
-    async def create(self, username, email_address, password):
+    async def create(self, username, account_data):
         """Create new user account with some default account data."""
-        account_data = {
-            'username': username,
-            'email_address': email_address,
-        }
-        if not self.validator.validate(account_data):
+        if username != account_data['username']:
             raise HTTPException(400, 'invalid account data')
-        if not self.password_manager.validate(password):
+        if not self.validator.validate(account_data):
             raise HTTPException(400, 'invalid account data')
         account_data = {
             '_id': username,
-            'email_address': email_address,
-            'password_hash': self.password_manager.hash(password),
+            'email_address': account_data['username'],
+            'password_hash': self.password_manager.hash(
+                account_data['password'],
+            ),
             'creation_time': now(),
             'verified': False,
             'verification_token': vtoken(),
@@ -62,7 +60,7 @@ class AccountManager:
 
         status = await self.letterbox.send_account_verification_email(
             username=username,
-            receiver=email_address,
+            receiver=account_data['email_address'],
             verification_token=account_data['verification_token'],
         )
         if status != 200:

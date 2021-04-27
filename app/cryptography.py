@@ -39,10 +39,6 @@ class PasswordManager:
         """Return true if the password results in the hash, else False."""
         return self.context.verify(password, pwdhash)
 
-    def validate(self, password):
-        """Validate that the password has the right format."""
-        return 8 <= len(password) <= 64
-
 
 class JWTManager:
     """The JWTManager manages encoding and decoding JSON Web Tokens."""

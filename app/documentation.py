@@ -38,14 +38,6 @@ parameters = {
         'description': 'The name of the user',
         'example': 'fastsurvey',
     },
-    'email': {
-        'description': 'The users\'s email address',
-        'example': 'support@fastsurvey.io',
-    },
-    'password': {
-        'description': 'The account password',
-        'example': '12345678',
-    },
     'survey_name': {
         'description': 'The name of the survey',
         'example': 'hello-world',
@@ -58,7 +50,8 @@ parameters = {
         'description': 'The updated account data',
         'example': {
             'username': 'fastsurvey',
-            'email_address': 'support@fastsurvey.io',
+            'email_address': 'support@fastsurvey.de',
+            'password': '12345678'
         },
     },
     'skip': {
@@ -69,17 +62,27 @@ parameters = {
         'description': 'The query result count limit; 0 means no limit',
         'example': 10,
     },
-    'identifier': {
-        'description': 'The email address or username',
-        'example': 'fastsurvey',
+    'token': {
+        'description': 'The verification token',
+        'example': 'cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
     },
     'submission': {
         'description': 'The user submission',
         'example': survey['submission'],
     },
-    'token': {
-        'description': 'The verification token',
-        'example': 'cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
+    'login_credentials': {
+        'description': 'The username or email address with the password',
+        'example': {
+            'identifier': 'fastsurvey',
+            'password': '12345678'
+        },
+    },
+    'verification_credentials': {
+        'description': 'The verification token together with the password',
+        'example': {
+            'token': 'cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
+            'password': '12345678'
+        },
     },
 }
 
@@ -91,7 +94,7 @@ specifications = {
                 'content': {
                     'application/json': {
                         'example': {
-                            'email_address': 'support@fastsurvey.io',
+                            'email_address': 'support@fastsurvey.de',
                             'creation_time': 1618530873,
                             'verified': True,
                         },
