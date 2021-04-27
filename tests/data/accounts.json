@@ -23,6 +23,18 @@
             "password": "1234"
         },
         {
+            "username": "fastsurvey",
+            "password": "12345678"
+        },
+        {
+            "email_address": "support@fastsurvey.de",
+            "password": "12345678"
+        },
+        {
+            "username": "fastsurvey",
+            "email_address": "support@fastsurvey.de"
+        },
+        {
             "1": "fastsurvey",
             "email_address": "support@fastsurvey.de",
             "password": "12345678"

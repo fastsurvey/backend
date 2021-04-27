@@ -8,7 +8,7 @@ import app.validation as validation
 @pytest.fixture(scope='module')
 def account_validator():
     """Provide an instance of the account validator."""
-    return validation.AccountValidator.create()
+    return validation.AccountValidator()
 
 
 @pytest.fixture(scope='module')

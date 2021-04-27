@@ -56,17 +56,14 @@ class AccountValidator(Validator):
         },
     }
 
-    @classmethod
-    def create(cls):
-        """Factory method providing a simple interface to create a validator.
-
-        A more elegant way to achieve this would be to override the __init__
-        method of the Validator class. The __init__ method is somehow called
-        multiple times, though, that's why using a factory method is the
-        easier way.
-
-        """
-        return cls(cls.SCHEMA, require_all=True)
+    def __init__(self, *args, **kwargs):
+        """Initialize with predefined account validation schema."""
+        super(AccountValidator, self).__init__(
+            self.SCHEMA,
+            *args,
+            require_all=True,
+            **kwargs,
+        )
 
 
 ################################################################################
@@ -77,19 +74,13 @@ class AccountValidator(Validator):
 class ConfigurationValidator(Validator):
     """The custom cerberus validator for validating survey configurations."""
 
-    @classmethod
-    def create(cls):
-        """Factory method providing a simple interface to create a validator.
-
-        A more elegant way to achieve this would be to override the __init__
-        method of the Validator class. The __init__ method is somehow called
-        multiple times, though, that's why using a factory method is the
-        easier way.
-
-        """
-        return cls(
+    def __init__(self, *args, **kwargs):
+        """Initialize with predefined configuration validation schema."""
+        super(ConfigurationValidator, self).__init__(
             {'__root__': {'type': 'configuration'}},
+            *args,
             require_all=True,
+            **kwargs,
         )
 
     def validate(self, document, schema=None, update=False, normalize=True):
@@ -285,12 +276,11 @@ class SubmissionValidator(Validator):
 
     @classmethod
     def create(cls, configuration):
-        """Factory method providing a simple interface to create a validator.
+        """Factory method to initialize with dynamically generated schema.
 
         A more elegant way to achieve this would be to override the __init__
-        method of the Validator class. The __init__ method is somehow called
-        multiple times, though, that's why using a factory method is the
-        easier way.
+        method of the Validator class. Contrary to the other validators, I
+        didn't get this to work here, due to the added function parameter.
 
         """
         return cls(

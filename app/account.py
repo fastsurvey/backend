@@ -17,7 +17,7 @@ class AccountManager:
         """Initialize an account manager instance."""
         self.database = database
         self.survey_manager = survey_manager
-        self.validator = AccountValidator.create()
+        self.validator = AccountValidator()
         self.password_manager = PasswordManager()
         self.jwt_manager = jwt_manager
         self.letterbox = letterbox

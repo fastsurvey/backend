@@ -31,7 +31,7 @@ class SurveyManager:
         self.database = database
         self.letterbox = letterbox
         self.cache = LRUCache(maxsize=256)
-        self.validator = ConfigurationValidator.create()
+        self.validator = ConfigurationValidator()
         self.jwt_manager = jwt_manager
 
     def _update_cache(self, configuration):
@@ -195,7 +195,7 @@ class Survey:
         self.end = self.configuration['end']
         self.authentication = self.configuration['authentication']
         self.ei = Survey._get_email_field_index(self.configuration)
-        self.validator = SubmissionValidator.create(self.configuration)
+        self.validator = SubmissionValidator.create(configuration)
         self.letterbox = letterbox
         self.alligator = Alligator(self.configuration, database)
         self.submissions = database[
