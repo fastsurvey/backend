@@ -229,6 +229,60 @@
                     "required": true
                 }
             ]
+        },
+        {
+            "survey_name": "option",
+            "title": "Option Test",
+            "description": "",
+            "start": 0,
+            "end": 4102444800,
+            "draft": false,
+            "authentication": "open",
+            "limit": "22",
+            "fields": [
+                {
+                    "type": "option",
+                    "title": "I have read and agree to the terms and conditions",
+                    "description": "",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "survey_name": "option",
+            "title": "Option Test",
+            "description": "",
+            "start": 0,
+            "end": 4102444800,
+            "draft": false,
+            "authentication": "tomato",
+            "limit": 0,
+            "fields": [
+                {
+                    "type": "option",
+                    "title": "I have read and agree to the terms and conditions",
+                    "description": "",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "survey_name": "option",
+            "title": "Option Test",
+            "description": "",
+            "start": 0,
+            "end": 4102444800,
+            "draft": false,
+            "authentication": "email",
+            "limit": 0,
+            "fields": [
+                {
+                    "type": "option",
+                    "title": "I have read and agree to the terms and conditions",
+                    "description": "",
+                    "required": true
+                }
+            ]
         }
     ]
 }

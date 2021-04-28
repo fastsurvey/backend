@@ -166,6 +166,11 @@ class ConfigurationValidator(Validator):
                 for field
                 in value['fields']
             ])
+            and sum([
+                self._validate_type_email(field)
+                for field
+                in value['fields']
+            ]) == int(value['authentication'] == 'email')
         )
 
     def _validate_type_email(self, value):
