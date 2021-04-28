@@ -112,6 +112,70 @@
                     "hint": "Your email address ..."
                 }
             ]
+        },
+        {
+            "survey_name": "email",
+            "title": "Email Test",
+            "description": "",
+            "start": 0,
+            "end": 4102444800,
+            "draft": false,
+            "authentication": "email",
+            "limit": 0,
+            "fields": [
+                {
+                    "type": "email",
+                    "title": "What is your email address?",
+                    "description": "",
+                    "regex": ".*",
+                    "hint": "Your email address ..."
+                },
+                {
+                    "type": "email",
+                    "title": "What is your email address?",
+                    "description": "",
+                    "regex": ".*",
+                    "hint": "Your email address ..."
+                }
+            ]
+        },
+        {
+            "survey_name": "email",
+            "title": "Email Test",
+            "description": "",
+            "start": 0,
+            "end": 4102444800,
+            "draft": false,
+            "authentication": "email",
+            "limit": 0,
+            "fields": [
+                {
+                    "type": "email",
+                    "title": "What is your email address?",
+                    "description": "",
+                    "regex": null,
+                    "hint": "Your email address ..."
+                }
+            ]
+        },
+        {
+            "survey_name": "email",
+            "title": "Email Test",
+            "description": "",
+            "start": 0,
+            "end": 4102444800,
+            "draft": false,
+            "authentication": "email",
+            "limit": 0,
+            "fields": [
+                {
+                    "type": "email",
+                    "title": "What is your email address?",
+                    "description": "",
+                    "regex": ".*",
+                    "hint": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+                }
+            ]
         }
     ]
 }

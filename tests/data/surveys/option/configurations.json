@@ -283,6 +283,14 @@
                     "required": true
                 }
             ]
+        },
+        {},
+        [],
+        "",
+        "tomato",
+        {
+            "survey_name": null,
+            "title": "Option Test"
         }
     ]
 }
