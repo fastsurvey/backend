@@ -59,7 +59,7 @@ def test_configurations_passing(configuration_validator, configurationss):
         assert configuration_validator.validate(configurations['valid'])
 
 
-def test_accounts_failing(configuration_validator, configurationss):
+def test_configurations_failing(configuration_validator, configurationss):
     """Test that configuration validator fails some invalid configurations."""
     for configurations in configurationss.values():
         for configuration in configurations['invalid']:

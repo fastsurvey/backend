@@ -1,6 +1,7 @@
 import re
 
 from cerberus import Validator, TypeDefinition
+from enum import Enum
 
 from app.utils import isregex
 
@@ -11,16 +12,12 @@ REGEXES = {
     'email_address': r'^.+@.+\..+$',
     'survey_name': r'^[a-z0-9-]{2,20}$',
 }
+
 # maximum character lengths (inclusive)
-MXLNS = {
-    'title': 100,
-    'description': 1000,
-    'regex': 100,
-    'hint': 100,
-}
-# maximum field values (inclusive)
-MXVLS = {
-    'max_chars': 10000,
+LENGTHS = {
+    'S': 128,
+    'M': 1024,
+    'L': 4096,
 }
 
 
@@ -46,7 +43,7 @@ class AccountValidator(Validator):
         },
         'email_address': {
             'type': 'string',
-            'maxlength': 1024,
+            'maxlength': LENGTHS['M'],
             'regex': REGEXES['email_address'],
         },
         'password': {
@@ -69,6 +66,22 @@ class AccountValidator(Validator):
 ################################################################################
 # Configuration Validation
 ################################################################################
+
+
+'''
+
+class ConfigurationValidatorNew():
+
+    def validate(self, value):
+        """Validate the field title and description."""
+        return (
+            type(value['title']) == str
+            and len(value['title']) <= LENGTHS['S']
+            and type(value['description']) == str
+            and len(value['description']) <= LENGTHS['L']
+        )
+
+'''
 
 
 class ConfigurationValidator(Validator):
@@ -112,6 +125,49 @@ class ConfigurationValidator(Validator):
     ### CUSTOM TYPE VALIDATIONS ###
 
 
+    def _validate_type_configuration(self, value):
+        """Validate that value is a correct survey configuration"""
+        keys = {
+            'survey_name',
+            'title',
+            'description',
+            'start',
+            'end',
+            'draft',
+            'authentication',
+            'limit',
+            'fields',
+        }
+        return (
+            type(value) is dict
+            and set(value.keys()) == keys
+            and type(value['survey_name']) == str
+            and re.match(REGEXES['survey_name'], value['survey_name'])
+            and type(value['title']) == str
+            and 1 <= len(value['title']) <= LENGTHS['S']
+            and type(value['description']) == str
+            and len(value['description']) <= LENGTHS['L']
+            and type(value['start']) == type(value['end']) == int
+            and 0 <= value['start'] <= value['end'] <= 4102444800
+            and type(value['draft']) == bool
+            and value['authentication'] in ['open', 'email']
+            and type(value['limit']) == int
+            and 0 <= value['limit'] <= 100
+            and type(value['fields']) == list
+            and 1 <= len(value['fields']) <= LENGTHS['S']
+            and all([
+                (
+                    self._validate_type_email(field)
+                    or self._validate_type_option(field)
+                    or self._validate_type_radio(field)
+                    or self._validate_type_selection(field)
+                    or self._validate_type_text(field)
+                )
+                for field
+                in value['fields']
+            ])
+        )
+
     def _validate_type_email(self, value):
         """Validate that value is a correct email field specification"""
         keys = {'type', 'title', 'description', 'regex', 'hint'}
@@ -120,14 +176,14 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'email'
             and type(value['title']) == str
-            and len(value['title']) <= MXLNS['title']
+            and 1 <= len(value['title']) <= LENGTHS['S']
             and type(value['description']) == str
-            and len(value['description']) <= MXLNS['description']
+            and len(value['description']) <= LENGTHS['L']
             and type(value['regex']) == str
-            and len(value['regex']) <= MXLNS['regex']
+            and len(value['regex']) <= LENGTHS['M']
             and isregex(value['regex'])
             and type(value['hint']) == str
-            and len(value['hint']) <= MXLNS['hint']
+            and len(value['hint']) <= LENGTHS['S']
         )
 
     def _validate_type_option(self, value):
@@ -138,9 +194,9 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'option'
             and type(value['title']) == str
-            and len(value['title']) <= MXLNS['title']
+            and 1 <= len(value['title']) <= LENGTHS['S']
             and type(value['description']) == str
-            and len(value['description']) <= MXLNS['description']
+            and len(value['description']) <= LENGTHS['L']
             and type(value['required']) == bool
         )
 
@@ -152,13 +208,11 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'radio'
             and type(value['title']) == str
-            and len(value['title']) <= MXLNS['title']
+            and 1 <= len(value['title']) <= LENGTHS['S']
             and type(value['description']) == str
-            and len(value['description']) <= MXLNS['description']
+            and len(value['description']) <= LENGTHS['L']
             and type(value['fields']) == list
-
-            # TODO check length of fields list (same for selection)
-
+            and 1 <= len(value['fields']) <= LENGTHS['S']
             and all([
                 self._validate_type_option(field)
                 for field
@@ -181,10 +235,11 @@ class ConfigurationValidator(Validator):
             and set(value.keys()) == keys
             and value['type'] == 'selection'
             and type(value['title']) == str
-            and len(value['title']) <= MXLNS['title']
+            and 1 <= len(value['title']) <= LENGTHS['S']
             and type(value['description']) == str
-            and len(value['description']) <= MXLNS['description']
+            and len(value['description']) <= LENGTHS['L']
             and type(value['fields']) == list
+            and 1 <= len(value['fields']) <= LENGTHS['S']
             and all([
                 self._validate_type_option(field)
                 for field
@@ -202,55 +257,13 @@ class ConfigurationValidator(Validator):
             type(value) is dict
             and set(value.keys()) == keys
             and value['type'] == 'text'
-            and type(value['title']) == str
-            and len(value['title']) <= MXLNS['title']
+            and 1 <= len(value['title']) <= LENGTHS['S']
+            and len(value['title']) <= LENGTHS['S']
             and type(value['description']) == str
-            and len(value['description']) <= MXLNS['description']
+            and len(value['description']) <= LENGTHS['L']
             and type(value['min_chars']) == type(value['max_chars']) == int
             and 0 <= value['min_chars'] <= value['max_chars']
-            and value['max_chars'] <= MXVLS['max_chars']
-        )
-
-    def _validate_type_configuration(self, value):
-        """Validate that value is a correct survey configuration"""
-        keys = {
-            'survey_name',
-            'title',
-            'description',
-            'start',
-            'end',
-            'draft',
-            'authentication',
-            'limit',
-            'fields',
-        }
-        return (
-            type(value) is dict
-            and set(value.keys()) == keys
-            and type(value['survey_name']) == str
-            and re.match(REGEXES['survey_name'], value['survey_name'])
-            and type(value['title']) == str
-            and len(value['title']) <= MXLNS['title']
-            and type(value['description']) == str
-            and len(value['description']) <= MXLNS['description']
-            and type(value['start']) == type(value['end']) == int
-            and value['start'] <= value['end']
-            and type(value['draft']) == bool
-            and value['authentication'] in ['open', 'email']
-            and type(value['limit']) == int
-            and value['limit'] >= 0
-            and type(value['fields']) == list
-            and all([
-                (
-                    self._validate_type_email(field)
-                    or self._validate_type_option(field)
-                    or self._validate_type_radio(field)
-                    or self._validate_type_selection(field)
-                    or self._validate_type_text(field)
-                )
-                for field
-                in value['fields']
-            ])
+            and value['max_chars'] <= LENGTHS['L']
         )
 
 
