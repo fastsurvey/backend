@@ -24,14 +24,14 @@ def authorize(func):
 
     """
     @functools.wraps(func)
-    async def wrapper(self, username, access_token, *args):
-        if username != self.decode(access_token):
+    async def wrapper(username, access_token, *args):
+        if username != decode(access_token):
             raise fastapi.HTTPException(401, 'invalid access token')
         await func(username, *args)
     return wrapper
 
 
-def generate(self, username):
+def generate(username):
     """Generate JWT access token containing username and expiration.
 
     Note that the backend returns the access_token in the form
@@ -50,14 +50,10 @@ def generate(self, username):
     return {'access_token': access_token, 'token_type': 'bearer'}
 
 
-def decode(self, access_token):
+def decode(access_token):
     """Decode the given JWT access token and return the username."""
     try:
-        payload = jwt.decode(
-            access_token,
-            PUBLIC_RSA_KEY,
-            algorithms=['RS256'],
-        )
+        payload = jwt.decode(access_token, PUBLIC_RSA_KEY, algorithms=['RS256'])
         return payload['sub']
     except (
         jwt.ExpiredSignatureError,

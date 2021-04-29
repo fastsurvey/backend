@@ -1,7 +1,9 @@
-from pydantic import BaseModel
+import pydantic
+import fastapi as api
+import fastapi.security
 
 
-class ExceptionResponse(BaseModel):
+class ExceptionResponse(pydantic.BaseModel):
     detail: str
 
 
@@ -33,57 +35,70 @@ survey = {
     },
 }
 
-parameters = {
-    'username': {
-        'description': 'The name of the user',
-        'example': 'fastsurvey',
-    },
-    'survey_name': {
-        'description': 'The name of the survey',
-        'example': 'hello-world',
-    },
-    'configuration': {
-        'description': 'The new configuration',
-        'example': survey['configuration'],
-    },
-    'account_data': {
-        'description': 'The updated account data',
-        'example': {
+arguments = {
+    'username': api.Path(
+        ...,
+        description='The name of the user',
+        example='fastsurvey',
+    ),
+    'access_token': api.Depends(
+        api.security.OAuth2PasswordBearer('/authentication')
+    ),
+    'survey_name': api.Path(
+        ...,
+        description='The name of the survey',
+        example='hello-world',
+    ),
+    'configuration': api.Body(
+        ...,
+        description='The new configuration',
+        example=survey['configuration'],
+    ),
+    'account_data': api.Body(
+        ...,
+        description='The updated account data',
+        example={
             'username': 'fastsurvey',
             'email_address': 'support@fastsurvey.de',
             'password': '12345678'
         },
-    },
-    'skip': {
-        'description': 'The index of the first returned configuration',
-        'example': 0,
-    },
-    'limit': {
-        'description': 'The query result count limit; 0 means no limit',
-        'example': 10,
-    },
-    'token': {
-        'description': 'The verification token',
-        'example': 'cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
-    },
-    'submission': {
-        'description': 'The user submission',
-        'example': survey['submission'],
-    },
-    'login_credentials': {
-        'description': 'The username or email address with the password',
-        'example': {
+    ),
+    'skip': api.Query(
+        0,
+        description='The index of the first returned configuration',
+        example=0,
+    ),
+    'limit': api.Query(
+        10,
+        description='The query result count limit; 0 means no limit',
+        example=10,
+    ),
+    'token': api.Path(
+        ...,
+        description='The verification token',
+        example='cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
+    ),
+    'submission': api.Body(
+        ...,
+        description='The user submission',
+        example=survey['submission'],
+    ),
+    'authentication_credentials': api.Body(
+        ...,
+        description='The username or email address with the password',
+        example={
             'identifier': 'fastsurvey',
             'password': '12345678'
         },
-    },
-    'verification_credentials': {
-        'description': 'The verification token together with the password',
-        'example': {
+    ),
+    'verification_credentials': api.Body(
+        ...,
+        description='The verification token together with the password',
+        example={
             'token': 'cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
             'password': '12345678'
         },
-    },
+    ),
 }
 
 specifications = {
@@ -293,7 +308,7 @@ specifications = {
                                     'detail': 'invalid configuration',
                                 },
                             },
-                            'survey exists': {
+                            'not an existing survey': {
                                 'value': {
                                     'detail': 'not an existing survey',
                                 },
@@ -391,9 +406,9 @@ specifications = {
                 'content': {
                     'application/json': {
                         'examples': {
-                            'invalid token': {
+                            'survey is not of type email': {
                                 'value': {
-                                    'detail': 'survey does not verify email addresses',
+                                    'detail': 'survey is not of type email',
                                 },
                             },
                             'survey is not open yet': {

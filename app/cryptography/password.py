@@ -1,14 +1,14 @@
-import passlib
+import passlib.context as context
 
 
-CONTEXT = passlib.context.CryptContext(schemes=['argon2'], deprecated='auto')
+CONTEXT = context.CryptContext(schemes=['argon2'], deprecated='auto')
 
 
-def hash(self, password):
+def hash(password):
     """Hash the given password and return the hash as string."""
-    return self.CONTEXT.hash(password)
+    return CONTEXT.hash(password)
 
 
-def verify(self, password, pwdhash):
+def verify(password, pwdhash):
     """Return true if the password results in the hash, else False."""
-    return self.CONTEXT.verify(password, pwdhash)
+    return CONTEXT.verify(password, pwdhash)

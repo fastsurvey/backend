@@ -1,4 +1,15 @@
 import os
+import fastapi
+import fastapi.middleware.cors
+import motor.motor_asyncio
+import pymongo
+import pydantic
+
+import app.email as email
+import app.account as ac
+import app.survey as sv
+import app.documentation as docs
+import app.cryptography.access as access
 
 
 # check that required environment variables are set
@@ -15,20 +26,6 @@ for env in envs:
     assert os.getenv(env), f'environment variable {env} not set'
 
 
-from fastapi import FastAPI, Path, Query, Body, HTTPException, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer
-from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo import MongoClient, ASCENDING
-from pydantic import BaseModel
-
-from app.mailing import Letterbox
-from app.account import AccountManager
-from app.survey import SurveyManager
-from app.cryptography import JWTManager
-from app.documentation import specifications, parameters
-
-
 # development / production / testing environment
 ENVIRONMENT = os.getenv('ENVIRONMENT')
 # MongoDB connection string
@@ -36,12 +33,12 @@ MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
 
 
 # connect to mongodb via pymongo
-client = MongoClient(MONGODB_CONNECTION_STRING)
+client = pymongo.MongoClient(MONGODB_CONNECTION_STRING)
 # get link to development / production / testing database via pymongo
 database = client[ENVIRONMENT]
 # set up database indices synchronously via pymongo
 database['configurations'].create_index(
-    keys=[('username', ASCENDING), ('survey_name', ASCENDING)],
+    keys=[('username', pymongo.ASCENDING), ('survey_name', pymongo.ASCENDING)],
     name='username_survey_name_index',
     unique=True,
 )
@@ -64,7 +61,7 @@ database['accounts'].create_index(
 
 
 # create fastapi app
-app = FastAPI(
+app = fastapi.FastAPI(
     title='FastSurvey',
     version='0.3.0',
     docs_url='/documentation/swagger',
@@ -72,31 +69,22 @@ app = FastAPI(
 )
 # configure cross-origin resource sharing
 app.add_middleware(
-    CORSMiddleware,
+    fastapi.middleware.cors.CORSMiddleware,
     allow_origins=['*'],
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
 )
 # connect to mongodb via motor
-client = AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
+client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
 # get link to development / production / testing database via motor
 database = client[ENVIRONMENT]
 # create email client
-letterbox = Letterbox()
-# create JWT manager
-jwt_manager = JWTManager()
+letterbox = email.Letterbox()
 # instantiate survey manager
-survey_manager = SurveyManager(database, letterbox, jwt_manager)
+survey_manager = sv.SurveyManager(database, letterbox)
 # instantiate account manager
-account_manager = AccountManager(
-    database,
-    letterbox,
-    jwt_manager,
-    survey_manager,
-)
-# fastapi password bearer
-oauth2_scheme = OAuth2PasswordBearer('/authentication')
+account_manager = ac.AccountManager(database, letterbox, survey_manager)
 
 
 ################################################################################
@@ -104,18 +92,18 @@ oauth2_scheme = OAuth2PasswordBearer('/authentication')
 ################################################################################
 
 
-class AccountData(BaseModel):
+class AccountData(pydantic.BaseModel):
     username: str
     email_address: str
     password: str
 
 
-class LoginCredentials(BaseModel):
+class AuthenticationCredentials(pydantic.BaseModel):
     identifier: str
     password: str
 
 
-class VerificationCredentials(BaseModel):
+class VerificationCredentials(pydantic.BaseModel):
     token: str
     password: str
 
@@ -125,180 +113,178 @@ class VerificationCredentials(BaseModel):
 ################################################################################
 
 
-@app.get(**specifications['fetch_user'])
+@app.get(**docs.specifications['fetch_user'])
 async def fetch_user(
-        username: str = Path(..., **parameters['username']),
-        access_token: str = Depends(oauth2_scheme),
+        username: str = docs.arguments['username'],
+        access_token: str = docs.arguments['access_token'],
     ):
     """Fetch the given user's account data."""
     return await account_manager.fetch(username, access_token)
 
 
-@app.post(**specifications['create_user'])
+@app.post(**docs.specifications['create_user'])
 async def create_user(
-        username: str = Path(..., **parameters['username']),
-        account_data: AccountData = Body(..., **parameters['account_data'])
+        username: str = docs.arguments['username'],
+        account_data: dict = docs.arguments['account_data'],
     ):
     """Create a new user with default account data."""
     await account_manager.create(username, account_data)
 
 
-@app.put(**specifications['update_user'])
+@app.put(**docs.specifications['update_user'])
 async def update_user(
-        username: str = Path(..., **parameters['username']),
-        account_data: AccountData = Body(..., **parameters['account_data']),
-        access_token: str = Depends(oauth2_scheme),
+        username: str = docs.arguments['username'],
+        account_data: dict = docs.arguments['account_data'],
+        access_token: str = docs.arguments['access_token'],
     ):
     """Update the given user's account data."""
-    await account_manager.update(username, account_data, access_token)
+    await account_manager.update(username, access_token, account_data)
 
 
-@app.delete(**specifications['delete_user'])
+@app.delete(**docs.specifications['delete_user'])
 async def delete_user(
-        username: str = Path(..., **parameters['username']),
-        access_token: str = Depends(oauth2_scheme),
+        username: str = docs.arguments['username'],
+        access_token: str = docs.arguments['access_token'],
     ):
     """Delete the user and all her surveys from the database."""
     await account_manager.delete(username, access_token)
 
 
-@app.get(**specifications['fetch_surveys'])
+@app.get(**docs.specifications['fetch_surveys'])
 async def fetch_surveys(
-        username: str = Path(..., **parameters['username']),
-        skip: int = Query(0, **parameters['skip']),
-        limit: int = Query(10, **parameters['limit']),
-        access_token: str = Depends(oauth2_scheme),
+        username: str = docs.arguments['username'],
+        skip: int = docs.arguments['skip'],
+        limit: int = docs.arguments['limit'],
+        access_token: str = docs.arguments['access_token'],
     ):
     """Fetch the user's survey configurations sorted by the start date."""
     return await account_manager.fetch_configurations(
         username,
+        access_token,
         skip,
         limit,
-        access_token,
     )
 
 
-@app.get(**specifications['fetch_survey'])
+@app.get(**docs.specifications['fetch_survey'])
 async def fetch_survey(
-        username: str = Path(..., **parameters['username']),
-        survey_name: str = Path(..., **parameters['survey_name']),
+        username: str = docs.arguments['username'],
+        survey_name: str = docs.arguments['survey_name'],
     ):
     """Fetch a survey configuration."""
-    return await survey_manager.fetch(username, survey_name)
+    return await survey_manager.fetch_configuration(username, survey_name)
 
 
-@app.post(**specifications['create_survey'])
+@app.post(**docs.specifications['create_survey'])
 async def create_survey(
-        username: str = Path(..., **parameters['username']),
-        survey_name: str = Path(..., **parameters['survey_name']),
-        configuration: dict = Body(..., **parameters['configuration']),
-        access_token: str = Depends(oauth2_scheme),
+        username: str = docs.arguments['username'],
+        survey_name: str = docs.arguments['survey_name'],
+        configuration: dict = docs.arguments['configuration'],
+        access_token: str = docs.arguments['access_token'],
     ):
     """Create new survey with given configuration."""
     await survey_manager.create(
         username,
+        access_token,
         survey_name,
         configuration,
-        access_token,
     )
 
 
-@app.put(**specifications['update_survey'])
+@app.put(**docs.specifications['update_survey'])
 async def update_survey(
-        username: str = Path(..., **parameters['username']),
-        survey_name: str = Path(..., **parameters['survey_name']),
-        configuration: dict = Body(..., **parameters['configuration']),
-        access_token: str = Depends(oauth2_scheme),
+        username: str = docs.arguments['username'],
+        survey_name: str = docs.arguments['survey_name'],
+        configuration: dict = docs.arguments['configuration'],
+        access_token: str = docs.arguments['access_token'],
     ):
     """Update survey with given configuration."""
     await survey_manager.update(
         username,
+        access_token,
         survey_name,
         configuration,
-        access_token,
     )
 
 
-@app.delete(**specifications['delete_survey'])
+@app.delete(**docs.specifications['delete_survey'])
 async def delete_survey(
-        username: str = Path(..., **parameters['username']),
-        survey_name: str = Path(..., **parameters['survey_name']),
-        access_token: str = Depends(oauth2_scheme),
+        username: str = docs.arguments['username'],
+        survey_name: str = docs.arguments['survey_name'],
+        access_token: str = docs.arguments['access_token'],
     ):
     """Delete given survey including all its submissions and other data."""
-    await survey_manager.delete(username, survey_name, access_token)
+    await survey_manager.delete(username, access_token, survey_name)
 
 
-@app.post(**specifications['create_submission'])
+@app.post(**docs.specifications['create_submission'])
 async def create_submission(
-        username: str = Path(..., **parameters['username']),
-        survey_name: str = Path(..., **parameters['survey_name']),
-        submission: dict = Body(..., **parameters['submission']),
+        username: str = docs.arguments['username'],
+        survey_name: str = docs.arguments['survey_name'],
+        submission: dict = docs.arguments['submission'],
     ):
     """Validate submission and store it under pending submissions."""
-    survey = await survey_manager._fetch(username, survey_name)
+    survey = await survey_manager.fetch(username, survey_name)
     return await survey.submit(submission)
 
 
-@app.delete(**specifications['reset_survey'])
+@app.delete(**docs.specifications['reset_survey'])
 async def reset_survey(
-        username: str = Path(..., **parameters['username']),
-        survey_name: str = Path(..., **parameters['survey_name']),
-        access_token: str = Depends(oauth2_scheme),
+        username: str = docs.arguments['username'],
+        survey_name: str = docs.arguments['survey_name'],
+        access_token: str = docs.arguments['access_token'],
     ):
     """Reset a survey by deleting all submission data including any results."""
-    await survey_manager.reset(username, survey_name, access_token)
+    await survey_manager.reset(username, access_token, survey_name)
 
 
-@app.get(**specifications['verify_submission'])
+@app.get(**docs.specifications['verify_submission'])
 async def verify_submission(
-        username: str = Path(..., **parameters['username']),
-        survey_name: str = Path(..., **parameters['survey_name']),
-        token: str = Path(..., **parameters['token']),
+        username: str = docs.arguments['username'],
+        survey_name: str = docs.arguments['survey_name'],
+        token: str = docs.arguments['token'],
     ):
     """Verify user token and either fail or redirect to success page."""
-    survey = await survey_manager._fetch(username, survey_name)
+    survey = await survey_manager.fetch(username, survey_name)
     return await survey.verify(token)
 
 
-@app.get(**specifications['fetch_results'])
+@app.get(**docs.specifications['fetch_results'])
 async def fetch_results(
-        username: str = Path(..., **parameters['username']),
-        survey_name: str = Path(..., **parameters['survey_name']),
+        username: str = docs.arguments['username'],
+        survey_name: str = docs.arguments['survey_name'],
     ):
     """Fetch the results of the given survey."""
 
     # TODO adapt result following authentication
 
-    survey = await survey_manager._fetch(username, survey_name)
+    survey = await survey_manager.fetch(username, survey_name)
     return await survey.aggregate()
 
 
-@app.get(**specifications['decode_access_token'])
+@app.get(**docs.specifications['decode_access_token'])
 async def decode_access_token(
-        access_token: str = Depends(oauth2_scheme),
+        access_token: str = docs.arguments['access_token'],
     ):
-    return jwt_manager.decode(access_token)
+    return access.decode(access_token)
 
 
-@app.post(**specifications['generate_access_token'])
+@app.post(**docs.specifications['generate_access_token'])
 async def generate_access_token(
-        login_credentials: LoginCredentials = Body(
-            ...,
-            **parameters['login_credentials'],
+        authentication_credentials: AuthenticationCredentials = (
+            docs.arguments['authentication_credentials']
         ),
     ):
     return await account_manager.authenticate(
-        login_credentials['identifier'],
-        login_credentials['password'],
+        authentication_credentials['identifier'],
+        authentication_credentials['password'],
     )
 
 
-@app.post(**specifications['verify_email_address'])
+@app.post(**docs.specifications['verify_email_address'])
 async def verify_email_address(
-        verification_credentials: VerificationCredentials = Body(
-            ...,
-            **parameters['verification_credentials'],
+        verification_credentials: VerificationCredentials = (
+            docs.arguments['verification_credentials']
         ),
     ):
     return await account_manager.verify(
