@@ -2,6 +2,7 @@ import re
 
 from cerberus import Validator, TypeDefinition
 from enum import Enum
+from functools import wraps
 
 from app.utils import isregex
 
@@ -68,66 +69,10 @@ class AccountValidator(Validator):
 ################################################################################
 
 
-'''
+class ConfigurationValidator():
 
-class ConfigurationValidatorNew():
-
-    def validate(self, value):
-        """Validate the field title and description."""
-        return (
-            type(value['title']) == str
-            and len(value['title']) <= LENGTHS['S']
-            and type(value['description']) == str
-            and len(value['description']) <= LENGTHS['L']
-        )
-
-'''
-
-
-class ConfigurationValidator(Validator):
-    """The custom cerberus validator for validating survey configurations."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize with predefined configuration validation schema."""
-        super(ConfigurationValidator, self).__init__(
-            {'__root__': {'type': 'configuration'}},
-            *args,
-            require_all=True,
-            **kwargs,
-        )
-
-    def validate(self, document, schema=None, update=False, normalize=True):
-        """Overridden validate method used to type-check the root dict.
-
-        It seems to be impossible in cerberus to validate a field depending
-        on the value of another field. For example, for a survey we want to
-        have the value of `end` to be greater or equal to `start`. I did not
-        find a possibility to do this other than writing custom type classes
-        and thus checking the field values with simple comparisons instead
-        of cerberus' schemas. The downside of this is that the error messages
-        are now no longer informative. As we also need to cross-check `start`
-        and `end` which are not nested, we need to implement type checking
-        the entire document as this is not possible out of the box. I adapted
-        the solution from https://stackoverflow.com/questions/49762642. If
-        someone knows of a better alternative, please let me know.
-
-        """
-        result = super(ConfigurationValidator, self).validate(
-            {'__root__': document},
-            schema,
-            update,
-            normalize,
-        )
-        self.document = self.document['__root__']
-        return result
-
-
-    ### CUSTOM TYPE VALIDATIONS ###
-
-
-    def _validate_type_configuration(self, value):
-        """Validate that value is a correct survey configuration"""
-        keys = {
+    FIELD_KEYS = {
+        'configuration': {
             'survey_name',
             'title',
             'description',
@@ -137,136 +82,131 @@ class ConfigurationValidator(Validator):
             'authentication',
             'limit',
             'fields',
-        }
-        return (
-            type(value) is dict
-            and set(value.keys()) == keys
-            and type(value['survey_name']) == str
-            and re.match(REGEXES['survey_name'], value['survey_name'])
-            and type(value['title']) == str
-            and 1 <= len(value['title']) <= LENGTHS['S']
-            and type(value['description']) == str
-            and len(value['description']) <= LENGTHS['L']
-            and type(value['start']) == type(value['end']) == int
-            and 0 <= value['start'] <= value['end'] <= 4102444800
-            and type(value['draft']) == bool
-            and value['authentication'] in ['open', 'email']
-            and type(value['limit']) == int
-            and 0 <= value['limit'] <= 100
-            and type(value['fields']) == list
-            and 1 <= len(value['fields']) <= LENGTHS['S']
-            and all([
-                (
-                    self._validate_type_email(field)
-                    or self._validate_type_option(field)
-                    or self._validate_type_radio(field)
-                    or self._validate_type_selection(field)
-                    or self._validate_type_text(field)
-                )
-                for field
-                in value['fields']
-            ])
-            and sum([
-                self._validate_type_email(field)
-                for field
-                in value['fields']
-            ]) == int(value['authentication'] == 'email')
-        )
-
-    def _validate_type_email(self, value):
-        """Validate that value is a correct email field specification"""
-        keys = {'type', 'title', 'description', 'regex', 'hint'}
-        return (
-            type(value) is dict
-            and set(value.keys()) == keys
-            and value['type'] == 'email'
-            and type(value['title']) == str
-            and 1 <= len(value['title']) <= LENGTHS['S']
-            and type(value['description']) == str
-            and len(value['description']) <= LENGTHS['L']
-            and type(value['regex']) == str
-            and len(value['regex']) <= LENGTHS['M']
-            and isregex(value['regex'])
-            and type(value['hint']) == str
-            and len(value['hint']) <= LENGTHS['S']
-        )
-
-    def _validate_type_option(self, value):
-        """Validate that value is a correct option field specification"""
-        keys = {'type', 'title', 'description', 'required'}
-        return (
-            type(value) is dict
-            and set(value.keys()) == keys
-            and value['type'] == 'option'
-            and type(value['title']) == str
-            and 1 <= len(value['title']) <= LENGTHS['S']
-            and type(value['description']) == str
-            and len(value['description']) <= LENGTHS['L']
-            and type(value['required']) == bool
-        )
-
-    def _validate_type_radio(self, value):
-        """Validate that value is a correct radio field specification"""
-        keys = {'type', 'title', 'description', 'fields'}
-        return (
-            type(value) is dict
-            and set(value.keys()) == keys
-            and value['type'] == 'radio'
-            and type(value['title']) == str
-            and 1 <= len(value['title']) <= LENGTHS['S']
-            and type(value['description']) == str
-            and len(value['description']) <= LENGTHS['L']
-            and type(value['fields']) == list
-            and 1 <= len(value['fields']) <= LENGTHS['S']
-            and all([
-                self._validate_type_option(field)
-                for field
-                in value['fields']
-            ])
-        )
-
-    def _validate_type_selection(self, value):
-        """Validate that value is a correct selection field specification"""
-        keys = {
+        },
+        'email': {'type', 'title', 'description', 'regex', 'hint'},
+        'option': {'type', 'title', 'description', 'required'},
+        'radio': {'type', 'title', 'description', 'fields'},
+        'selection': {
             'type',
             'title',
             'description',
             'min_select',
             'max_select',
             'fields',
-        }
+        },
+        'text': {'type', 'title', 'description', 'min_chars', 'max_chars'},
+    }
+
+    def validate(self, value):
+        """Validate that the argument is a valid survey configuration."""
         return (
             type(value) is dict
-            and set(value.keys()) == keys
-            and value['type'] == 'selection'
-            and type(value['title']) == str
+            and set(value.keys()) == self.FIELD_KEYS['configuration']
+            and type(value['survey_name']) is str
+            and re.match(REGEXES['survey_name'], value['survey_name'])
+            and type(value['title']) is str
             and 1 <= len(value['title']) <= LENGTHS['S']
-            and type(value['description']) == str
+            and type(value['description']) is str
             and len(value['description']) <= LENGTHS['L']
-            and type(value['fields']) == list
+            and type(value['start']) is type(value['end']) is int
+            and 0 <= value['start'] <= value['end'] <= 4102444800
+            and type(value['draft']) is bool
+            and value['authentication'] in ['open', 'email']
+            and type(value['limit']) is int
+            and 0 <= value['limit'] <= 100
+            and type(value['fields']) is list
             and 1 <= len(value['fields']) <= LENGTHS['S']
             and all([
-                self._validate_type_option(field)
+                (
+                    self._validate_email(field)
+                    or self._validate_option(field)
+                    or self._validate_radio(field)
+                    or self._validate_selection(field)
+                    or self._validate_text(field)
+                )
                 for field
                 in value['fields']
             ])
-            and type(value['min_select']) == type(value['max_select']) == int
+            and sum([
+                self._validate_email(field)
+                for field
+                in value['fields']
+            ]) == int(value['authentication'] == 'email')
+        )
+
+    def _base_validate(func):
+        @wraps(func)
+        def wrapper(self, value):
+            return (
+                type(value) is dict
+                and 'type' in value.keys()
+                and value['type'] in self.FIELD_KEYS.keys()
+                and set(value.keys()) == self.FIELD_KEYS[value['type']]
+                and type(value['title']) == str
+                and 1 <= len(value['title']) <= LENGTHS['S']
+                and type(value['description']) is str
+                and len(value['description']) <= LENGTHS['L']
+                and func(self, value)
+            )
+        return wrapper
+
+    @_base_validate
+    def _validate_email(self, value):
+        """Validate that the argument is a valid email field."""
+        return (
+            value['type'] == 'email'
+            and type(value['regex']) is str
+            and len(value['regex']) <= LENGTHS['M']
+            and isregex(value['regex'])
+            and type(value['hint']) is str
+            and len(value['hint']) <= LENGTHS['S']
+        )
+
+    @_base_validate
+    def _validate_option(self, value):
+        """Validate that the argument is a valid option field."""
+        return (
+            value['type'] == 'option'
+            and type(value['required']) is bool
+        )
+
+    @_base_validate
+    def _validate_radio(self, value):
+        """Validate that the argument is a valid radio field."""
+        return (
+            value['type'] == 'radio'
+            and type(value['fields']) is list
+            and 2 <= len(value['fields']) <= LENGTHS['S']
+            and all([
+                self._validate_option(field)
+                for field
+                in value['fields']
+            ])
+        )
+
+    @_base_validate
+    def _validate_selection(self, value):
+        """Validate that the argument is a valid selection field."""
+        return (
+            value['type'] == 'selection'
+            and type(value['fields']) is list
+            and 2 <= len(value['fields']) <= LENGTHS['S']
+            and all([
+                self._validate_option(field)
+                for field
+                in value['fields']
+            ])
+            and type(value['min_select']) is type(value['max_select']) is int
             and 0 <= value['min_select'] <= value['max_select']
             and value['max_select'] <= len(value['fields'])
         )
 
-    def _validate_type_text(self, value):
-        """Validate that value is a correct text field specification"""
-        keys = {'type', 'title', 'description', 'min_chars', 'max_chars'}
+    @_base_validate
+    def _validate_text(self, value):
+        """Validate that the argument is a valid text field."""
         return (
-            type(value) is dict
-            and set(value.keys()) == keys
-            and value['type'] == 'text'
-            and 1 <= len(value['title']) <= LENGTHS['S']
-            and len(value['title']) <= LENGTHS['S']
-            and type(value['description']) == str
-            and len(value['description']) <= LENGTHS['L']
-            and type(value['min_chars']) == type(value['max_chars']) == int
+            value['type'] == 'text'
+            and type(value['min_chars']) is type(value['max_chars']) is int
             and 0 <= value['min_chars'] <= value['max_chars']
             and value['max_chars'] <= LENGTHS['L']
         )
