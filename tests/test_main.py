@@ -1,7 +1,6 @@
 import pytest
 import secrets
-
-from httpx import AsyncClient
+import httpx
 
 import app.main as main
 
@@ -13,9 +12,9 @@ async def test_fetching_configuration_with_valid_identifier(
     ):
     """Using valid survey identifier, test that correct config is returned."""
     for survey_name, configurations in configurationss.items():
-        async with AsyncClient(app=main.app, base_url='http://test') as ac:
+        async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
             url = f'/users/{username}/surveys/{survey_name}'
-            response = await ac.get(url)
+            response = await c.get(url)
         assert response.status_code == 200
         assert response.json() == configurations['valid']
 
@@ -23,21 +22,21 @@ async def test_fetching_configuration_with_valid_identifier(
 @pytest.mark.asyncio
 async def test_fetching_configuration_with_invalid_identifier(username):
     """Using invalid survey identifier, test that an exception is raised."""
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
         url = f'/users/{username}/surveys/carrot'
-        response = await ac.get(url)
+        response = await c.get(url)
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_submitting_valid_submission(username, submissionss, cleanup):
     """Test that submission works with valid submissions for test surveys."""
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
         for survey_name, submissions in submissionss.items():
-            survey = await main.survey_manager._fetch(username, survey_name)
+            survey = await main.survey_manager.fetch(username, survey_name)
             url = f'/users/{username}/surveys/{survey_name}/submissions'
             for submission in submissions['valid']:
-                response = await ac.post(url, json=submission)
+                response = await c.post(url, json=submission)
                 assert response.status_code == 200
                 entry = await survey.submissions.find_one({'data': submission})
                 assert entry is not None
@@ -50,12 +49,12 @@ async def test_submitting_invalid_submission(
         cleanup,
     ):
     """Test that submit correctly fails for invalid test survey submissions."""
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
         for survey_name, submissions in submissionss.items():
-            survey = await main.survey_manager._fetch(username, survey_name)
+            survey = await main.survey_manager.fetch(username, survey_name)
             url = f'/users/{username}/surveys/{survey_name}/submissions'
             for submission in submissions['invalid']:
-                response = await ac.post(url, json=submission)
+                response = await c.post(url, json=submission)
                 assert response.status_code == 400
                 entry = await survey.submissions.find_one()
                 assert entry is None
@@ -70,7 +69,7 @@ async def test_duplicate_validation_token_resolution(
     ):
     """Test that duplicate tokens in submissions are correctly resolved."""
     survey_name = 'complex-survey'
-    survey = await main.survey_manager._fetch(username, survey_name)
+    survey = await main.survey_manager.fetch(username, survey_name)
     submissions = submissionss[survey_name]['valid']
     tokens = []
 
@@ -80,9 +79,9 @@ async def test_duplicate_validation_token_resolution(
         return tokens[-1]
 
     monkeypatch.setattr(secrets, 'token_hex', token)  # mock token generation
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
         for i, submission in enumerate(submissions):
-            response = await ac.post(
+            response = await c.post(
                 url=f'/users/{username}/surveys/{survey_name}/submissions',
                 json=submission,
             )
@@ -101,7 +100,7 @@ async def test_verifying_valid_token(
     ):
     """Test correct verification given a valid submission token."""
     survey_name = 'complex-survey'
-    survey = await main.survey_manager._fetch(username, survey_name)
+    survey = await main.survey_manager.fetch(username, survey_name)
     submissions = submissionss[survey_name]['valid']
     tokens = []
 
@@ -111,12 +110,12 @@ async def test_verifying_valid_token(
         return tokens[-1]
 
     monkeypatch.setattr(secrets, 'token_hex', token)  # token generation mock
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
+    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
         base_url = f'/users/{username}/surveys/{survey_name}'
         for submission in submissions:
-            await ac.post(f'{base_url}/submission', json=submission)
+            await c.post(f'{base_url}/submission', json=submission)
         for i, token in enumerate(tokens):
-            response = await ac.get(
+            response = await c.get(
                 url=f'{base_url}/verification/{token}',
                 allow_redirects=False,
             )
@@ -163,8 +162,8 @@ async def scenario2(survey):
 async def test_verifying_replace_valid_token(scenario2, survey):
     """Test replacement of previously verified submission."""
     token = 'tomato'
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get(
+    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
+        response = await c.get(
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
@@ -187,8 +186,8 @@ async def test_verifying_replace_valid_token(scenario2, survey):
 async def test_verifying_invalid_token(scenario2, survey):
     """Test correct verification rejection given an invalid token."""
     token = 'peach'
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get(
+    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
+        response = await c.get(
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
@@ -206,8 +205,8 @@ async def test_verifying_invalid_token(scenario2, survey):
 @pytest.mark.asyncio
 async def test_verifying_with_no_prior_submission(survey):
     token = 'olive'
-    async with AsyncClient(app=main.app, base_url='http://test') as ac:
-        response = await ac.get(
+    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
+        response = await c.get(
             url=f'/fastsurvey/test/verify/{token}',
             allow_redirects=False,
         )
@@ -223,7 +222,7 @@ async def test_aggregating(username, submissionss, resultss, cleanup):
     """Test that aggregation of test submissions returns the correct result."""
     for survey_name, submissions in submissionss.items():
         # push test submissions
-        survey = await main.survey_manager._fetch(username, survey_name)
+        survey = await main.survey_manager.fetch(username, survey_name)
         await survey.alligator.collection.insert_many([
             {'data': submission}
             for submission
@@ -232,8 +231,8 @@ async def test_aggregating(username, submissionss, resultss, cleanup):
         # manually close survey so that we can aggregate
         survey.end = 0
         # aggregate and fetch results
-        async with AsyncClient(app=main.app, base_url='http://test') as ac:
-            response = await ac.get(
+        async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
+            response = await c.get(
                 url=f'/users/{username}/surveys/{survey_name}/results',
                 allow_redirects=False,
             )

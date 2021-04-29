@@ -2,8 +2,7 @@ import pytest
 import asyncio
 import json
 import os
-
-from copy import deepcopy
+import copy
 
 import app.main as main
 
@@ -159,13 +158,17 @@ async def reset(username, account_data, configurationss):
 
     '''
 
-    await main.account_manager._delete(username)
+    await main.account_manager.delete.__wrapped__(
+        main.account_manager,
+        username,
+    )
     await main.account_manager.create(username, account_data)
     for survey_name, configurations in configurationss.items():
-        await main.survey_manager._create(
-            username=username,
-            survey_name=survey_name,
-            configuration=deepcopy(configurations['valid']),
+        await main.survey_manager.create.__wrapped__(
+            main.survey_manager,
+            username,
+            survey_name,
+            copy.deepcopy(configurations['valid']),
         )
 
 
