@@ -5,6 +5,7 @@ import os
 import copy
 
 import app.main as main
+import app.cryptography.access as access
 
 
 @pytest.fixture(scope='session')
@@ -97,6 +98,11 @@ def variables():
     """Provide the some miscellaneous values used for testing."""
     with open('tests/data/variables.json', 'r') as e:
         return json.load(e)
+
+@pytest.fixture(scope='session')
+def headers(username):
+    access_token = access.generate(username)['access_token']
+    return {'Authorization': f'Bearer {access_token}'}
 
 
 ################################################################################

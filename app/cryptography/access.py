@@ -5,6 +5,7 @@ import fastapi
 import functools
 
 import app.utils as utils
+import app.documentation as docs
 
 
 # public JSON Web Token signature key
@@ -14,7 +15,7 @@ PRIVATE_RSA_KEY = base64.b64decode(os.getenv('PRIVATE_RSA_KEY'))
 
 
 def authorize(func):
-    """Enforce proper authorization for the given function.
+    """Enforce proper authorization for the given fastapi route.
 
     A user is authorized if the username from the decrypted access token
     equals the given username. We handle every exception that can occur
@@ -24,10 +25,10 @@ def authorize(func):
 
     """
     @functools.wraps(func)
-    async def wrapper(username, access_token, *args):
-        if username != decode(access_token):
+    async def wrapper(**kwargs):
+        if kwargs['username'] != decode(kwargs['access_token']):
             raise fastapi.HTTPException(401, 'invalid access token')
-        await func(username, *args)
+        return await func(**kwargs)
     return wrapper
 
 
@@ -47,6 +48,7 @@ def generate(username):
         'exp': timestamp + 7*24*60*60,  # tokens are valid for 7 days
     }
     access_token = jwt.encode(payload, PRIVATE_RSA_KEY, algorithm='RS256')
+    access_token = access_token.decode('utf-8')
     return {'access_token': access_token, 'token_type': 'bearer'}
 
 

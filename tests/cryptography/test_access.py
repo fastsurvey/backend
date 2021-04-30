@@ -11,14 +11,23 @@ import app.cryptography.access as access
 PRIVATE_RSA_KEY = base64.b64decode(os.getenv('PRIVATE_RSA_KEY'))
 
 
-def test_valid_access_token_procedure(username):
-    """Test JWT access token generation and decoding procedure."""
-    access_token = access.generate(username)['access_token']
-    assert access.decode(access_token) == username
+@pytest.fixture(scope='module')
+def route():
+    """Provide an example route function that needs authorization."""
+    @access.authorize
+    async def func(**kwargs): pass
+    return func
 
 
 @pytest.mark.asyncio
-async def test_invalid_access_token_procedure(username, variables):
+async def test_valid_access_token_procedure(username, route):
+    """Test JWT access token generation and decoding procedure."""
+    access_token = access.generate(username)['access_token']
+    await route(access_token=access_token, username=username)
+
+
+@pytest.mark.asyncio
+async def test_invalid_access_token_procedure(username, variables, route):
     """Test that JWT decoding fails for some example invalid tokens."""
     access_tokens = [
         42,
@@ -54,4 +63,4 @@ async def test_invalid_access_token_procedure(username, variables):
     ]
     for access_token in access_tokens:
         with pytest.raises(fastapi.HTTPException):
-            await access.authorize(lambda x : None)(username, access_token)
+            await route(access_token=access_token, username=username)
