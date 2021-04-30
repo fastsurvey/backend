@@ -101,6 +101,7 @@ def variables():
 
 @pytest.fixture(scope='session')
 def headers(username):
+    """Provide an authentication header to access protected routes."""
     access_token = access.generate(username)['access_token']
     return {'Authorization': f'Bearer {access_token}'}
 
@@ -164,14 +165,10 @@ async def reset(username, account_data, configurationss):
 
     '''
 
-    await main.account_manager.delete.__wrapped__(
-        main.account_manager,
-        username,
-    )
+    await main.account_manager.delete(username)
     await main.account_manager.create(username, account_data)
     for survey_name, configurations in configurationss.items():
-        await main.survey_manager.create.__wrapped__(
-            main.survey_manager,
+        await main.survey_manager.create(
             username,
             survey_name,
             copy.deepcopy(configurations['valid']),

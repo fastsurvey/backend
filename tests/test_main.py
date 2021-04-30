@@ -5,8 +5,42 @@ import httpx
 import app.main as main
 
 
+################################################################################
+# Fetch User
+################################################################################
+
+
 @pytest.mark.asyncio
-async def test_fetching_configuration_with_valid_identifier(
+async def test_fetching_existing_user_with_valid_access_token(
+        username,
+        account_data,
+        headers,
+    ):
+    """Test that correct account data is returned on valid request."""
+    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
+        url = f'/users/{username}'
+        response = await c.get(url, headers=headers)
+    assert response.status_code == 200
+    keys = set(response.json().keys())
+    assert keys == {'email_address', 'creation_time', 'verified'}
+
+
+
+
+
+# create user
+# update user
+# delete user
+# fetch surveys
+
+
+################################################################################
+# Fetch Survey
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_fetching_survey_with_valid_identifier(
         username,
         configurationss,
     ):
@@ -20,16 +54,26 @@ async def test_fetching_configuration_with_valid_identifier(
 
 
 @pytest.mark.asyncio
-async def test_fetching_configuration_with_invalid_identifier(username):
+async def test_fetching_survey_with_invalid_identifier(username):
     """Using invalid survey identifier, test that an exception is raised."""
     async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
-        url = f'/users/{username}/surveys/carrot'
+        url = f'/users/{username}/surveys/tomato'
         response = await c.get(url)
     assert response.status_code == 404
 
 
+# update survey
+# reset survey
+# delete survey
+
+
+################################################################################
+# Create Submission
+################################################################################
+
+
 @pytest.mark.asyncio
-async def test_submitting_valid_submission(username, submissionss, cleanup):
+async def test_creating_valid_submission(username, submissionss, cleanup):
     """Test that submission works with valid submissions for test surveys."""
     async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
         for survey_name, submissions in submissionss.items():
@@ -43,11 +87,7 @@ async def test_submitting_valid_submission(username, submissionss, cleanup):
 
 
 @pytest.mark.asyncio
-async def test_submitting_invalid_submission(
-        username,
-        submissionss,
-        cleanup,
-    ):
+async def test_creating_invalid_submission(username, submissionss, cleanup):
     """Test that submit correctly fails for invalid test survey submissions."""
     async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
         for survey_name, submissions in submissionss.items():
@@ -58,6 +98,11 @@ async def test_submitting_invalid_submission(
                 assert response.status_code == 400
                 entry = await survey.submissions.find_one()
                 assert entry is None
+
+
+################################################################################
+# Verify submission
+################################################################################
 
 
 @pytest.mark.asyncio
@@ -217,6 +262,11 @@ async def test_verifying_with_no_prior_submission(survey):
     assert ve is None
 
 
+################################################################################
+# Fetch Results
+################################################################################
+
+
 @pytest.mark.asyncio
 async def test_aggregating(username, submissionss, resultss, cleanup):
     """Test that aggregation of test submissions returns the correct result."""
@@ -238,3 +288,8 @@ async def test_aggregating(username, submissionss, resultss, cleanup):
             )
         assert response.status_code == 200
         assert response.json() == resultss[survey_name]
+
+
+# decode access token
+# generate access token
+# verify email address

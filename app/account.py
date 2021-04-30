@@ -21,7 +21,6 @@ class AccountManager:
         self.validator = validation.AccountValidator()
         self.letterbox = letterbox
 
-    @access.authorize
     async def fetch(self, username):
         """Return the account data corresponding to given user name."""
         account_data = await self.database['accounts'].find_one(
@@ -98,7 +97,6 @@ class AccountManager:
             raise api.HTTPException(401, 'invalid verification token')
         return access.generate(account_data['_id'])
 
-    @access.authorize
     async def update(self, username, account_data):
         """Update existing user account data in the database."""
 
@@ -118,7 +116,6 @@ class AccountManager:
         if result.matched_count == 0:
             raise api.HTTPException(404, 'user not found')
 
-    @access.authorize
     async def delete(self, username):
         """Delete the user including all her surveys from the database."""
         await self.database['accounts'].delete_one({'_id': username})
@@ -132,11 +129,7 @@ class AccountManager:
             in await cursor.to_list(None)
         ]
         for survey_name in survey_names:
-            await self.survey_manager.delete.__wrapped__(
-                self.survey_manager,
-                username,
-                survey_name,
-            )
+            await self.survey_manager.delete(username, survey_name)
 
     async def authenticate(self, identifier, password):
         """Authenticate user by her username or email and her password."""
@@ -158,7 +151,6 @@ class AccountManager:
             raise api.HTTPException(400, 'account not verified')
         return access.generate(account_data['_id'])
 
-    @access.authorize
     async def fetch_configurations(self, username, skip, limit):
         """Return a list of the user's survey configurations."""
         cursor = self.database['configurations'].find(

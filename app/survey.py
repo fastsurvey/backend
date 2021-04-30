@@ -68,7 +68,6 @@ class SurveyManager:
             if key not in ['username']
         }
 
-    @access.authorize
     async def create(self, username, survey_name, configuration):
         """Create a new survey configuration in the database and cache.
 
@@ -94,7 +93,6 @@ class SurveyManager:
         except pymongo.errors.DuplicateKeyError:
             raise fastapi.HTTPException(400, 'survey exists')
 
-    @access.authorize
     async def update(self, username, survey_name, configuration):
         """Update a survey configuration in the database and cache.
 
@@ -127,7 +125,6 @@ class SurveyManager:
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
-    @access.authorize
     async def reset(self, username, survey_name):
         """Delete all submission data including the results of a survey."""
         survey_id = utils.combine(username, survey_name)
@@ -135,7 +132,6 @@ class SurveyManager:
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
 
-    @access.authorize
     async def delete(self, username, survey_name):
         """Delete the survey and all its data from the database and cache."""
         await self.database['configurations'].delete_one(

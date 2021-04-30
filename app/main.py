@@ -114,12 +114,13 @@ class VerificationCredentials(pydantic.BaseModel):
 
 
 @app.get(**docs.specifications['fetch_user'])
+@access.authorize
 async def fetch_user(
-        username: str = docs.arguments['username'],
         access_token: str = docs.arguments['access_token'],
+        username: str = docs.arguments['username'],
     ):
     """Fetch the given user's account data."""
-    return await account_manager.fetch(username, access_token)
+    return await account_manager.fetch(username)
 
 
 @app.post(**docs.specifications['create_user'])
@@ -132,38 +133,36 @@ async def create_user(
 
 
 @app.put(**docs.specifications['update_user'])
+@access.authorize
 async def update_user(
+        access_token: str = docs.arguments['access_token'],
         username: str = docs.arguments['username'],
         account_data: dict = docs.arguments['account_data'],
-        access_token: str = docs.arguments['access_token'],
     ):
     """Update the given user's account data."""
-    await account_manager.update(username, access_token, account_data)
+    await account_manager.update(username, account_data)
 
 
 @app.delete(**docs.specifications['delete_user'])
+@access.authorize
 async def delete_user(
-        username: str = docs.arguments['username'],
         access_token: str = docs.arguments['access_token'],
+        username: str = docs.arguments['username'],
     ):
     """Delete the user and all her surveys from the database."""
-    await account_manager.delete(username, access_token)
+    await account_manager.delete(username)
 
 
 @app.get(**docs.specifications['fetch_surveys'])
+@access.authorize
 async def fetch_surveys(
+        access_token: str = docs.arguments['access_token'],
         username: str = docs.arguments['username'],
         skip: int = docs.arguments['skip'],
         limit: int = docs.arguments['limit'],
-        access_token: str = docs.arguments['access_token'],
     ):
     """Fetch the user's survey configurations sorted by the start date."""
-    return await account_manager.fetch_configurations(
-        username,
-        access_token,
-        skip,
-        limit,
-    )
+    return await account_manager.fetch_configurations(username, skip, limit)
 
 
 @app.get(**docs.specifications['fetch_survey'])
@@ -176,45 +175,49 @@ async def fetch_survey(
 
 
 @app.post(**docs.specifications['create_survey'])
+@access.authorize
 async def create_survey(
+        access_token: str = docs.arguments['access_token'],
         username: str = docs.arguments['username'],
         survey_name: str = docs.arguments['survey_name'],
         configuration: dict = docs.arguments['configuration'],
-        access_token: str = docs.arguments['access_token'],
     ):
     """Create new survey with given configuration."""
-    await survey_manager.create(
-        username,
-        access_token,
-        survey_name,
-        configuration,
-    )
+    await survey_manager.create(username, survey_name, configuration)
 
 
 @app.put(**docs.specifications['update_survey'])
+@access.authorize
 async def update_survey(
+        access_token: str = docs.arguments['access_token'],
         username: str = docs.arguments['username'],
         survey_name: str = docs.arguments['survey_name'],
         configuration: dict = docs.arguments['configuration'],
-        access_token: str = docs.arguments['access_token'],
     ):
     """Update survey with given configuration."""
-    await survey_manager.update(
-        username,
-        access_token,
-        survey_name,
-        configuration,
-    )
+    await survey_manager.update(username, survey_name, configuration)
+
+
+@app.delete(**docs.specifications['reset_survey'])
+@access.authorize
+async def reset_survey(
+        access_token: str = docs.arguments['access_token'],
+        username: str = docs.arguments['username'],
+        survey_name: str = docs.arguments['survey_name'],
+    ):
+    """Reset a survey by deleting all submission data including any results."""
+    await survey_manager.reset(username, survey_name)
 
 
 @app.delete(**docs.specifications['delete_survey'])
+@access.authorize
 async def delete_survey(
+        access_token: str = docs.arguments['access_token'],
         username: str = docs.arguments['username'],
         survey_name: str = docs.arguments['survey_name'],
-        access_token: str = docs.arguments['access_token'],
     ):
     """Delete given survey including all its submissions and other data."""
-    await survey_manager.delete(username, access_token, survey_name)
+    await survey_manager.delete(username, survey_name)
 
 
 @app.post(**docs.specifications['create_submission'])
@@ -226,16 +229,6 @@ async def create_submission(
     """Validate submission and store it under pending submissions."""
     survey = await survey_manager.fetch(username, survey_name)
     return await survey.submit(submission)
-
-
-@app.delete(**docs.specifications['reset_survey'])
-async def reset_survey(
-        username: str = docs.arguments['username'],
-        survey_name: str = docs.arguments['survey_name'],
-        access_token: str = docs.arguments['access_token'],
-    ):
-    """Reset a survey by deleting all submission data including any results."""
-    await survey_manager.reset(username, access_token, survey_name)
 
 
 @app.get(**docs.specifications['verify_submission'])
