@@ -104,7 +104,7 @@ class AuthenticationCredentials(pydantic.BaseModel):
 
 
 class VerificationCredentials(pydantic.BaseModel):
-    token: str
+    verification_token: str
     password: str
 
 
@@ -281,6 +281,6 @@ async def verify_email_address(
         ),
     ):
     return await account_manager.verify(
-        verification_credentials.token,
+        verification_credentials.verification_token,
         verification_credentials.password,
     )

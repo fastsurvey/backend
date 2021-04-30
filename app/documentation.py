@@ -95,7 +95,7 @@ arguments = {
         ...,
         description='The verification token together with the password',
         example={
-            'token': 'cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
+            'verification_token': 'cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
             'password': '12345678'
         },
     ),

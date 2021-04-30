@@ -31,7 +31,6 @@ async def test_fetching_existing_user_with_valid_access_token(
         client,
         headers,
         username,
-        account_data,
     ):
     """Test that correct account data is returned on valid request."""
     response = await client.get(f'/users/{username}', headers=headers)
@@ -339,10 +338,10 @@ async def test_decoding_valid_access_token(client, username, headers):
 async def test_generating_access_token_with_non_verified_account(
         client,
         username,
-        account_data,
+        password,
     ):
     """Test that authentication fails when the account is not verified."""
-    credentials = dict(identifier=username, password=account_data['password'])
+    credentials = dict(identifier=username, password=password)
     response = await client.post(f'/authentication', json=credentials)
     assert response.status_code == 400
 
@@ -351,7 +350,8 @@ async def test_generating_access_token_with_non_verified_account(
 async def test_generating_access_token_with_valid_credentials(
         client,
         username,
-        account_data,
+        email_address,
+        password,
         cleanup,
     ):
     """Test that authentication works with valid identifier and password."""
@@ -360,10 +360,10 @@ async def test_generating_access_token_with_valid_credentials(
         update={'$set': {'verified': True}}
     )
     # test with username as well as email address as identifier
-    for identifier in [username, account_data['email_address']]:
+    for identifier in [username, email_address]:
         credentials = dict(
             identifier=identifier,
-            password=account_data['password'],
+            password=password,
         )
         response = await client.post(f'/authentication', json=credentials)
         assert response.status_code == 200
@@ -400,4 +400,100 @@ async def test_generating_access_token_with_invalid_password(
     assert response.status_code == 401
 
 
-# TODO verify email address
+################################################################################
+# Verify Email Address
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_verifying_email_address_with_valid_credentials(
+        client,
+        username,
+        password,
+        cleanup,
+    ):
+    """Test that email verification works given valid credentials."""
+    account_data = await main.database['accounts'].find_one(
+        filter={'_id': username},
+        projection={'_id': False, 'verification_token': True},
+    )
+    credentials = dict(
+        verification_token=account_data['verification_token'],
+        password=password,
+    )
+    response = await client.post(f'/verification', json=credentials)
+    assert response.status_code == 200
+    assert access.decode(response.json()['access_token']) == username
+    account_data = await main.database['accounts'].find_one(
+        filter={'_id': username},
+        projection={'_id': False, 'verified': True},
+    )
+    assert account_data['verified']
+
+
+@pytest.mark.asyncio
+async def test_verifying_email_address_with_invalid_verification_token(
+        client,
+        username,
+    ):
+    """Test that email verification fails with invalid verification token."""
+    credentials = dict(verification_token='tomato', password='tomato')
+    response = await client.post(f'/verification', json=credentials)
+    assert response.status_code == 401
+    account_data = await main.database['accounts'].find_one(
+        filter={'_id': username},
+        projection={'_id': False, 'verified': True},
+    )
+    assert not account_data['verified']
+
+
+@pytest.mark.asyncio
+async def test_verifying_email_address_with_invalid_password(
+        client,
+        username,
+    ):
+    """Test that email verification fails given an invalid password."""
+    account_data = await main.database['accounts'].find_one(
+        filter={'_id': username},
+        projection={'_id': False, 'verification_token': True},
+    )
+    credentials = dict(
+        verification_token=account_data['verification_token'],
+        password='tomato',
+    )
+    response = await client.post(f'/verification', json=credentials)
+    assert response.status_code == 401
+    account_data = await main.database['accounts'].find_one(
+        filter={'_id': username},
+        projection={'_id': False, 'verified': True},
+    )
+    assert not account_data['verified']
+
+
+@pytest.mark.asyncio
+async def test_verifying_previously_verified_email_address(
+        client,
+        username,
+        password,
+        cleanup,
+    ):
+    """Test that email verification works given valid credentials."""
+    await main.database['accounts'].update_one(
+        filter={'_id': username},
+        update={'$set': {'verified': True}}
+    )
+    account_data = await main.database['accounts'].find_one(
+        filter={'_id': username},
+        projection={'_id': False, 'verification_token': True},
+    )
+    credentials = dict(
+        verification_token=account_data['verification_token'],
+        password=password,
+    )
+    response = await client.post(f'/verification', json=credentials)
+    assert response.status_code == 400
+    account_data = await main.database['accounts'].find_one(
+        filter={'_id': username},
+        projection={'_id': False, 'verified': True},
+    )
+    assert account_data['verified']

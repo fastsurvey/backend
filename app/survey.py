@@ -25,6 +25,10 @@ class SurveyManager:
     # private functions only the finished configuration document as
     # argument.
 
+    # or: split validation, errors, etc. and actual (e.g. update) logic
+    # into public and private functions (might be useful in tests), same
+    # for account.py
+
 
     def __init__(self, database, letterbox):
         """Initialize a survey manager instance."""

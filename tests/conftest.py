@@ -94,6 +94,18 @@ def username(account_data):
 
 
 @pytest.fixture(scope='session')
+def email_address(account_data):
+    """Convenience method to access the email address of the test account."""
+    return account_data['email_address']
+
+
+@pytest.fixture(scope='session')
+def password(account_data):
+    """Convenience method to access the password of the test account."""
+    return account_data['password']
+
+
+@pytest.fixture(scope='session')
 def variables():
     """Provide the some miscellaneous values used for testing."""
     with open('tests/data/variables.json', 'r') as e:
