@@ -5,33 +5,45 @@ import httpx
 import app.main as main
 
 
+@pytest.fixture(scope='module')
+async def client():
+    """Provide a HTTPX AsyncClient, that is properly closed after testing."""
+    async_client = httpx.AsyncClient(
+        app=main.app,
+        base_url='http://example.com',
+    )
+    yield async_client
+    await async_client.aclose()
+
+
 ################################################################################
 # Fetch User
 ################################################################################
 
 
+# test with non-existing user
+# test with invalid token
+
+
 @pytest.mark.asyncio
 async def test_fetching_existing_user_with_valid_access_token(
+        client,
         username,
         account_data,
         headers,
     ):
     """Test that correct account data is returned on valid request."""
-    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
-        url = f'/users/{username}'
-        response = await c.get(url, headers=headers)
+    url = f'/users/{username}'
+    response = await client.get(url, headers=headers)
     assert response.status_code == 200
     keys = set(response.json().keys())
     assert keys == {'email_address', 'creation_time', 'verified'}
 
 
-
-
-
-# create user
-# update user
-# delete user
-# fetch surveys
+# TODO create user
+# TODO update user
+# TODO delete user
+# TODO fetch surveys
 
 
 ################################################################################
@@ -40,31 +52,24 @@ async def test_fetching_existing_user_with_valid_access_token(
 
 
 @pytest.mark.asyncio
-async def test_fetching_survey_with_valid_identifier(
-        username,
-        configurationss,
-    ):
-    """Using valid survey identifier, test that correct config is returned."""
+async def test_fetching_existing_survey(client, username, configurationss):
+    """Test that correct configuration is returned for an existing survey."""
     for survey_name, configurations in configurationss.items():
-        async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
-            url = f'/users/{username}/surveys/{survey_name}'
-            response = await c.get(url)
+        response = await client.get(f'/users/{username}/surveys/{survey_name}')
         assert response.status_code == 200
         assert response.json() == configurations['valid']
 
 
 @pytest.mark.asyncio
-async def test_fetching_survey_with_invalid_identifier(username):
-    """Using invalid survey identifier, test that an exception is raised."""
-    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
-        url = f'/users/{username}/surveys/tomato'
-        response = await c.get(url)
+async def test_fetching_nonexistent_survey(client, username):
+    """Test that exception is raised when requesting a nonexistent survey."""
+    response = await client.get(f'/users/{username}/surveys/tomato')
     assert response.status_code == 404
 
 
-# update survey
-# reset survey
-# delete survey
+# TODO update survey
+# TODO reset survey
+# TODO delete survey
 
 
 ################################################################################
@@ -72,32 +77,44 @@ async def test_fetching_survey_with_invalid_identifier(username):
 ################################################################################
 
 
+# it probably suffices when we only check one valid and one invalid
+# maybe that would increase performance?
+
+
 @pytest.mark.asyncio
-async def test_creating_valid_submission(username, submissionss, cleanup):
+async def test_creating_valid_submission(
+        client,
+        username,
+        submissionss,
+        cleanup,
+    ):
     """Test that submission works with valid submissions for test surveys."""
-    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
-        for survey_name, submissions in submissionss.items():
-            survey = await main.survey_manager.fetch(username, survey_name)
-            url = f'/users/{username}/surveys/{survey_name}/submissions'
-            for submission in submissions['valid']:
-                response = await c.post(url, json=submission)
-                assert response.status_code == 200
-                entry = await survey.submissions.find_one({'data': submission})
-                assert entry is not None
+    for survey_name, submissions in submissionss.items():
+        survey = await main.survey_manager.fetch(username, survey_name)
+        url = f'/users/{username}/surveys/{survey_name}/submissions'
+        for submission in submissions['valid']:
+            response = await client.post(url, json=submission)
+            assert response.status_code == 200
+            entry = await survey.submissions.find_one({'data': submission})
+            assert entry is not None
 
 
 @pytest.mark.asyncio
-async def test_creating_invalid_submission(username, submissionss, cleanup):
+async def test_creating_invalid_submission(
+        client,
+        username,
+        submissionss,
+        cleanup,
+    ):
     """Test that submit correctly fails for invalid test survey submissions."""
-    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
-        for survey_name, submissions in submissionss.items():
-            survey = await main.survey_manager.fetch(username, survey_name)
-            url = f'/users/{username}/surveys/{survey_name}/submissions'
-            for submission in submissions['invalid']:
-                response = await c.post(url, json=submission)
-                assert response.status_code == 400
-                entry = await survey.submissions.find_one()
-                assert entry is None
+    for survey_name, submissions in submissionss.items():
+        survey = await main.survey_manager.fetch(username, survey_name)
+        url = f'/users/{username}/surveys/{survey_name}/submissions'
+        for submission in submissions['invalid']:
+            response = await client.post(url, json=submission)
+            assert response.status_code == 400
+            entry = await survey.submissions.find_one()
+            assert entry is None
 
 
 ################################################################################
@@ -105,9 +122,13 @@ async def test_creating_invalid_submission(username, submissionss, cleanup):
 ################################################################################
 
 
+# go through tests, don't skip any
+
+
 @pytest.mark.asyncio
 async def test_duplicate_validation_token_resolution(
         monkeypatch,
+        client,
         username,
         submissionss,
         cleanup,
@@ -124,21 +145,22 @@ async def test_duplicate_validation_token_resolution(
         return tokens[-1]
 
     monkeypatch.setattr(secrets, 'token_hex', token)  # mock token generation
-    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
-        for i, submission in enumerate(submissions):
-            response = await c.post(
-                url=f'/users/{username}/surveys/{survey_name}/submissions',
-                json=submission,
-            )
-            assert response.status_code == 200
-            entry = await survey.submissions.find_one({'data': submission})
-            assert entry is not None
-            assert entry['_id'] == str(i)
+
+    for i, submission in enumerate(submissions):
+        response = await client.post(
+            url=f'/users/{username}/surveys/{survey_name}/submissions',
+            json=submission,
+        )
+        assert response.status_code == 200
+        entry = await survey.submissions.find_one({'data': submission})
+        assert entry is not None
+        assert entry['_id'] == str(i)
 
 
 @pytest.mark.asyncio
 async def test_verifying_valid_token(
         monkeypatch,
+        client,
         username,
         submissionss,
         cleanup,
@@ -155,20 +177,20 @@ async def test_verifying_valid_token(
         return tokens[-1]
 
     monkeypatch.setattr(secrets, 'token_hex', token)  # token generation mock
-    async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
-        base_url = f'/users/{username}/surveys/{survey_name}'
-        for submission in submissions:
-            await c.post(f'{base_url}/submission', json=submission)
-        for i, token in enumerate(tokens):
-            response = await c.get(
-                url=f'{base_url}/verification/{token}',
-                allow_redirects=False,
-            )
-            assert response.status_code == 307
-            entry = await survey.submissions.find_one({'_id': token})
-            ve = await survey.vss.find_one({'_id': f'test+{i}@fastsurvey.io'})
-            assert entry is not None  # still unchanged in submissions
-            assert ve is not None  # now also in verified submissions
+
+    base_url = f'/users/{username}/surveys/{survey_name}'
+    for submission in submissions:
+        await client.post(f'{base_url}/submission', json=submission)
+    for i, token in enumerate(tokens):
+        response = await client.get(
+            url=f'{base_url}/verification/{token}',
+            allow_redirects=False,
+        )
+        assert response.status_code == 307
+        entry = await survey.submissions.find_one({'_id': token})
+        ve = await survey.vss.find_one({'_id': f'test+{i}@fastsurvey.io'})
+        assert entry is not None  # still unchanged in submissions
+        assert ve is not None  # now also in verified submissions
 
 
 @pytest.fixture(scope='function')
@@ -267,8 +289,11 @@ async def test_verifying_with_no_prior_submission(survey):
 ################################################################################
 
 
+# needs more tests
+
+
 @pytest.mark.asyncio
-async def test_aggregating(username, submissionss, resultss, cleanup):
+async def test_aggregating(client, username, submissionss, resultss, cleanup):
     """Test that aggregation of test submissions returns the correct result."""
     for survey_name, submissions in submissionss.items():
         # push test submissions
@@ -281,15 +306,41 @@ async def test_aggregating(username, submissionss, resultss, cleanup):
         # manually close survey so that we can aggregate
         survey.end = 0
         # aggregate and fetch results
-        async with httpx.AsyncClient(app=main.app, base_url='http://test') as c:
-            response = await c.get(
-                url=f'/users/{username}/surveys/{survey_name}/results',
-                allow_redirects=False,
-            )
+        response = await client.get(
+            url=f'/users/{username}/surveys/{survey_name}/results',
+            allow_redirects=False,
+        )
         assert response.status_code == 200
         assert response.json() == resultss[survey_name]
 
 
-# decode access token
-# generate access token
-# verify email address
+################################################################################
+# Decode Access Token
+#
+# We don't really need to test much more here, it's a direct function call
+# to access.decode which is in itself sufficiently tested.
+################################################################################
+
+'''
+@pytest.mark.asyncio
+async def test_decoding_valid_access_token(client, username):
+    """Test that the correct username is returned for a valid access token."""
+    response = await client.get(f'/users/{username}/surveys/tomato')
+    assert response.status_code == 200
+    print(response.text)
+
+
+'''
+
+
+
+
+
+
+
+
+
+
+
+# TODO generate access token
+# TODO verify email address

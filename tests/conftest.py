@@ -99,6 +99,7 @@ def variables():
     with open('tests/data/variables.json', 'r') as e:
         return json.load(e)
 
+
 @pytest.fixture(scope='session')
 def headers(username):
     """Provide an authentication header to access protected routes."""
