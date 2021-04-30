@@ -22,8 +22,8 @@ async def client():
 ################################################################################
 
 
-# test with non-existing user
-# test with invalid token
+# TODO test with non-existing user
+# TODO test with invalid token
 
 
 @pytest.mark.asyncio
@@ -76,7 +76,7 @@ async def test_fetching_nonexistent_survey(client, username):
 ################################################################################
 
 
-# it probably suffices when we only check one valid and one invalid
+# TODO it probably suffices when we only check one valid and one invalid
 # maybe that would increase performance?
 
 
@@ -121,7 +121,7 @@ async def test_creating_invalid_submission(
 ################################################################################
 
 
-# go through tests, don't skip any
+# TODO go through tests, don't skip any
 
 
 @pytest.mark.asyncio
@@ -288,11 +288,18 @@ async def test_verifying_with_no_prior_submission(survey):
 ################################################################################
 
 
-# needs more tests
+# TODO needs more tests
 
 
 @pytest.mark.asyncio
-async def test_aggregating(client, username, submissionss, resultss, cleanup):
+async def test_fetching_results(
+        client,
+        headers,
+        username,
+        submissionss,
+        resultss,
+        cleanup,
+    ):
     """Test that aggregation of test submissions returns the correct result."""
     for survey_name, submissions in submissionss.items():
         # push test submissions
@@ -302,23 +309,22 @@ async def test_aggregating(client, username, submissionss, resultss, cleanup):
             for submission
             in submissions['valid']
         ])
-        # manually close survey so that we can aggregate
+        # manually close (cached) survey so that we can aggregate
         survey.end = 0
         # aggregate and fetch results
-        response = await client.get(
-            url=f'/users/{username}/surveys/{survey_name}/results',
-            allow_redirects=False,
-        )
+        url = f'/users/{username}/surveys/{survey_name}/results'
+        response = await client.get(url=url, headers=headers)
         assert response.status_code == 200
         assert response.json() == resultss[survey_name]
 
 
 ################################################################################
 # Decode Access Token
-#
-# We don't really need to test much more here, it's a direct function call
-# to access.decode which is in itself sufficiently tested.
 ################################################################################
+
+
+# We don't really need to test much more here, the decoding route is a direct
+# function call to access.decode which is in itself sufficiently tested.
 
 
 @pytest.mark.asyncio

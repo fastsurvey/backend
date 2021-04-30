@@ -73,7 +73,7 @@ arguments = {
         description='The query result count limit; 0 means no limit',
         example=10,
     ),
-    'token': api.Path(
+    'verification_token': api.Path(
         ...,
         description='The verification token',
         example='cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
@@ -463,6 +463,16 @@ specifications = {
                     'application/json': {
                         'example': {
                             'detail': 'survey is not yet closed',
+                        },
+                    },
+                },
+            },
+            401: {
+                'model': ExceptionResponse,
+                'content': {
+                    'application/json': {
+                        'example': {
+                            'detail': 'invalid access token',
                         },
                     },
                 },

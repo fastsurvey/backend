@@ -235,22 +235,21 @@ async def create_submission(
 async def verify_submission(
         username: str = docs.arguments['username'],
         survey_name: str = docs.arguments['survey_name'],
-        token: str = docs.arguments['token'],
+        verification_token: str = docs.arguments['verification_token'],
     ):
     """Verify user token and either fail or redirect to success page."""
     survey = await survey_manager.fetch(username, survey_name)
-    return await survey.verify(token)
+    return await survey.verify(verification_token)
 
 
 @app.get(**docs.specifications['fetch_results'])
+@access.authorize
 async def fetch_results(
+        access_token: str = docs.arguments['access_token'],
         username: str = docs.arguments['username'],
         survey_name: str = docs.arguments['survey_name'],
     ):
     """Fetch the results of the given survey."""
-
-    # TODO adapt result following authentication
-
     survey = await survey_manager.fetch(username, survey_name)
     return await survey.aggregate()
 
