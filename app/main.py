@@ -269,8 +269,8 @@ async def generate_access_token(
         ),
     ):
     return await account_manager.authenticate(
-        authentication_credentials['identifier'],
-        authentication_credentials['password'],
+        authentication_credentials.identifier,
+        authentication_credentials.password,
     )
 
 
@@ -281,6 +281,6 @@ async def verify_email_address(
         ),
     ):
     return await account_manager.verify(
-        verification_credentials['token'],
-        verification_credentials['password'],
+        verification_credentials.token,
+        verification_credentials.password,
     )

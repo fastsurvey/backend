@@ -44,7 +44,7 @@ class AccountManager:
             raise api.HTTPException(400, 'invalid account data')
         account_data = {
             '_id': username,
-            'email_address': account_data['username'],
+            'email_address': account_data['email_address'],
             'password_hash': pw.hash(account_data['password']),
             'creation_time': utils.now(),
             'verified': False,

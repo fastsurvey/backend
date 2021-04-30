@@ -3,9 +3,10 @@ import secrets
 import httpx
 
 import app.main as main
+import app.cryptography.access as access
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 async def client():
     """Provide a HTTPX AsyncClient, that is properly closed after testing."""
     async_client = httpx.AsyncClient(
@@ -28,13 +29,12 @@ async def client():
 @pytest.mark.asyncio
 async def test_fetching_existing_user_with_valid_access_token(
         client,
+        headers,
         username,
         account_data,
-        headers,
     ):
     """Test that correct account data is returned on valid request."""
-    url = f'/users/{username}'
-    response = await client.get(url, headers=headers)
+    response = await client.get(f'/users/{username}', headers=headers)
     assert response.status_code == 200
     keys = set(response.json().keys())
     assert keys == {'email_address', 'creation_time', 'verified'}
@@ -321,26 +321,83 @@ async def test_aggregating(client, username, submissionss, resultss, cleanup):
 # to access.decode which is in itself sufficiently tested.
 ################################################################################
 
-'''
+
 @pytest.mark.asyncio
-async def test_decoding_valid_access_token(client, username):
+async def test_decoding_valid_access_token(client, username, headers):
     """Test that the correct username is returned for a valid access token."""
-    response = await client.get(f'/users/{username}/surveys/tomato')
+    response = await client.get(f'/authentication', headers=headers)
     assert response.status_code == 200
-    print(response.text)
+    assert response.json() == username
 
 
-'''
+################################################################################
+# Generate Access Token
+################################################################################
 
 
+@pytest.mark.asyncio
+async def test_generating_access_token_with_non_verified_account(
+        client,
+        username,
+        account_data,
+    ):
+    """Test that authentication fails when the account is not verified."""
+    credentials = dict(identifier=username, password=account_data['password'])
+    response = await client.post(f'/authentication', json=credentials)
+    assert response.status_code == 400
 
 
+@pytest.mark.asyncio
+async def test_generating_access_token_with_valid_credentials(
+        client,
+        username,
+        account_data,
+        cleanup,
+    ):
+    """Test that authentication works with valid identifier and password."""
+    await main.database['accounts'].update_one(
+        filter={'_id': username},
+        update={'$set': {'verified': True}}
+    )
+    # test with username as well as email address as identifier
+    for identifier in [username, account_data['email_address']]:
+        credentials = dict(
+            identifier=identifier,
+            password=account_data['password'],
+        )
+        response = await client.post(f'/authentication', json=credentials)
+        assert response.status_code == 200
+        assert access.decode(response.json()['access_token']) == username
 
 
+@pytest.mark.asyncio
+async def test_generating_access_token_invalid_username(
+        client,
+        username,
+    ):
+    """Test that authentication fails for a user that does not exist."""
+    credentials = dict(identifier='tomato', password='tomato')
+    response = await client.post(f'/authentication', json=credentials)
+    assert response.status_code == 404
 
 
+@pytest.mark.asyncio
+async def test_generating_access_token_with_invalid_password(
+        client,
+        username,
+        cleanup,
+    ):
+    """Test that authentication fails given an incorrect password."""
+    await main.database['accounts'].update_one(
+        filter={'_id': username},
+        update={'$set': {'verified': True}}
+    )
+    credentials = dict(
+        identifier=username,
+        password='tomato',
+    )
+    response = await client.post(f'/authentication', json=credentials)
+    assert response.status_code == 401
 
 
-
-# TODO generate access token
 # TODO verify email address
