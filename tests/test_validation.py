@@ -2,31 +2,28 @@ import pytest
 import copy
 
 import app.main as main
-
-from app.validation import (
-    AccountValidator,
-    ConfigurationValidator,
-    SubmissionValidator,
-)
+import app.validation as validation
 
 
 @pytest.fixture(scope='module')
 def account_validator():
     """Provide an instance of the account validator."""
-    return AccountValidator()
+    return validation.AccountValidator()
 
 
 @pytest.fixture(scope='module')
 def configuration_validator():
     """Provide an instance of the configuration validator."""
-    return ConfigurationValidator()
+    return validation.ConfigurationValidator()
 
 
 @pytest.fixture(scope='module')
 def submission_validators(configurationss):
     """Provide submission validator for every test survey."""
     return {
-        survey_name: SubmissionValidator.create(configurations['valid'])
+        survey_name: validation.SubmissionValidator.create(
+            configurations['valid']
+        )
         for survey_name, configurations
         in configurationss.items()
     }
@@ -74,7 +71,7 @@ def test_configurations_failing(configuration_validator, configurationss):
 def test_generating_submission_validation_schema(configurationss, schemas):
     """Test that the schema generation function returns the correct result."""
     for survey_name, configurations in configurationss.items():
-        schema = SubmissionValidator._generate_validation_schema(
+        schema = validation.SubmissionValidator._generate_validation_schema(
             configurations['valid']
         )
         assert schema == schemas[survey_name]

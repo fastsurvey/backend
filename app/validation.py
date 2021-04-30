@@ -1,10 +1,8 @@
 import re
+import cerberus
+import functools
 
-from cerberus import Validator, TypeDefinition
-from enum import Enum
-from functools import wraps
-
-from app.utils import isregex
+import app.utils as utils
 
 
 # string validation regexes
@@ -27,7 +25,7 @@ LENGTHS = {
 ################################################################################
 
 
-class AccountValidator(Validator):
+class AccountValidator(cerberus.Validator):
     """The custom cerberus validator for validating user account data.
 
     We could use pydantic to validate the account data instead, as the data
@@ -38,19 +36,12 @@ class AccountValidator(Validator):
     """
 
     SCHEMA = {
-        'username': {
-            'type': 'string',
-            'regex': REGEXES['username'],
-        },
+        'username': {'type': 'string', 'regex': REGEXES['username']},
+        'password': {'type': 'string', 'minlength': 8, 'maxlength': 64},
         'email_address': {
             'type': 'string',
             'maxlength': LENGTHS['M'],
             'regex': REGEXES['email_address'],
-        },
-        'password': {
-            'type': 'string',
-            'minlength': 8,
-            'maxlength': 64,
         },
     }
 
@@ -135,7 +126,7 @@ class ConfigurationValidator():
         )
 
     def _base_validate(func):
-        @wraps(func)
+        @functools.wraps(func)
         def wrapper(self, value):
             return (
                 type(value) is dict
@@ -157,7 +148,7 @@ class ConfigurationValidator():
             value['type'] == 'email'
             and type(value['regex']) is str
             and len(value['regex']) <= LENGTHS['M']
-            and isregex(value['regex'])
+            and utils.isregex(value['regex'])
             and type(value['hint']) is str
             and len(value['hint']) <= LENGTHS['S']
         )
@@ -217,7 +208,7 @@ class ConfigurationValidator():
 ################################################################################
 
 
-class SubmissionValidator(Validator):
+class SubmissionValidator(cerberus.Validator):
     """The cerberus submission validator with added custom validation rules.
 
     For an explanation of the validation rules we kindly refer the curious
@@ -228,8 +219,8 @@ class SubmissionValidator(Validator):
     """
 
     types_mapping = {
-        'option': TypeDefinition('option', (bool,), ()),
-        'text': TypeDefinition('text', (str,), ()),
+        'option': cerberus.TypeDefinition('option', (bool,), ()),
+        'text': cerberus.TypeDefinition('text', (str,), ()),
     }
 
     @classmethod

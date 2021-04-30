@@ -1,15 +1,15 @@
 import app.utils as utils
 
-from app.main import database
-from app.aggregation import Alligator
+import app.main as main
+import app.aggregation as aggregation
 
 
 def test_adding_email_to_aggregation_pipeline(username, configurationss):
     """Test adding an email field to the aggregation pipeline."""
     configuration = configurationss['email']['valid']
-    alligator = Alligator(
+    alligator = aggregation.Alligator(
         configuration={'username': username, **configuration},
-        database=database,
+        database=main.database,
     )
     alligator._add_email(
         field=configuration['fields'][0],
@@ -25,9 +25,9 @@ def test_adding_email_to_aggregation_pipeline(username, configurationss):
 def test_adding_option_to_aggregation_pipeline(username, configurationss):
     """Test adding an option field to the aggregation pipeline."""
     configuration = configurationss['option']['valid']
-    alligator = Alligator(
+    alligator = aggregation.Alligator(
         configuration={'username': username, **configuration},
-        database=database,
+        database=main.database,
     )
     alligator._add_option(
         field=configuration['fields'][0],
@@ -46,9 +46,9 @@ def test_adding_option_to_aggregation_pipeline(username, configurationss):
 def test_adding_radio_to_aggregation_pipeline(username, configurationss):
     """Test adding a radio field to the aggregation pipeline."""
     configuration = configurationss['radio']['valid']
-    alligator = Alligator(
+    alligator = aggregation.Alligator(
         configuration={'username': username, **configuration},
-        database=database,
+        database=main.database,
     )
     alligator._add_radio(
         field=configuration['fields'][0],
@@ -73,9 +73,9 @@ def test_adding_radio_to_aggregation_pipeline(username, configurationss):
 def test_adding_selection_to_aggregation_pipeline(username, configurationss):
     """Test adding a selection field to the aggregation pipeline."""
     configuration = configurationss['selection']['valid']
-    alligator = Alligator(
+    alligator = aggregation.Alligator(
         configuration={'username': username, **configuration},
-        database=database,
+        database=main.database,
     )
     alligator._add_selection(
         field=configuration['fields'][0],
@@ -98,9 +98,9 @@ def test_adding_selection_to_aggregation_pipeline(username, configurationss):
 def test_adding_text_to_aggregation_pipeline(username, configurationss):
     """Test adding a text field to the aggregation pipeline."""
     configuration = configurationss['text']['valid']
-    alligator = Alligator(
+    alligator = aggregation.Alligator(
         configuration={'username': username, **configuration},
-        database=database,
+        database=main.database,
     )
     alligator._add_text(
         field=configuration['fields'][0],
