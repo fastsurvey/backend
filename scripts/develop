@@ -1,3 +1,3 @@
 #!/bin/sh
 
-poetry run uvicorn app.main:app --host 0.0.0.0 --reload --env-file .env
+poetry run uvicorn app.main:app --host 0.0.0.0 --reload --log-level debug --env-file .env
