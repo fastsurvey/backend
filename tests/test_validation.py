@@ -33,15 +33,15 @@ def submission_validators(configurationss):
 ################################################################################
 
 
-def test_account_data_passing(account_validator, accounts):
+def test_account_data_passing(account_validator, account_datas):
     """Test that account validator passes some valid account data."""
-    for account_data in accounts['valid']:
+    for account_data in account_datas['valid']:
         assert account_validator.validate(account_data)
 
 
-def test_account_data_failing(account_validator, accounts):
+def test_account_data_failing(account_validator, account_datas):
     """Test that account validator fails some invalid account data."""
-    for account_data in accounts['invalid']:
+    for account_data in account_datas['invalid']:
         assert not account_validator.validate(account_data)
 
 

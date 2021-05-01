@@ -7,13 +7,13 @@
         },
         {
             "username": "tomato-man",
-            "email_address": "tomato-man@gmail.com",
+            "email_address": "tomato-man@tutanota.de",
             "password": "best-password-on-earth"
         },
         {
-            "username": "someguy",
+            "username": "banana-man",
             "email_address": "tomato-man-sucks@tutanota.de",
-            "password": "iamsomeguy###"
+            "password": "nobody-catches-banana-man"
         }
     ],
     "invalid": [

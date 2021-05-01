@@ -1,6 +1,7 @@
 import pytest
 import secrets
 import httpx
+import copy
 
 import app.main as main
 import app.cryptography.access as access
@@ -20,9 +21,6 @@ async def client():
 ################################################################################
 # Fetch User
 ################################################################################
-
-
-# TODO test with non-existing user
 
 
 @pytest.mark.asyncio
@@ -55,11 +53,65 @@ async def test_fetching_nonexistent_user(client):
     """Test that correct account data is returned on valid request."""
     access_token = access.generate('tomato')['access_token']
     headers = {'Authorization': f'Bearer {access_token}'}
-    response = await client.get(f'/users/tomato', headers=headers)
+    response = await client.get('/users/tomato', headers=headers)
     assert response.status_code == 404
 
 
-# TODO create user
+################################################################################
+# Create User
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_creating_user_with_valid_account_data(
+        client,
+        account_datas,
+        cleanup,
+    ):
+    """Test that account is created successfully on valid request."""
+    account_data = account_datas['valid'][1]
+    username = account_data['username']
+    response = await client.post(url=f'/users/{username}', json=account_data)
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_creating_user_with_invalid_account_data(
+        client,
+        username,
+        account_datas,
+    ):
+    """Test that account creation fails when given invalid account data."""
+    account_data = account_datas['invalid'][0]
+    response = await client.post(url=f'/users/{username}', json=account_data)
+    assert response.status_code == 400
+    assert response.json()['detail'] == 'invalid account data'
+
+
+@pytest.mark.asyncio
+async def test_creating_user_username_already_taken(
+        client,
+        username,
+        account_data,
+    ):
+    """Test that account creation fails when the username is already taken."""
+    account_data = copy.deepcopy(account_data)
+    account_data['email_address'] = 'tomato@fastsurvey.de'
+    response = await client.post(url=f'/users/{username}', json=account_data)
+    assert response.status_code == 400
+    assert response.json()['detail'] == 'username already taken'
+
+
+@pytest.mark.asyncio
+async def test_creating_user_email_address_already_taken(client, account_data):
+    """Test that account creation fails when the email address is in use."""
+    account_data = copy.deepcopy(account_data)
+    account_data['username'] = 'tomato'
+    response = await client.post(url='/users/tomato', json=account_data)
+    assert response.status_code == 400
+    assert response.json()['detail'] == 'email address already taken'
+
+
 # TODO update user
 # TODO delete user
 # TODO fetch surveys
