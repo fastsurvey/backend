@@ -27,7 +27,7 @@ async def test_valid_access_token_procedure(username, route):
 
 
 @pytest.mark.asyncio
-async def test_invalid_access_token_procedure(username, variables, route):
+async def test_invalid_access_token_procedure(username, route, variables):
     """Test that JWT decoding fails for some example invalid tokens."""
     access_tokens = [
         42,

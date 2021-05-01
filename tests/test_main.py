@@ -23,7 +23,6 @@ async def client():
 
 
 # TODO test with non-existing user
-# TODO test with invalid token
 
 
 @pytest.mark.asyncio
@@ -37,6 +36,27 @@ async def test_fetching_existing_user_with_valid_access_token(
     assert response.status_code == 200
     keys = set(response.json().keys())
     assert keys == {'email_address', 'creation_time', 'verified'}
+
+
+@pytest.mark.asyncio
+async def test_fetching_existing_user_with_invalid_access_token(
+        client,
+        username,
+    ):
+    """Test that correct account data is returned on valid request."""
+    access_token = access.generate('tomato')['access_token']
+    headers = {'Authorization': f'Bearer {access_token}'}
+    response = await client.get(f'/users/{username}', headers=headers)
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_fetching_nonexistent_user(client):
+    """Test that correct account data is returned on valid request."""
+    access_token = access.generate('tomato')['access_token']
+    headers = {'Authorization': f'Bearer {access_token}'}
+    response = await client.get(f'/users/tomato', headers=headers)
+    assert response.status_code == 404
 
 
 # TODO create user
@@ -319,23 +339,6 @@ async def test_fetching_results(
 
 
 ################################################################################
-# Decode Access Token
-################################################################################
-
-
-# We don't really need to test much more here, the decoding route is a direct
-# function call to access.decode which is in itself sufficiently tested.
-
-
-@pytest.mark.asyncio
-async def test_decoding_valid_access_token(client, username, headers):
-    """Test that the correct username is returned for a valid access token."""
-    response = await client.get(f'/authentication', headers=headers)
-    assert response.status_code == 200
-    assert response.json() == username
-
-
-################################################################################
 # Generate Access Token
 ################################################################################
 
@@ -404,6 +407,23 @@ async def test_generating_access_token_with_invalid_password(
     )
     response = await client.post(f'/authentication', json=credentials)
     assert response.status_code == 401
+
+
+################################################################################
+# Decode Access Token
+################################################################################
+
+
+# We don't really need to test much more here, the decoding route is a direct
+# function call to access.decode which is in itself sufficiently tested.
+
+
+@pytest.mark.asyncio
+async def test_decoding_valid_access_token(client, username, headers):
+    """Test that the correct username is returned for a valid access token."""
+    response = await client.get(f'/authentication', headers=headers)
+    assert response.status_code == 200
+    assert response.json() == username
 
 
 ################################################################################
