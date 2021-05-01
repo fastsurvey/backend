@@ -28,7 +28,7 @@ class Letterbox:
             'from': self.sender,
             'to': (
                 f'test@{self.domain}'
-                if ENVIRONMENT != 'production'
+                if ENVIRONMENT == 'testing'
                 else receiver
             ),
             'subject': subject,
