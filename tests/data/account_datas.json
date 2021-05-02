@@ -18,6 +18,11 @@
     ],
     "invalid": [
         {
+            "username": "mango-man",
+            "email_address": "mangolicious!",
+            "password": "MMMMMMMM"
+        },
+        {
             "username": "fastsurvey",
             "email_address": "support@fastsurvey.de",
             "password": "1234"
@@ -37,11 +42,6 @@
         {
             "1": "fastsurvey",
             "email_address": "support@fastsurvey.de",
-            "password": "12345678"
-        },
-        {
-            "username": "fastsurvey",
-            "email_address": "email",
             "password": "12345678"
         },
         {

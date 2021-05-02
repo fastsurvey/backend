@@ -73,25 +73,27 @@ async def test_creating_user_with_valid_account_data(
     username = account_data['username']
     response = await client.post(url=f'/users/{username}', json=account_data)
     assert response.status_code == 200
+    entry = await main.database['accounts'].find_one({'_id': username})
+    assert entry is not None
 
 
 @pytest.mark.asyncio
-async def test_creating_user_with_invalid_account_data(
-        client,
-        username,
-        account_datas,
-    ):
+async def test_creating_user_with_invalid_account_data(client, account_datas):
     """Test that account creation fails when given invalid account data."""
     account_data = account_datas['invalid'][0]
+    username = account_data['username']
     response = await client.post(url=f'/users/{username}', json=account_data)
     assert response.status_code == 400
     assert response.json()['detail'] == 'invalid account data'
+    entry = await main.database['accounts'].find_one({'_id': username})
+    assert entry is None
 
 
 @pytest.mark.asyncio
 async def test_creating_user_username_already_taken(
         client,
         username,
+        email_address,
         account_data,
     ):
     """Test that account creation fails when the username is already taken."""
@@ -100,16 +102,27 @@ async def test_creating_user_username_already_taken(
     response = await client.post(url=f'/users/{username}', json=account_data)
     assert response.status_code == 400
     assert response.json()['detail'] == 'username already taken'
+    entry = await main.database['accounts'].find_one({'_id': username})
+    assert entry['email_address'] == email_address
 
 
 @pytest.mark.asyncio
-async def test_creating_user_email_address_already_taken(client, account_data):
+async def test_creating_user_email_address_already_taken(
+        client,
+        username,
+        email_address,
+        account_data,
+    ):
     """Test that account creation fails when the email address is in use."""
     account_data = copy.deepcopy(account_data)
     account_data['username'] = 'tomato'
     response = await client.post(url='/users/tomato', json=account_data)
     assert response.status_code == 400
     assert response.json()['detail'] == 'email address already taken'
+    entry = await main.database['accounts'].find_one(
+        filter={'email_address': email_address},
+    )
+    assert entry['_id'] == username
 
 
 # TODO update user
@@ -138,6 +151,7 @@ async def test_fetching_nonexistent_survey(client, username):
     assert response.status_code == 404
 
 
+# TODO create survey
 # TODO update survey
 # TODO reset survey
 # TODO delete survey

@@ -127,56 +127,7 @@ def headers(username):
 async def reset(account_datas, configurationss):
     """Purge all user and survey data locally and remotely and reset it."""
 
-    # motor transaction example
-
-    '''
-
-    async with await main.motor_client.start_session() as session:
-        async with session.start_transaction():
-            #await main.database['toast'].rename('toast-reloaded')
-            #await main.database['toast-reloaded'].insert_one({'value': 'hello!'})
-            #await main.database['toast-reloaded'].rename('toast-reloaded-two')
-            #await main.database['toast-reloaded-two'].drop()
-            #await main.database['japan'].insert_one({'value': 'what?'})
-            result = await main.database['japan'].replace_one(
-                filter={'value': 'what?'},
-                replacement={'password': 'lol'},
-            )
-            await main.database['japan'].insert_one({'value': result.matched_count})
-
-
-    async with await self.motor_client.start_session() as session:
-        async with session.start_transaction():
-
-            # TODO rename results
-
-            result = await self.database['configurations'].replace_one(
-                filter=expression,
-                replacement=configuration,
-            )
-            if result.matched_count == 0:
-                raise HTTPException(400, 'not an existing survey')
-
-            collection_names = await self.database.list_collection_names()
-            old_cname = (
-                f'surveys'
-                f'.{combine(username, survey_name)}'
-                f'.submissions'
-            )
-            new_cname = (
-                f'surveys'
-                f'.{combine(username, configuration["survey_name"])}'
-                f'.submissions'
-            )
-            if old_cname in collection_names:
-                self.database[old_cname].rename(new_cname)
-
-            old_cname = f'{old_cname}.verified'
-            new_cname = f'{new_cname}.verified'
-            if old_cname in collection_names:
-                self.database[old_cname].rename(new_cname)
-
-    '''
+    # TODO implement part-resets to increase test performance?
 
     for account_data in account_datas['valid']:
         await main.account_manager.delete(account_data['username'])
