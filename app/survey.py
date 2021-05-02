@@ -209,10 +209,10 @@ class Survey:
                 except pymongo.errors.DuplicateKeyError:
                     submission['_id'] = verification.token()
             status = await email.send_submission_verification(
+                submission['data'][str(self.ei + 1)],
                 self.username,
                 self.survey_name,
                 self.configuration['title'],
-                submission['data'][str(self.ei + 1)],
                 submission['_id'],
             )
             if status != 200:

@@ -1,5 +1,6 @@
-import os
 import httpx
+import os
+import os.path
 
 
 # development / production / testing environment
@@ -12,6 +13,17 @@ CONSOLE_URL = os.getenv('CONSOLE_URL')
 MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
 
 
+def _read_templates():
+    """Read all available email templates into a dictionary."""
+    templates = {}
+    base = os.path.dirname(__file__)
+    for name in os.listdir(os.path.join(base, 'emails')):
+        if name.endswith('.html'):
+            with open(os.path.join(base, 'emails', name)) as file:
+                templates[name[:-5]] = file.read()
+    return templates
+
+
 # main domain of the service
 DOMAIN = 'fastsurvey.io'
 # sender email address
@@ -21,15 +33,17 @@ CLIENT = httpx.AsyncClient(
     base_url=f'https://api.eu.mailgun.net/v3/email.{DOMAIN}',
     auth=('api', MAILGUN_API_KEY),
 )
+# html email templates
+TEMPLATES = _read_templates()
 
 
-async def _send(receiver, subject, html):
-    """Send the given email to the given receiver."""
+async def _send(email_address, subject, content):
+    """Send the given email to the given email address."""
     data = {
         'from': SENDER,
-        'to': f'test@{DOMAIN}' if ENVIRONMENT == 'testing' else receiver,
+        'to': f'test@{DOMAIN}' if ENVIRONMENT == 'testing' else email_address,
         'subject': subject,
-        'html': html,
+        'html': content,
         'o:testmode': ENVIRONMENT == 'testing',
         'o:tag': [f'{ENVIRONMENT} transactional'],
     }
@@ -37,11 +51,26 @@ async def _send(receiver, subject, html):
     return response.status_code
 
 
+async def send_account_verification(
+        email_address,
+        username,
+        verification_token,
+    ):
+    """Send a confirmation email to verify an account email address."""
+    subject = 'Welcome to FastSurvey!'
+    link = f'{CONSOLE_URL}/verify?token={verification_token}'
+    content = TEMPLATES['account_verification'].format(
+        username=username,
+        link=link,
+    )
+    return await _send(email_address, subject, content)
+
+
 async def send_submission_verification(
+        email_address,
         username,
         survey_name,
         title,
-        receiver,
         verification_token,
     ):
     """Send a confirmation email to verify a submission email address."""
@@ -53,23 +82,8 @@ async def send_submission_verification(
         f'/verification/{verification_token}'
     )
 
-    html = (
-        f'<p>Hi there, we received your submission!</p>'
-        f'<p>Survey: <strong>{title}</strong></p>'
-        f'<p>Please verify your submission by <a href="{link}" target="_blank">clicking here</a>.</p>'
-        f'<p>Best, the FastSurvey team</p>'
+    content = TEMPLATES['submission_verification'].format(
+        title=title,
+        link=link,
     )
-    return await _send(receiver, subject, html)
-
-
-async def send_account_verification(username, receiver, verification_token):
-    """Send a confirmation email to verify an account email address."""
-    subject = 'Welcome to FastSurvey!'
-    link = f'{CONSOLE_URL}/verify?token={verification_token}'
-    html = (
-        f'<p>Welcome to FastSurvey, {username}!</p>'
-        f'<p>Please verify your email address by <a href="{link}" target="_blank">clicking here</a>.</p>'
-        f'<p>The verification link is valid for 10 minutes.</p>'
-        f'<p>Best, the FastSurvey team</p>'
-    )
-    return await _send(receiver, subject, html)
+    return await _send(email_address, subject, content)

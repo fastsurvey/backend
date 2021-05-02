@@ -66,9 +66,9 @@ class AccountManager:
                     raise api.HTTPException(500, 'account creation error')
 
         status = await email.send_account_verification(
-            username=username,
-            receiver=account_data['email_address'],
-            verification_token=account_data['verification_token'],
+            account_data['email_address'],
+            username,
+            account_data['verification_token'],
         )
         if status != 200:
             # we do not delete the unverified account here, as the user could
