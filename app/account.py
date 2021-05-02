@@ -5,6 +5,7 @@ import pymongo.errors
 import pymongo
 
 import app.validation as validation
+import app.email as email
 import app.cryptography.access as access
 import app.cryptography.password as pw
 import app.cryptography.verification as verification
@@ -14,12 +15,11 @@ import app.utils as utils
 class AccountManager:
     """The manager manages creating, updating and deleting user accounts."""
 
-    def __init__(self, database, letterbox, survey_manager):
+    def __init__(self, database, survey_manager):
         """Initialize an account manager instance."""
         self.database = database
         self.survey_manager = survey_manager
         self.validator = validation.AccountValidator()
-        self.letterbox = letterbox
 
     async def fetch(self, username):
         """Return the account data corresponding to given user name."""
@@ -65,7 +65,7 @@ class AccountManager:
                 else:
                     raise api.HTTPException(500, 'account creation error')
 
-        status = await self.letterbox.send_account_verification_email(
+        status = await email.send_account_verification(
             username=username,
             receiver=account_data['email_address'],
             verification_token=account_data['verification_token'],

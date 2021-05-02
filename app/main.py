@@ -79,12 +79,10 @@ app.add_middleware(
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
 # get link to development / production / testing database via motor
 database = client[ENVIRONMENT]
-# create email client
-letterbox = email.Letterbox()
 # instantiate survey manager
-survey_manager = sv.SurveyManager(database, letterbox)
+survey_manager = sv.SurveyManager(database)
 # instantiate account manager
-account_manager = ac.AccountManager(database, letterbox, survey_manager)
+account_manager = ac.AccountManager(database, survey_manager)
 
 
 ################################################################################

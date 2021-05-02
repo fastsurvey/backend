@@ -10,6 +10,7 @@ import app.aggregation as aggregation
 import app.utils as utils
 import app.cryptography.verification as verification
 import app.cryptography.access as access
+import app.email as email
 
 
 # frontend url
@@ -30,10 +31,9 @@ class SurveyManager:
     # for account.py
 
 
-    def __init__(self, database, letterbox):
+    def __init__(self, database):
         """Initialize a survey manager instance."""
         self.database = database
-        self.letterbox = letterbox
         self.cache = cachetools.LRUCache(maxsize=256)
         self.validator = validation.ConfigurationValidator()
 
@@ -43,11 +43,7 @@ class SurveyManager:
             configuration['username'],
             configuration['survey_name'],
         )
-        self.cache[survey_id] = Survey(
-            configuration,
-            self.database,
-            self.letterbox,
-        )
+        self.cache[survey_id] = Survey(configuration, self.database)
 
     async def fetch(self, username, survey_name):
         """Return the survey object corresponding to user and survey name."""
@@ -158,7 +154,6 @@ class Survey:
             self,
             configuration,
             database,
-            letterbox,
     ):
         """Create a survey from the given json configuration file."""
         self.configuration = configuration
@@ -169,7 +164,6 @@ class Survey:
         self.authentication = self.configuration['authentication']
         self.ei = Survey._get_email_field_index(self.configuration)
         self.validator = validation.SubmissionValidator.create(configuration)
-        self.letterbox = letterbox
         self.alligator = aggregation.Alligator(self.configuration, database)
         self.submissions = database[
             f'surveys'
@@ -214,7 +208,7 @@ class Survey:
                     break
                 except pymongo.errors.DuplicateKeyError:
                     submission['_id'] = verification.token()
-            status = await self.letterbox.send_submission_verification_email(
+            status = await email.send_submission_verification(
                 self.username,
                 self.survey_name,
                 self.configuration['title'],
