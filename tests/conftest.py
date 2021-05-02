@@ -128,6 +128,8 @@ async def reset(account_datas, configurationss):
     """Purge all user and survey data locally and remotely and reset it."""
 
     # TODO implement part-resets to increase test performance?
+    # e.g. start with no data in the database each test and load only what
+    # we need, then only clean what needs cleaning
 
     for account_data in account_datas['valid']:
         await main.account_manager.delete(account_data['username'])

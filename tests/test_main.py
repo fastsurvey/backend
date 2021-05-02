@@ -5,9 +5,10 @@ import copy
 
 import app.main as main
 import app.cryptography.access as access
+import app.utils as utils
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='module')
 async def client():
     """Provide a HTTPX AsyncClient, that is properly closed after testing."""
     async_client = httpx.AsyncClient(
@@ -149,9 +150,66 @@ async def test_fetching_nonexistent_survey(client, username):
     """Test that exception is raised when requesting a nonexistent survey."""
     response = await client.get(f'/users/{username}/surveys/tomato')
     assert response.status_code == 404
+    assert response.json()['detail'] == 'survey not found'
 
 
-# TODO create survey
+################################################################################
+# Create Survey
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_creating_survey_with_valid_configuration(
+        client,
+        headers,
+        username,
+        configurationss,
+        cleanup,
+    ):
+    """Test that survey is correctly created with a valid configuration."""
+    configuration = copy.deepcopy(configurationss['option']['valid'])
+    survey_name = 'tomato'
+    configuration['survey_name'] = survey_name
+    response = await client.post(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    assert response.status_code == 200
+    survey_id = utils.combine(username, survey_name)
+    assert survey_id in main.survey_manager.cache
+    entry = await main.database['configurations'].find_one(
+        filter={'username': username, 'survey_name': survey_name},
+    )
+    assert entry is not None
+
+
+@pytest.mark.asyncio
+async def test_creating_survey_with_invalid_configuration(
+        client,
+        headers,
+        username,
+        configurationss,
+    ):
+    """Test that survey creation fails with an invalid configuration."""
+    configuration = configurationss['option']['invalid'][0]
+    survey_name = 'tomato'
+    configuration['survey_name'] = survey_name
+    response = await client.post(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    assert response.status_code == 400
+    assert response.json()['detail'] == 'invalid configuration'
+    survey_id = utils.combine(username, survey_name)
+    assert survey_id not in main.survey_manager.cache
+    entry = await main.database['configurations'].find_one(
+        filter={'username': username, 'survey_name': survey_name},
+    )
+    assert entry is None
+
+
 # TODO update survey
 # TODO reset survey
 # TODO delete survey
