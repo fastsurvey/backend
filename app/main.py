@@ -16,7 +16,7 @@ import app.cryptography.access as access
 envs = [
     'ENVIRONMENT',
     'FRONTEND_URL',
-    'BACKEND_URL',
+    'CONSOLE_URL',
     'PUBLIC_RSA_KEY',
     'PRIVATE_RSA_KEY',
     'MONGODB_CONNECTION_STRING',

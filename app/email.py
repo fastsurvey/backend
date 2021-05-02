@@ -6,6 +6,8 @@ import httpx
 ENVIRONMENT = os.getenv('ENVIRONMENT')
 # frontend url
 FRONTEND_URL = os.getenv('FRONTEND_URL')
+# console url
+CONSOLE_URL = os.getenv('CONSOLE_URL')
 # mailgun api key
 MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
 
@@ -72,7 +74,7 @@ class Letterbox:
         ):
         """Send confirmation email to verify an account email address."""
         subject = 'Welcome to FastSurvey!'
-        link = f'{FRONTEND_URL}/verify?token={verification_token}'
+        link = f'{CONSOLE_URL}/verify?token={verification_token}'
         html = (
             f'<p>Welcome to FastSurvey, {username}!</p>'
             f'<p>Please verify your email address by <a href="{link}" target="_blank">clicking here</a>.</p>'
