@@ -128,7 +128,7 @@ async def create_user(
         username: str = docs.arguments['username'],
         account_data: dict = docs.arguments['account_data'],
     ):
-    """Create a new user with default account data."""
+    """Create a new user based on the given account data."""
     await account_manager.create(username, account_data)
 
 
@@ -271,6 +271,13 @@ async def generate_access_token(
         authentication_credentials.identifier,
         authentication_credentials.password,
     )
+
+
+@app.put(**docs.specifications['refresh_access_token'])
+async def refresh_access_token(
+        access_token: str = docs.arguments['access_token'],
+    ):
+    return access.generate(access.decode(access_token))
 
 
 @app.post(**docs.specifications['verify_email_address'])

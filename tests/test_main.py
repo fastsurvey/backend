@@ -463,6 +463,23 @@ async def test_fetching_results(
 
 
 ################################################################################
+# Decode Access Token
+################################################################################
+
+
+# We don't really need to test much more here, the decoding route is a direct
+# function call to access.decode which is in itself sufficiently tested.
+
+
+@pytest.mark.asyncio
+async def test_decoding_valid_access_token(client, username, headers):
+    """Test that the correct username is returned for a valid access token."""
+    response = await client.get(f'/authentication', headers=headers)
+    assert response.status_code == 200
+    assert response.json() == username
+
+
+################################################################################
 # Generate Access Token
 ################################################################################
 
@@ -534,20 +551,21 @@ async def test_generating_access_token_with_invalid_password(
 
 
 ################################################################################
-# Decode Access Token
+# Refresh Access Token
 ################################################################################
 
 
-# We don't really need to test much more here, the decoding route is a direct
-# function call to access.decode which is in itself sufficiently tested.
+# We don't really need to test much more here, the refresh route is composed
+# of direct function calls to the access model which is in itself sufficiently
+# tested.
 
 
 @pytest.mark.asyncio
-async def test_decoding_valid_access_token(client, username, headers):
+async def test_refreshing_valid_access_token(client, username, headers):
     """Test that the correct username is returned for a valid access token."""
-    response = await client.get(f'/authentication', headers=headers)
+    response = await client.put(f'/authentication', headers=headers)
     assert response.status_code == 200
-    assert response.json() == username
+    assert access.decode(response.json()['access_token']) == username
 
 
 ################################################################################

@@ -107,6 +107,8 @@ class SurveyManager:
         """
 
         # TODO make update only possible if survey has not yet started
+        # TODO when survey name ist changed to something that exists already
+        # it'll probably fail due to the index, but that must be handled
 
         if not self.validator.validate(configuration):
             raise fastapi.HTTPException(400, 'invalid configuration')
