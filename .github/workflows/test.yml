@@ -23,6 +23,7 @@ jobs:
         ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
         FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
         CONSOLE_URL: ${{ secrets.CONSOLE_URL }}
+        BACKEND_URL: ${{ secrets.BACKEND_URL }}
         PUBLIC_RSA_KEY: ${{ secrets.PUBLIC_RSA_KEY }}
         PRIVATE_RSA_KEY: ${{ secrets.PRIVATE_RSA_KEY }}
         MONGODB_CONNECTION_STRING: ${{ secrets.MONGODB_CONNECTION_STRING }}

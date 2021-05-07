@@ -6,7 +6,7 @@ import os.path
 # development / production / testing environment
 ENVIRONMENT = os.getenv('ENVIRONMENT')
 # frontend url
-FRONTEND_URL = os.getenv('FRONTEND_URL')
+BACKEND_URL = os.getenv('BACKEND_URL')
 # console url
 CONSOLE_URL = os.getenv('CONSOLE_URL')
 # mailgun api key
@@ -75,13 +75,10 @@ async def send_submission_verification(
     ):
     """Send a confirmation email to verify a submission email address."""
     subject = 'Please verify your submission'
-
-    # TODO check with moritz what this link should be
     link = (
-        f'{FRONTEND_URL}/{username}/{survey_name}'
+        f'{BACKEND_URL}/users/{username}/surveys/{survey_name}'
         f'/verification/{verification_token}'
     )
-
     content = TEMPLATES['submission_verification'].format(
         title=title,
         link=link,
