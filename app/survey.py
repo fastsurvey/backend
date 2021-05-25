@@ -1,7 +1,5 @@
 import os
-import asyncio
 import fastapi
-import starlette.responses
 import pymongo.errors
 import cachetools
 
@@ -9,7 +7,6 @@ import app.validation as validation
 import app.aggregation as aggregation
 import app.utils as utils
 import app.cryptography.verification as verification
-import app.cryptography.access as access
 import app.email as email
 
 
@@ -34,32 +31,30 @@ class SurveyManager:
     def __init__(self, database):
         """Initialize a survey manager instance."""
         self.database = database
-        self.cache = cachetools.LRUCache(maxsize=256)
+        self.cache = SurveyCache(database)
         self.validator = validation.ConfigurationValidator()
 
-    def _update_cache(self, configuration):
-        """Update survey object in the local cache."""
-        survey_id = utils.combine(
-            configuration['username'],
-            configuration['survey_name'],
-        )
-        self.cache[survey_id] = Survey(configuration, self.database)
+    async def fetch(self, username, survey_name):
+        """Return the survey object corresponding to user and survey name.
 
-    async def fetch(self, username, survey_name, return_drafts=False):
-        """Return the survey object corresponding to user and survey name."""
-        survey_id = utils.combine(username, survey_name)
-        if survey_id not in self.cache:
-            filter = {'username': username, 'survey_name': survey_name}
-            if not return_drafts:
-                filter['draft'] = False
+        Surveys drafts are not returned.
+
+        """
+        try:
+            return self.cache.fetch(username, survey_name)
+        except KeyError:
             configuration = await self.database['configurations'].find_one(
-                filter=filter,
+                filter={
+                    'username': username,
+                    'survey_name': survey_name,
+                    'draft': False,
+                },
                 projection={'_id': False},
             )
             if configuration is None:
                 raise fastapi.HTTPException(404, 'survey not found')
-            self._update_cache(configuration)
-        return self.cache[survey_id]
+            self.cache.update(configuration)
+            return self.cache.fetch(username, survey_name)
 
     async def fetch_configuration(self, username, survey_name):
         """Return survey configuration corresponding to user/survey name."""
@@ -92,7 +87,7 @@ class SurveyManager:
             # like this the configuration in the survey is the same as
             # the one that is sent around in the routes
 
-            self._update_cache(configuration)
+            self.cache.update(configuration)
         except pymongo.errors.DuplicateKeyError:
             raise fastapi.HTTPException(400, 'survey exists')
 
@@ -123,7 +118,7 @@ class SurveyManager:
         assert '_id' not in configuration.keys()
         assert '_id' in configuration.keys()
 
-        self._update_cache(configuration)
+        self.cache.update(configuration)
 
     async def _archive(self, username, survey_name):
         """Delete submission data of a survey, but keep the results."""
@@ -143,12 +138,43 @@ class SurveyManager:
         await self.database['configurations'].delete_one(
             filter={'username': username, 'survey_name': survey_name},
         )
+        self.cache.delete(username, survey_name)
         survey_id = utils.combine(username, survey_name)
-        if survey_id in self.cache:
-            del self.cache[survey_id]
         await self.database['resultss'].delete_one({'_id': survey_id})
         await self.database[f'surveys.{survey_id}.submissions'].drop()
         await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
+
+
+class SurveyCache:
+
+    def __init__(self, database):
+        self.cache = cachetools.LRUCache(maxsize=2**10)
+        self.database = database
+
+    def fetch(self, username, survey_name):
+        """Fetch and return a survey object from the local cache."""
+        survey_id = utils.combine(username, survey_name)
+        return self.cache[survey_id]
+
+    def update(self, configuration):
+        """Update or create survey object in the local cache.
+
+        Draft surveys are not cached. When the given configuration is a draft,
+        any (non-draft) configuration is deleted from the cache.
+
+        """
+        username = configuration['username']
+        survey_name = configuration['survey_name']
+        survey_id = utils.combine(username, survey_name)
+        if configuration['draft']:
+            self.delete(username, survey_name)
+        else:
+            self.cache[survey_id] = Survey(configuration, self.database)
+
+    def delete(self, username, survey_name):
+        """Remove survey object from the local cache."""
+        survey_id = utils.combine(username, survey_name)
+        self.cache.pop(survey_id, None)
 
 
 class Survey:

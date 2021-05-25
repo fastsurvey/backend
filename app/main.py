@@ -5,7 +5,6 @@ import motor.motor_asyncio
 import pymongo
 import pydantic
 
-import app.email as email
 import app.account as ac
 import app.survey as sv
 import app.documentation as docs
