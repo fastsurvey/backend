@@ -1,5 +1,4 @@
 import pytest
-import copy
 
 import app.main as main
 import app.validation as validation
