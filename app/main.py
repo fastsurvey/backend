@@ -148,7 +148,7 @@ async def delete_user(
         access_token: str = docs.arguments['access_token'],
         username: str = docs.arguments['username'],
     ):
-    """Delete the user and all her surveys from the database."""
+    """Delete the user and all their surveys from the database."""
     await account_manager.delete(username)
 
 
@@ -160,7 +160,12 @@ async def fetch_surveys(
         skip: int = docs.arguments['skip'],
         limit: int = docs.arguments['limit'],
     ):
-    """Fetch the user's survey configurations sorted by the start date."""
+    """Fetch the user's survey configurations sorted by the start date.
+
+    As this is a protected route, configurations of surveys that are in
+    draft mode **are** returned.
+
+    """
     return await account_manager.fetch_configurations(username, skip, limit)
 
 
@@ -169,7 +174,12 @@ async def fetch_survey(
         username: str = docs.arguments['username'],
         survey_name: str = docs.arguments['survey_name'],
     ):
-    """Fetch a survey configuration."""
+    """Fetch a survey configuration.
+
+    As this is an unprotected route, configurations of surveys that are in
+    draft mode **are not** returned.
+
+    """
     return await survey_manager.fetch_configuration(username, survey_name)
 
 

@@ -45,12 +45,15 @@ class SurveyManager:
         )
         self.cache[survey_id] = Survey(configuration, self.database)
 
-    async def fetch(self, username, survey_name):
+    async def fetch(self, username, survey_name, return_drafts=False):
         """Return the survey object corresponding to user and survey name."""
         survey_id = utils.combine(username, survey_name)
         if survey_id not in self.cache:
+            filter = {'username': username, 'survey_name': survey_name}
+            if not return_drafts:
+                filter['draft'] = False
             configuration = await self.database['configurations'].find_one(
-                filter={'username': username, 'survey_name': survey_name},
+                filter=filter,
                 projection={'_id': False},
             )
             if configuration is None:
@@ -103,6 +106,7 @@ class SurveyManager:
         """
 
         # TODO make update only possible if survey has not yet started
+        # -> no, if there are no submissions yet!
         # TODO when survey name ist changed to something that exists already
         # it'll probably fail due to the index, but that must be handled
 

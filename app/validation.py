@@ -8,7 +8,7 @@ import app.utils as utils
 # string validation regexes
 REGEXES = {
     'username': r'^[a-z0-9-]{2,20}$',
-    'email_address': r'^.+@.+\..+$',
+    'email_address': r'^.+@.+$',
     'survey_name': r'^[a-z0-9-]{2,20}$',
 }
 
