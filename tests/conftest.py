@@ -52,7 +52,12 @@ def test_survey_data():
 
 @pytest.fixture(scope='session')
 def configurationss(test_survey_data):
-    """Convenience method to access test survey configurations."""
+    """Convenience method to access test survey configurations.
+
+    If during testing, some general valid/invalid survey configuration is
+    needed, preferably use the 'complex' survey for consistency.
+
+    """
     return test_survey_data['configurationss']
 
 
