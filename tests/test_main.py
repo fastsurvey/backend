@@ -1,3 +1,4 @@
+from asyncio.streams import start_server
 import pytest
 import secrets
 import httpx
@@ -10,7 +11,7 @@ import app.utils as utils
 
 @pytest.fixture(scope='module')
 async def client():
-    """Provide a HTTPX AsyncClient, that is properly closed after testing."""
+    """Provide a HTTPX AsyncClient that is properly closed after testing."""
     async_client = httpx.AsyncClient(
         app=main.app,
         base_url='http://example.com',
@@ -239,11 +240,11 @@ async def test_creating_survey_with_invalid_configuration(
 
 ################################################################################
 # Create Submission
+#
+# It suffices here to test only one valid and one invalid submission, instead
+# of all examples that we have, as the validation is tested on its own.
+# Additionally, that gets us a pretty nice speed-up.
 ################################################################################
-
-
-# TODO it probably suffices when we only check one valid and one invalid
-# maybe that would increase performance?
 
 
 @pytest.mark.asyncio
@@ -254,14 +255,14 @@ async def test_creating_valid_submission(
         cleanup,
     ):
     """Test that submission works with valid submissions for test surveys."""
-    for survey_name, submissions in submissionss.items():
-        survey = await main.survey_manager.fetch(username, survey_name)
-        url = f'/users/{username}/surveys/{survey_name}/submissions'
-        for submission in submissions['valid']:
-            response = await client.post(url, json=submission)
-            assert response.status_code == 200
-            entry = await survey.submissions.find_one({'data': submission})
-            assert entry is not None
+    survey_name = 'complex'
+    submission = submissionss[survey_name]['valid'][0]
+    survey = await main.survey_manager.fetch(username, survey_name)
+    url = f'/users/{username}/surveys/{survey_name}/submissions'
+    response = await client.post(url, json=submission)
+    assert response.status_code == 200
+    entry = await survey.submissions.find_one({'data': submission})
+    assert entry is not None
 
 
 @pytest.mark.asyncio
@@ -272,14 +273,14 @@ async def test_creating_invalid_submission(
         cleanup,
     ):
     """Test that submit correctly fails for invalid test survey submissions."""
-    for survey_name, submissions in submissionss.items():
-        survey = await main.survey_manager.fetch(username, survey_name)
-        url = f'/users/{username}/surveys/{survey_name}/submissions'
-        for submission in submissions['invalid']:
-            response = await client.post(url, json=submission)
-            assert response.status_code == 400
-            entry = await survey.submissions.find_one()
-            assert entry is None
+    survey_name = 'complex'
+    submission = submissionss[survey_name]['invalid'][0]
+    survey = await main.survey_manager.fetch(username, survey_name)
+    url = f'/users/{username}/surveys/{survey_name}/submissions'
+    response = await client.post(url, json=submission)
+    assert response.status_code == 400
+    entry = await survey.submissions.find_one()
+    assert entry is None
 
 
 ################################################################################
@@ -488,11 +489,10 @@ async def test_fetching_results(
 
 ################################################################################
 # Decode Access Token
-################################################################################
-
-
+#
 # We don't really need to test much more here, the decoding route is a direct
 # function call to access.decode which is in itself sufficiently tested.
+################################################################################
 
 
 @pytest.mark.asyncio
@@ -576,12 +576,11 @@ async def test_generating_access_token_with_invalid_password(
 
 ################################################################################
 # Refresh Access Token
-################################################################################
-
-
+#
 # We don't really need to test much more here, the refresh route is composed
 # of direct function calls to the access model which is in itself sufficiently
 # tested.
+################################################################################
 
 
 @pytest.mark.asyncio
