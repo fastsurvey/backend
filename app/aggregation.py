@@ -1,5 +1,5 @@
-from app.utils import combine
-from app.resources.database import database
+import app.utils as utils
+import app.resources.database as database
 
 
 class Alligator:
@@ -8,7 +8,7 @@ class Alligator:
     def __init__(self, configuration):
         """Initialize alligator with some pipeline parts already defined."""
         self.configuration = configuration
-        self.survey_id = combine(
+        self.survey_id = utils.combine(
             configuration['username'],
             configuration['survey_name'],
         )
