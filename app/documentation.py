@@ -1,6 +1,5 @@
 import pydantic
 import fastapi as api
-import fastapi.security
 
 
 class ExceptionResponse(pydantic.BaseModel):

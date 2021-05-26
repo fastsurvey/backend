@@ -6,14 +6,14 @@ import app.utils as utils
 
 
 # string validation regexes
-REGEXES = {
+_REGEXES = {
     'username': r'^[a-z0-9-]{2,20}$',
     'email_address': r'^.+@.+$',
     'survey_name': r'^[a-z0-9-]{2,20}$',
 }
 
 # maximum character lengths (inclusive)
-LENGTHS = {
+_LENGTHS = {
     'S': 128,
     'M': 1024,
     'L': 4096,
@@ -35,20 +35,20 @@ class AccountValidator(cerberus.Validator):
 
     """
 
-    SCHEMA = {
-        'username': {'type': 'string', 'regex': REGEXES['username']},
+    _SCHEMA = {
+        'username': {'type': 'string', 'regex': _REGEXES['username']},
         'password': {'type': 'string', 'minlength': 8, 'maxlength': 64},
         'email_address': {
             'type': 'string',
-            'maxlength': LENGTHS['M'],
-            'regex': REGEXES['email_address'],
+            'maxlength': _LENGTHS['M'],
+            'regex': _REGEXES['email_address'],
         },
     }
 
     def __init__(self, *args, **kwargs):
         """Initialize with predefined account validation schema."""
         super(AccountValidator, self).__init__(
-            self.SCHEMA,
+            self._SCHEMA,
             *args,
             require_all=True,
             **kwargs,
@@ -62,7 +62,7 @@ class AccountValidator(cerberus.Validator):
 
 class ConfigurationValidator():
 
-    FIELD_KEYS = {
+    _FIELD_KEYS = {
         'configuration': {
             'survey_name',
             'title',
@@ -92,13 +92,13 @@ class ConfigurationValidator():
         """Validate that the argument is a valid survey configuration."""
         return (
             type(value) is dict
-            and set(value.keys()) == self.FIELD_KEYS['configuration']
+            and set(value.keys()) == self._FIELD_KEYS['configuration']
             and type(value['survey_name']) is str
-            and re.match(REGEXES['survey_name'], value['survey_name'])
+            and re.match(_REGEXES['survey_name'], value['survey_name'])
             and type(value['title']) is str
-            and 1 <= len(value['title']) <= LENGTHS['S']
+            and 1 <= len(value['title']) <= _LENGTHS['S']
             and type(value['description']) is str
-            and len(value['description']) <= LENGTHS['L']
+            and len(value['description']) <= _LENGTHS['L']
             and type(value['start']) is type(value['end']) is int
             and 0 <= value['start'] <= value['end'] <= 4102444800
             and type(value['draft']) is bool
@@ -106,7 +106,7 @@ class ConfigurationValidator():
             and type(value['limit']) is int
             and 0 <= value['limit'] <= 100
             and type(value['fields']) is list
-            and 1 <= len(value['fields']) <= LENGTHS['S']
+            and 1 <= len(value['fields']) <= _LENGTHS['S']
             and all([
                 (
                     self._validate_email(field)
@@ -131,12 +131,12 @@ class ConfigurationValidator():
             return (
                 type(value) is dict
                 and 'type' in value.keys()
-                and value['type'] in self.FIELD_KEYS.keys()
-                and set(value.keys()) == self.FIELD_KEYS[value['type']]
+                and value['type'] in self._FIELD_KEYS.keys()
+                and set(value.keys()) == self._FIELD_KEYS[value['type']]
                 and type(value['title']) == str
-                and 1 <= len(value['title']) <= LENGTHS['S']
+                and 1 <= len(value['title']) <= _LENGTHS['S']
                 and type(value['description']) is str
-                and len(value['description']) <= LENGTHS['L']
+                and len(value['description']) <= _LENGTHS['L']
                 and func(self, value)
             )
         return wrapper
@@ -147,10 +147,10 @@ class ConfigurationValidator():
         return (
             value['type'] == 'email'
             and type(value['regex']) is str
-            and len(value['regex']) <= LENGTHS['M']
+            and len(value['regex']) <= _LENGTHS['M']
             and utils.isregex(value['regex'])
             and type(value['hint']) is str
-            and len(value['hint']) <= LENGTHS['S']
+            and len(value['hint']) <= _LENGTHS['S']
         )
 
     @_base_validate
@@ -167,7 +167,7 @@ class ConfigurationValidator():
         return (
             value['type'] == 'radio'
             and type(value['fields']) is list
-            and 2 <= len(value['fields']) <= LENGTHS['S']
+            and 2 <= len(value['fields']) <= _LENGTHS['S']
             and all([
                 self._validate_option(field)
                 for field
@@ -181,7 +181,7 @@ class ConfigurationValidator():
         return (
             value['type'] == 'selection'
             and type(value['fields']) is list
-            and 2 <= len(value['fields']) <= LENGTHS['S']
+            and 2 <= len(value['fields']) <= _LENGTHS['S']
             and all([
                 self._validate_option(field)
                 for field
@@ -199,7 +199,7 @@ class ConfigurationValidator():
             value['type'] == 'text'
             and type(value['min_chars']) is type(value['max_chars']) is int
             and 0 <= value['min_chars'] <= value['max_chars']
-            and value['max_chars'] <= LENGTHS['L']
+            and value['max_chars'] <= _LENGTHS['L']
         )
 
 
@@ -293,7 +293,7 @@ class SubmissionValidator(cerberus.Validator):
         return (
             type(value) is str
             and len(value) <= 1024
-            and re.match(REGEXES['email_address'], value)
+            and re.match(_REGEXES['email_address'], value)
         )
 
     def _validate_type_selection(self, value):

@@ -1,41 +1,20 @@
-import os
 import fastapi
 import fastapi.middleware.cors
 import motor.motor_asyncio
 import pymongo
 import pydantic
 
-import app.account as ac
-import app.survey as sv
+import app.account as acc
+import app.survey as svy
 import app.documentation as docs
 import app.cryptography.access as access
-
-
-# check that required environment variables are set
-envs = [
-    'ENVIRONMENT',
-    'FRONTEND_URL',
-    'CONSOLE_URL',
-    'BACKEND_URL',
-    'PUBLIC_RSA_KEY',
-    'PRIVATE_RSA_KEY',
-    'MONGODB_CONNECTION_STRING',
-    'MAILGUN_API_KEY',
-]
-for env in envs:
-    assert os.getenv(env), f'environment variable {env} not set'
-
-
-# development / production / testing environment
-ENVIRONMENT = os.getenv('ENVIRONMENT')
-# MongoDB connection string
-MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
+import app.settings as settings
 
 
 # connect to mongodb via pymongo
-client = pymongo.MongoClient(MONGODB_CONNECTION_STRING)
+client = pymongo.MongoClient(settings.MONGODB_CONNECTION_STRING)
 # get link to development / production / testing database via pymongo
-database = client[ENVIRONMENT]
+database = client[settings.ENVIRONMENT]
 # set up database indices synchronously via pymongo
 database['configurations'].create_index(
     keys=[('username', pymongo.ASCENDING), ('survey_name', pymongo.ASCENDING)],
@@ -76,13 +55,13 @@ app.add_middleware(
     allow_headers=['*'],
 )
 # connect to mongodb via motor
-client = motor.motor_asyncio.AsyncIOMotorClient(MONGODB_CONNECTION_STRING)
+client = motor.motor_asyncio.AsyncIOMotorClient(settings.MONGODB_CONNECTION_STRING)
 # get link to development / production / testing database via motor
-database = client[ENVIRONMENT]
+database = client[settings.ENVIRONMENT]
 # instantiate survey manager
-survey_manager = sv.SurveyManager(database)
+survey_manager = svy.SurveyManager(database)
 # instantiate account manager
-account_manager = ac.AccountManager(database, survey_manager)
+account_manager = acc.AccountManager(database, survey_manager)
 
 
 ################################################################################

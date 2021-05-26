@@ -1,17 +1,9 @@
-import jwt
-import base64
-import os
-import fastapi
 import functools
+import jwt
+import fastapi
 
 import app.utils as utils
-import app.documentation as docs
-
-
-# public JSON Web Token signature key
-PUBLIC_RSA_KEY = base64.b64decode(os.getenv('PUBLIC_RSA_KEY'))
-# private JSON Web Token signature key
-PRIVATE_RSA_KEY = base64.b64decode(os.getenv('PRIVATE_RSA_KEY'))
+import app.settings as settings
 
 
 def authorize(func):
@@ -47,7 +39,11 @@ def generate(username):
         'iat': timestamp,
         'exp': timestamp + 7*24*60*60,  # tokens are valid for 7 days
     }
-    access_token = jwt.encode(payload, PRIVATE_RSA_KEY, algorithm='RS256')
+    access_token = jwt.encode(
+        payload,
+        settings.PRIVATE_RSA_KEY,
+        algorithm='RS256',
+    )
     access_token = access_token.decode('utf-8')
     return {'access_token': access_token, 'token_type': 'bearer'}
 
@@ -55,7 +51,11 @@ def generate(username):
 def decode(access_token):
     """Decode the given JWT access token and return the username."""
     try:
-        payload = jwt.decode(access_token, PUBLIC_RSA_KEY, algorithms=['RS256'])
+        payload = jwt.decode(
+            access_token,
+            settings.PUBLIC_RSA_KEY,
+            algorithms=['RS256'],
+        )
         return payload['sub']
     except (
         jwt.ExpiredSignatureError,

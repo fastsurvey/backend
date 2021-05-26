@@ -1,5 +1,3 @@
-import time
-import asyncio
 import fastapi as api
 import pymongo.errors
 import pymongo

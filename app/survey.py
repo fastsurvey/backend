@@ -1,4 +1,3 @@
-import os
 import fastapi
 import pymongo.errors
 import cachetools
@@ -8,10 +7,7 @@ import app.aggregation as aggregation
 import app.utils as utils
 import app.cryptography.verification as verification
 import app.email as email
-
-
-# frontend url
-FRONTEND_URL = os.getenv('FRONTEND_URL')
+import app.settings as settings
 
 
 class SurveyManager:
@@ -57,7 +53,11 @@ class SurveyManager:
             return self.cache.fetch(username, survey_name)
 
     async def fetch_configuration(self, username, survey_name):
-        """Return survey configuration corresponding to user/survey name."""
+        """Return survey configuration corresponding to user/survey name.
+
+        Draft configurations are not returned.
+
+        """
         survey = await self.fetch(username, survey_name)
         return {
             key: survey.configuration[key]
@@ -146,6 +146,7 @@ class SurveyManager:
 
 
 class SurveyCache:
+    """A cache layer for survey objects operating by LRU."""
 
     def __init__(self, database):
         self.cache = cachetools.LRUCache(maxsize=2**10)
@@ -270,7 +271,8 @@ class Survey:
             upsert=True,
         )
         return fastapi.RedirectResponse(
-            f'{FRONTEND_URL}/{self.username}/{self.survey_name}/success'
+            f'{settings.FRONTEND_URL}/{self.username}/{self.survey_name}'
+            f'/success'
         )
 
     async def aggregate(self):
