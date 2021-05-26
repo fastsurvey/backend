@@ -3,7 +3,7 @@ import base64
 
 
 # check that required environment variables are set
-envs = [
+_ENVS = [
     'ENVIRONMENT',
     'FRONTEND_URL',
     'CONSOLE_URL',
@@ -13,7 +13,7 @@ envs = [
     'MONGODB_CONNECTION_STRING',
     'MAILGUN_API_KEY',
 ]
-for env in envs:
+for env in _ENVS:
     assert os.getenv(env), f'environment variable {env} not set'
 
 
