@@ -1,12 +1,11 @@
-from asyncio.streams import start_server
 import pytest
 import secrets
 import httpx
 import copy
 
 import app.main as main
+import app.resources.database as database
 import app.cryptography.access as access
-import app.utils as utils
 
 
 @pytest.fixture(scope='module')
@@ -75,7 +74,7 @@ async def test_creating_user_with_valid_account_data(
     username = account_data['username']
     response = await client.post(url=f'/users/{username}', json=account_data)
     assert response.status_code == 200
-    entry = await main.database['accounts'].find_one({'_id': username})
+    entry = await database.database['accounts'].find_one({'_id': username})
     assert entry is not None
 
 
@@ -87,7 +86,7 @@ async def test_creating_user_with_invalid_account_data(client, account_datas):
     response = await client.post(url=f'/users/{username}', json=account_data)
     assert response.status_code == 400
     assert response.json()['detail'] == 'invalid account data'
-    entry = await main.database['accounts'].find_one({'_id': username})
+    entry = await database.database['accounts'].find_one({'_id': username})
     assert entry is None
 
 
@@ -104,7 +103,7 @@ async def test_creating_user_username_already_taken(
     response = await client.post(url=f'/users/{username}', json=account_data)
     assert response.status_code == 400
     assert response.json()['detail'] == 'username already taken'
-    entry = await main.database['accounts'].find_one({'_id': username})
+    entry = await database.database['accounts'].find_one({'_id': username})
     assert entry['email_address'] == email_address
 
 
@@ -121,7 +120,7 @@ async def test_creating_user_email_address_already_taken(
     response = await client.post(url='/users/tomato', json=account_data)
     assert response.status_code == 400
     assert response.json()['detail'] == 'email address already taken'
-    entry = await main.database['accounts'].find_one(
+    entry = await database.database['accounts'].find_one(
         filter={'email_address': email_address},
     )
     assert entry['_id'] == username
@@ -201,7 +200,7 @@ async def test_creating_survey_with_valid_configuration(
     )
     assert response.status_code == 200
     assert main.survey_manager.cache.fetch(username, survey_name) is not None
-    entry = await main.database['configurations'].find_one(
+    entry = await database.database['configurations'].find_one(
         filter={'username': username, 'survey_name': survey_name},
     )
     assert entry is not None
@@ -227,7 +226,7 @@ async def test_creating_survey_with_invalid_configuration(
     assert response.json()['detail'] == 'invalid configuration'
     with pytest.raises(KeyError):
         main.survey_manager.cache.fetch(username, survey_name)
-    entry = await main.database['configurations'].find_one(
+    entry = await database.database['configurations'].find_one(
         filter={'username': username, 'survey_name': survey_name},
     )
     assert entry is None
@@ -529,7 +528,7 @@ async def test_generating_access_token_with_valid_credentials(
         cleanup,
     ):
     """Test that authentication works with valid identifier and password."""
-    await main.database['accounts'].update_one(
+    await database.database['accounts'].update_one(
         filter={'_id': username},
         update={'$set': {'verified': True}}
     )
@@ -562,7 +561,7 @@ async def test_generating_access_token_with_invalid_password(
         cleanup,
     ):
     """Test that authentication fails given an incorrect password."""
-    await main.database['accounts'].update_one(
+    await database.database['accounts'].update_one(
         filter={'_id': username},
         update={'$set': {'verified': True}}
     )
@@ -604,7 +603,7 @@ async def test_verifying_email_address_with_valid_credentials(
         cleanup,
     ):
     """Test that email verification works given valid credentials."""
-    account_data = await main.database['accounts'].find_one(
+    account_data = await database.database['accounts'].find_one(
         filter={'_id': username},
         projection={'_id': False, 'verification_token': True},
     )
@@ -615,7 +614,7 @@ async def test_verifying_email_address_with_valid_credentials(
     response = await client.post(f'/verification', json=credentials)
     assert response.status_code == 200
     assert access.decode(response.json()['access_token']) == username
-    account_data = await main.database['accounts'].find_one(
+    account_data = await database.database['accounts'].find_one(
         filter={'_id': username},
         projection={'_id': False, 'verified': True},
     )
@@ -631,7 +630,7 @@ async def test_verifying_email_address_with_invalid_verification_token(
     credentials = dict(verification_token='tomato', password='tomato')
     response = await client.post(f'/verification', json=credentials)
     assert response.status_code == 401
-    account_data = await main.database['accounts'].find_one(
+    account_data = await database.database['accounts'].find_one(
         filter={'_id': username},
         projection={'_id': False, 'verified': True},
     )
@@ -644,7 +643,7 @@ async def test_verifying_email_address_with_invalid_password(
         username,
     ):
     """Test that email verification fails given an invalid password."""
-    account_data = await main.database['accounts'].find_one(
+    account_data = await database.database['accounts'].find_one(
         filter={'_id': username},
         projection={'_id': False, 'verification_token': True},
     )
@@ -654,7 +653,7 @@ async def test_verifying_email_address_with_invalid_password(
     )
     response = await client.post(f'/verification', json=credentials)
     assert response.status_code == 401
-    account_data = await main.database['accounts'].find_one(
+    account_data = await database.database['accounts'].find_one(
         filter={'_id': username},
         projection={'_id': False, 'verified': True},
     )
@@ -669,11 +668,11 @@ async def test_verifying_previously_verified_email_address(
         cleanup,
     ):
     """Test that email verification works given valid credentials."""
-    await main.database['accounts'].update_one(
+    await database.database['accounts'].update_one(
         filter={'_id': username},
         update={'$set': {'verified': True}}
     )
-    account_data = await main.database['accounts'].find_one(
+    account_data = await database.database['accounts'].find_one(
         filter={'_id': username},
         projection={'_id': False, 'verification_token': True},
     )
@@ -683,7 +682,7 @@ async def test_verifying_previously_verified_email_address(
     )
     response = await client.post(f'/verification', json=credentials)
     assert response.status_code == 400
-    account_data = await main.database['accounts'].find_one(
+    account_data = await database.database['accounts'].find_one(
         filter={'_id': username},
         projection={'_id': False, 'verified': True},
     )
