@@ -1,10 +1,11 @@
 from app.utils import combine
+from app.resources.database import database
 
 
 class Alligator:
     """Does it aggregate ... or does it alligate ... ?"""
 
-    def __init__(self, configuration, database):
+    def __init__(self, configuration):
         """Initialize alligator with some pipeline parts already defined."""
         self.configuration = configuration
         self.survey_id = combine(
@@ -12,11 +13,11 @@ class Alligator:
             configuration['survey_name'],
         )
         self.collection = (
-            database[f'surveys.{self.survey_id}.submissions']
+            database.database[f'surveys.{self.survey_id}.submissions']
             if self.configuration['authentication'] == 'open'
-            else database[f'surveys.{self.survey_id}.verified-submissions']
+            else database.database[f'surveys.{self.survey_id}.verified-submissions']
         )
-        self.resultss = database['resultss']
+        self.resultss = database.database['resultss']
         self.mapping = {
             'email': self._add_email,
             'option': self._add_option,

@@ -1,43 +1,11 @@
 import fastapi
 import fastapi.middleware.cors
-import motor.motor_asyncio
-import pymongo
 import pydantic
 
 import app.account as acc
 import app.survey as svy
 import app.documentation as docs
 import app.cryptography.access as access
-import app.settings as settings
-
-
-# connect to mongodb via pymongo
-client = pymongo.MongoClient(settings.MONGODB_CONNECTION_STRING)
-# get link to development / production / testing database via pymongo
-database = client[settings.ENVIRONMENT]
-# set up database indices synchronously via pymongo
-database['configurations'].create_index(
-    keys=[('username', pymongo.ASCENDING), ('survey_name', pymongo.ASCENDING)],
-    name='username_survey_name_index',
-    unique=True,
-)
-database['accounts'].create_index(
-    keys='email_address',
-    name='email_address_index',
-    unique=True,
-)
-database['accounts'].create_index(
-    keys='verification_token',
-    name='verification_token_index',
-    unique=True,
-)
-database['accounts'].create_index(
-    keys='creation_time',
-    name='creation_time_index',
-    expireAfterSeconds=10*60,  # delete draft accounts after 10 mins
-    partialFilterExpression={'verified': {'$eq': False}},
-)
-
 
 # create fastapi app
 app = fastapi.FastAPI(
@@ -54,14 +22,10 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
-# connect to mongodb via motor
-client = motor.motor_asyncio.AsyncIOMotorClient(settings.MONGODB_CONNECTION_STRING)
-# get link to development / production / testing database via motor
-database = client[settings.ENVIRONMENT]
 # instantiate survey manager
-survey_manager = svy.SurveyManager(database)
+survey_manager = svy.SurveyManager()
 # instantiate account manager
-account_manager = acc.AccountManager(database, survey_manager)
+account_manager = acc.AccountManager(survey_manager)
 
 
 ################################################################################

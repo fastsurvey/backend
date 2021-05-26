@@ -8,20 +8,20 @@ import app.cryptography.access as access
 import app.cryptography.password as pw
 import app.cryptography.verification as verification
 import app.utils as utils
+import app.resources.database as database
 
 
 class AccountManager:
     """The manager manages creating, updating and deleting user accounts."""
 
-    def __init__(self, database, survey_manager):
+    def __init__(self, survey_manager):
         """Initialize an account manager instance."""
-        self.database = database
         self.survey_manager = survey_manager
         self.validator = validation.AccountValidator()
 
     async def fetch(self, username):
         """Return the account data corresponding to given user name."""
-        account_data = await self.database['accounts'].find_one(
+        account_data = await database.database['accounts'].find_one(
             filter={'_id': username},
             projection={
                 '_id': False,
@@ -50,7 +50,7 @@ class AccountManager:
         }
         while True:
             try:
-                await self.database['accounts'].insert_one(account_data)
+                await database.database['accounts'].insert_one(account_data)
                 break
             except pymongo.errors.DuplicateKeyError as error:
                 index = str(error).split()[7]
@@ -76,7 +76,7 @@ class AccountManager:
 
     async def verify(self, verification_token, password):
         """Verify an existing account via its unique verification token."""
-        account_data = await self.database['accounts'].find_one(
+        account_data = await database.database['accounts'].find_one(
             filter={'verification_token': verification_token},
             projection={'password_hash': True, 'verified': True},
         )
@@ -87,7 +87,7 @@ class AccountManager:
             raise api.HTTPException(401, 'invalid password')
         if account_data['verified'] is True:
             raise api.HTTPException(400, 'account already verified')
-        result = await self.database['accounts'].update_one(
+        result = await database.database['accounts'].update_one(
             filter={'verification_token': verification_token},
             update={'$set': {'verified': True}}
         )
@@ -107,7 +107,7 @@ class AccountManager:
 
         # TODO cannot do a full replace, think password hash!
 
-        result = await self.database['accounts'].replace_one(
+        result = await database.database['accounts'].replace_one(
             filter={'_id': username},
             replacement=account_data,
         )
@@ -116,8 +116,8 @@ class AccountManager:
 
     async def delete(self, username):
         """Delete the user including all her surveys from the database."""
-        await self.database['accounts'].delete_one({'_id': username})
-        cursor = self.database['configurations'].find(
+        await database.database['accounts'].delete_one({'_id': username})
+        cursor = database.database['configurations'].find(
             filter={'username': username},
             projection={'_id': False, 'survey_name': True},
         )
@@ -136,7 +136,7 @@ class AccountManager:
             if '@' in identifier
             else {'_id': identifier}
         )
-        account_data = await self.database['accounts'].find_one(
+        account_data = await database.database['accounts'].find_one(
             filter=expression,
             projection={'password_hash': True, 'verified': True},
         )
@@ -151,7 +151,7 @@ class AccountManager:
 
     async def fetch_configurations(self, username, skip, limit):
         """Return a list of the user's survey configurations."""
-        cursor = self.database['configurations'].find(
+        cursor = database.database['configurations'].find(
             filter={'username': username},
             projection={'_id': False, 'username': False},
             sort=[('start', pymongo.DESCENDING)],

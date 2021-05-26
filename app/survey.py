@@ -8,6 +8,7 @@ import app.utils as utils
 import app.cryptography.verification as verification
 import app.email as email
 import app.settings as settings
+import app.resources.database as database
 
 
 class SurveyManager:
@@ -24,10 +25,9 @@ class SurveyManager:
     # for account.py
 
 
-    def __init__(self, database):
+    def __init__(self):
         """Initialize a survey manager instance."""
-        self.database = database
-        self.cache = SurveyCache(database)
+        self.cache = SurveyCache()
         self.validator = validation.ConfigurationValidator()
 
     async def fetch(self, username, survey_name):
@@ -39,7 +39,7 @@ class SurveyManager:
         try:
             return self.cache.fetch(username, survey_name)
         except KeyError:
-            configuration = await self.database['configurations'].find_one(
+            configuration = await database.database['configurations'].find_one(
                 filter={
                     'username': username,
                     'survey_name': survey_name,
@@ -80,7 +80,7 @@ class SurveyManager:
             raise fastapi.HTTPException(400, 'invalid configuration')
         configuration['username'] = username
         try:
-            await self.database['configurations'].insert_one(configuration)
+            await database.database['configurations'].insert_one(configuration)
             del configuration['_id']
 
             # TODO also delete the username from the configuration here?
@@ -108,7 +108,7 @@ class SurveyManager:
         if not self.validator.validate(configuration):
             raise fastapi.HTTPException(400, 'invalid configuration')
         configuration['username'] = username
-        result = await self.database['configurations'].replace_one(
+        result = await database.database['configurations'].replace_one(
             filter={'username': username, 'survey_name': survey_name},
             replacement=configuration,
         )
@@ -123,34 +123,36 @@ class SurveyManager:
     async def _archive(self, username, survey_name):
         """Delete submission data of a survey, but keep the results."""
         survey_id = utils.combine(username, survey_name)
-        await self.database[f'surveys.{survey_id}.submissions'].drop()
-        await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
+        await database.database[f'surveys.{survey_id}.submissions'].drop()
+        s = f'surveys.{survey_id}.verified-submissions'
+        await database.database[s].drop()
 
     async def reset(self, username, survey_name):
         """Delete all submission data including the results of a survey."""
         survey_id = utils.combine(username, survey_name)
-        await self.database['resultss'].delete_one({'_id': survey_id})
-        await self.database[f'surveys.{survey_id}.submissions'].drop()
-        await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
+        await database.database['resultss'].delete_one({'_id': survey_id})
+        await database.database[f'surveys.{survey_id}.submissions'].drop()
+        s = f'surveys.{survey_id}.verified-submissions'
+        await database.database[s].drop()
 
     async def delete(self, username, survey_name):
         """Delete the survey and all its data from the database and cache."""
-        await self.database['configurations'].delete_one(
+        await database.database['configurations'].delete_one(
             filter={'username': username, 'survey_name': survey_name},
         )
         self.cache.delete(username, survey_name)
         survey_id = utils.combine(username, survey_name)
-        await self.database['resultss'].delete_one({'_id': survey_id})
-        await self.database[f'surveys.{survey_id}.submissions'].drop()
-        await self.database[f'surveys.{survey_id}.verified-submissions'].drop()
+        await database.database['resultss'].delete_one({'_id': survey_id})
+        await database.database[f'surveys.{survey_id}.submissions'].drop()
+        s = f'surveys.{survey_id}.verified-submissions'
+        await database.database[s].drop()
 
 
 class SurveyCache:
     """A cache layer for survey objects operating by LRU."""
 
-    def __init__(self, database):
+    def __init__(self):
         self.cache = cachetools.LRUCache(maxsize=2**10)
-        self.database = database
 
     def fetch(self, username, survey_name):
         """Fetch and return a survey object from the local cache."""
@@ -170,7 +172,7 @@ class SurveyCache:
         if configuration['draft']:
             self.delete(username, survey_name)
         else:
-            self.cache[survey_id] = Survey(configuration, self.database)
+            self.cache[survey_id] = Survey(configuration)
 
     def delete(self, username, survey_name):
         """Remove survey object from the local cache."""
@@ -181,11 +183,7 @@ class SurveyCache:
 class Survey:
     """The survey class that all surveys instantiate."""
 
-    def __init__(
-            self,
-            configuration,
-            database,
-    ):
+    def __init__(self, configuration):
         """Create a survey from the given json configuration file."""
         self.configuration = configuration
         self.username = self.configuration['username']
@@ -195,16 +193,16 @@ class Survey:
         self.authentication = self.configuration['authentication']
         self.ei = Survey._get_email_field_index(self.configuration)
         self.validator = validation.SubmissionValidator.create(configuration)
-        self.alligator = aggregation.Alligator(self.configuration, database)
-        self.submissions = database[
+        self.alligator = aggregation.Alligator(self.configuration)
+        self.submissions = database.database[
             f'surveys'
             f'.{utils.combine(self.username, self.survey_name)}'
             f'.submissions'
         ]
-        self.verified_submissions = database[
+        self.verified_submissions = database.database[
             f'surveys'
             f'.{utils.combine(self.username, self.survey_name)}'
-            f'.submissions.verified'
+            f'.verified-submissions'
         ]
         self.results = None
 
