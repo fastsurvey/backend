@@ -149,15 +149,29 @@ class SurveyManager:
 
 
 class SurveyCache:
-    """A cache layer for survey objects operating by LRU."""
+    """A cache layer for survey objects operating by LRU.
+
+    When the survey is already cached, the time to get a it is reduced by a
+    factor of about 10.
+
+    """
 
     def __init__(self):
-        self.cache = cachetools.LRUCache(maxsize=2**10)
+        self._size = 2**10
+        self._cache = cachetools.LRUCache(maxsize=self._size)
+
+    def reset(self):
+        """Reset the cache by removing all cached elements."""
+        self._cache = cachetools.LRUCache(maxsize=self._size)
 
     def fetch(self, username, survey_name):
-        """Fetch and return a survey object from the local cache."""
+        """Fetch and return a survey object from the local cache.
+
+        Raises KeyError if survey is not cached.
+
+        """
         survey_id = utils.combine(username, survey_name)
-        return self.cache[survey_id]
+        return self._cache[survey_id]
 
     def update(self, configuration):
         """Update or create survey object in the local cache.
@@ -172,12 +186,12 @@ class SurveyCache:
         if configuration['draft']:
             self.delete(username, survey_name)
         else:
-            self.cache[survey_id] = Survey(configuration)
+            self._cache[survey_id] = Survey(configuration)
 
     def delete(self, username, survey_name):
         """Remove survey object from the local cache."""
         survey_id = utils.combine(username, survey_name)
-        self.cache.pop(survey_id, None)
+        self._cache.pop(survey_id, None)
 
 
 class Survey:

@@ -2,10 +2,11 @@ import fastapi
 import fastapi.middleware.cors
 import pydantic
 
-import app.account as acc
-import app.survey as svy
+import app.account as ac
+import app.survey as sv
 import app.documentation as docs
 import app.cryptography.access as access
+
 
 # create fastapi app
 app = fastapi.FastAPI(
@@ -23,9 +24,9 @@ app.add_middleware(
     allow_headers=['*'],
 )
 # instantiate survey manager
-survey_manager = svy.SurveyManager()
+survey_manager = sv.SurveyManager()
 # instantiate account manager
-account_manager = acc.AccountManager(survey_manager)
+account_manager = ac.AccountManager(survey_manager)
 
 
 ################################################################################
