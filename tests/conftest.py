@@ -53,13 +53,20 @@ def test_survey_data():
 
 @pytest.fixture(scope='session')
 def configurationss(test_survey_data):
-    """Convenience method to access test survey configurations.
-
-    If during testing, some general valid/invalid survey configuration is
-    needed, preferably use the 'complex' survey for consistency.
-
-    """
+    """Convenience method to access test survey configurations."""
     return test_survey_data['configurationss']
+
+
+@pytest.fixture(scope='session')
+def configuration(configurationss):
+    """Convenience method to access a general valid test configuration."""
+    return configurationss['complex']['valid']
+
+
+@pytest.fixture(scope='session')
+def survey_name(configuration):
+    """Convenience method to access the name of the general configuration."""
+    return configuration['survey_name']
 
 
 @pytest.fixture(scope='session')
@@ -69,15 +76,33 @@ def resultss(test_survey_data):
 
 
 @pytest.fixture(scope='session')
+def results(survey_name, resultss):
+    """Convenience method to access the results of the general survey."""
+    return resultss[survey_name]
+
+
+@pytest.fixture(scope='session')
 def schemas(test_survey_data):
     """Convenience method to access test survey cerberus validation schemas."""
     return test_survey_data['schemas']
 
 
 @pytest.fixture(scope='session')
+def schema(survey_name, schemas):
+    """Convenience method to access the schema of the general survey."""
+    return schemas[survey_name]
+
+
+@pytest.fixture(scope='session')
 def submissionss(test_survey_data):
     """Convenience method to access test survey submissions."""
     return test_survey_data['submissionss']
+
+
+@pytest.fixture(scope='session')
+def submissions(survey_name, submissionss):
+    """Convenience method to access valid submissions of the general survey."""
+    return submissionss[survey_name]['valid']
 
 
 @pytest.fixture(scope='session')
