@@ -1,14 +1,10 @@
 import pytest
 import jwt
-import os
 import base64
 import fastapi
 
 import app.cryptography.access as access
-
-
-# private JSON Web Token signature key
-PRIVATE_RSA_KEY = base64.b64decode(os.getenv('PRIVATE_RSA_KEY'))
+import app.settings as settings
 
 
 @pytest.fixture(scope='module')
@@ -42,22 +38,22 @@ async def test_invalid_access_token_procedure(username, route, variables):
         access.generate(f'{username}+')['access_token'],
         jwt.encode(
             {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 0},
-            key=PRIVATE_RSA_KEY,
+            key=settings.PRIVATE_RSA_KEY,
             algorithm='RS256',
         ),
         jwt.encode(
             {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 4102444800},
-            key=base64.b64decode(variables['wrong_private_rsa_key']),
+            key=base64.b64decode(variables['invalid_private_rsa_key']),
             algorithm='RS256',
         ),
         jwt.encode(
             {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 4102444800},
-            key=PRIVATE_RSA_KEY,
+            key=settings.PRIVATE_RSA_KEY,
             algorithm='HS256',
         ),
         jwt.encode(
             {'iss': 'FastSurvey', 'sub': username, 'iat': 0, 'exp': 4102444800},
-            key=PRIVATE_RSA_KEY,
+            key=settings.PRIVATE_RSA_KEY,
             algorithm='RS512',
         ),
     ]

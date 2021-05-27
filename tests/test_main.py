@@ -2,6 +2,7 @@ import pytest
 import secrets
 import httpx
 import copy
+import time
 
 import app.main as main
 import app.resources.database as database
@@ -11,12 +12,12 @@ import app.cryptography.access as access
 @pytest.fixture(scope='module')
 async def client():
     """Provide a HTTPX AsyncClient that is properly closed after testing."""
-    async_client = httpx.AsyncClient(
+    client = httpx.AsyncClient(
         app=main.app,
         base_url='http://example.com',
     )
-    yield async_client
-    await async_client.aclose()
+    yield client
+    await client.aclose()
 
 
 ################################################################################
@@ -28,9 +29,12 @@ async def client():
 async def test_fetching_existing_user_with_valid_access_token(
         client,
         headers,
+        account_data,
         username,
+        cleanup,
     ):
     """Test that correct account data is returned on valid request."""
+    await main.account_manager.create(username, account_data)
     response = await client.get(f'/users/{username}', headers=headers)
     assert response.status_code == 200
     keys = set(response.json().keys())
@@ -40,9 +44,12 @@ async def test_fetching_existing_user_with_valid_access_token(
 @pytest.mark.asyncio
 async def test_fetching_existing_user_with_invalid_access_token(
         client,
+        account_data,
         username,
+        cleanup,
     ):
     """Test that correct account data is returned on valid request."""
+    await main.account_manager.create(username, account_data)
     access_token = access.generate('tomato')['access_token']
     headers = {'Authorization': f'Bearer {access_token}'}
     response = await client.get(f'/users/{username}', headers=headers)
@@ -50,11 +57,9 @@ async def test_fetching_existing_user_with_invalid_access_token(
 
 
 @pytest.mark.asyncio
-async def test_fetching_nonexistent_user(client):
+async def test_fetching_nonexistent_user(client, headers, username):
     """Test that correct account data is returned on valid request."""
-    access_token = access.generate('tomato')['access_token']
-    headers = {'Authorization': f'Bearer {access_token}'}
-    response = await client.get('/users/tomato', headers=headers)
+    response = await client.get(f'/users/{username}', headers=headers)
     assert response.status_code == 404
 
 
@@ -134,6 +139,9 @@ async def test_creating_user_email_address_already_taken(
 ################################################################################
 # Fetch Survey
 ################################################################################
+
+
+# TODO compare get request with caching and without caching
 
 
 @pytest.mark.asyncio

@@ -2,10 +2,11 @@ import pytest
 import asyncio
 import json
 import os
-import copy
 
 import app.main as main
 import app.cryptography.access as access
+import app.survey as svy
+import app.resources.database as database
 
 
 @pytest.fixture(scope='session')
@@ -129,35 +130,30 @@ def headers(username):
 ################################################################################
 
 
-async def reset(account_datas, configurationss):
-    """Purge all user and survey data locally and remotely and reset it."""
+async def reset():
+    """Purge all user and survey data locally and remotely.
 
-    # TODO implement part-resets to increase test performance?
-    # e.g. start with no data in the database each test and load only what
-    # we need, then only clean what needs cleaning
+    The elements from collections with custom indexes are removed, while other
+    collections are simply dropped entirely.
 
-    for account_data in account_datas['valid']:
-        await main.account_manager.delete(account_data['username'])
-    await main.account_manager.create(
-        account_datas['valid'][0]['username'],
-        account_datas['valid'][0],
-    )
-    for survey_name, configurations in configurationss.items():
-        await main.survey_manager.create(
-            account_datas['valid'][0]['username'],
-            survey_name,
-            copy.deepcopy(configurations['valid']),
-        )
+    """
+    static = {'accounts', 'configurations', 'resultss'}
+    for name in static:
+        await database.database[name].delete_many({})
+    other = await database.database.list_collection_names()
+    for name in set(other) - static:
+        await database.database[name].drop()
+    main.survey_manager.cache.reset()
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def setup(account_datas, configurationss):
-    """Reset survey data and configurations before the first test starts."""
-    await reset(account_datas, configurationss)
+async def setup():
+    """Reset database before the first test starts."""
+    await reset()
 
 
 @pytest.fixture(scope='function')
-async def cleanup(account_datas, configurationss):
-    """Reset survey data and configurations after a single test."""
+async def cleanup():
+    """Reset database after a single test."""
     yield
-    await reset(account_datas, configurationss)
+    await reset()
