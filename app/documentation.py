@@ -398,7 +398,7 @@ specifications = {
         },
     },
     'verify_submission': {
-        'path': '/users/{username}/surveys/{survey_name}/verification/{token}',
+        'path': '/users/{username}/surveys/{survey_name}/verification/{verification_token}',
         'responses': {
             400: {
                 'model': ExceptionResponse,
