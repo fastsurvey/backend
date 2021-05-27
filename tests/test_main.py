@@ -2,11 +2,11 @@ import pytest
 import secrets
 import httpx
 import copy
-import time
 
 import app.main as main
 import app.resources.database as database
 import app.cryptography.access as access
+import app.cryptography.verification as verification
 
 
 @pytest.fixture(scope='module')
@@ -29,8 +29,8 @@ async def client():
 async def test_fetching_existing_user_with_valid_access_token(
         client,
         headers,
-        account_data,
         username,
+        account_data,
         cleanup,
     ):
     """Test that correct account data is returned on valid request."""
@@ -44,8 +44,8 @@ async def test_fetching_existing_user_with_valid_access_token(
 @pytest.mark.asyncio
 async def test_fetching_existing_user_with_invalid_access_token(
         client,
-        account_data,
         username,
+        account_data,
         cleanup,
     ):
     """Test that correct account data is returned on valid request."""
@@ -71,16 +71,15 @@ async def test_fetching_nonexistent_user(client, headers, username):
 @pytest.mark.asyncio
 async def test_creating_user_with_valid_account_data(
         client,
-        account_datas,
+        username,
+        account_data,
         cleanup,
     ):
     """Test that account is created successfully on valid request."""
-    account_data = account_datas['valid'][1]
-    username = account_data['username']
     response = await client.post(url=f'/users/{username}', json=account_data)
     assert response.status_code == 200
-    entry = await database.database['accounts'].find_one({'_id': username})
-    assert entry is not None
+    entry = await database.database['accounts'].find_one({})
+    assert entry['_id'] == username
 
 
 @pytest.mark.asyncio
@@ -91,7 +90,7 @@ async def test_creating_user_with_invalid_account_data(client, account_datas):
     response = await client.post(url=f'/users/{username}', json=account_data)
     assert response.status_code == 400
     assert response.json()['detail'] == 'invalid account data'
-    entry = await database.database['accounts'].find_one({'_id': username})
+    entry = await database.database['accounts'].find_one({})
     assert entry is None
 
 
@@ -101,14 +100,16 @@ async def test_creating_user_username_already_taken(
         username,
         email_address,
         account_data,
+        cleanup,
     ):
     """Test that account creation fails when the username is already taken."""
+    await client.post(url=f'/users/{username}', json=account_data)
     account_data = copy.deepcopy(account_data)
-    account_data['email_address'] = 'tomato@fastsurvey.de'
+    account_data['email_address'] = 'test@fastsurvey.de'
     response = await client.post(url=f'/users/{username}', json=account_data)
     assert response.status_code == 400
     assert response.json()['detail'] == 'username already taken'
-    entry = await database.database['accounts'].find_one({'_id': username})
+    entry = await database.database['accounts'].find_one({})
     assert entry['email_address'] == email_address
 
 
@@ -116,18 +117,17 @@ async def test_creating_user_username_already_taken(
 async def test_creating_user_email_address_already_taken(
         client,
         username,
-        email_address,
         account_data,
+        cleanup,
     ):
     """Test that account creation fails when the email address is in use."""
+    await client.post(url=f'/users/{username}', json=account_data)
     account_data = copy.deepcopy(account_data)
     account_data['username'] = 'tomato'
     response = await client.post(url='/users/tomato', json=account_data)
     assert response.status_code == 400
     assert response.json()['detail'] == 'email address already taken'
-    entry = await database.database['accounts'].find_one(
-        filter={'email_address': email_address},
-    )
+    entry = await database.database['accounts'].find_one({})
     assert entry['_id'] == username
 
 
@@ -141,22 +141,32 @@ async def test_creating_user_email_address_already_taken(
 ################################################################################
 
 
-# TODO compare get request with caching and without caching
-
-
 @pytest.mark.asyncio
-async def test_fetching_existing_survey(client, username, configurationss):
+async def test_fetching_existing_survey(
+        client,
+        headers,
+        username,
+        survey_name,
+        configuration,
+        cleanup,
+    ):
     """Test that correct configuration is returned for an existing survey."""
-    for survey_name, configurations in configurationss.items():
-        response = await client.get(f'/users/{username}/surveys/{survey_name}')
-        assert response.status_code == 200
-        assert response.json() == configurations['valid']
+    await client.post(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    # reset cache in order to test fetching with cache miss
+    main.survey_manager.cache.reset()
+    response = await client.get(f'/users/{username}/surveys/{survey_name}')
+    assert response.status_code == 200
+    assert response.json() == configuration
 
 
 @pytest.mark.asyncio
 async def test_fetching_nonexistent_survey(client, username):
     """Test that exception is raised when requesting a nonexistent survey."""
-    response = await client.get(f'/users/{username}/surveys/tomato')
+    response = await client.get(f'/users/{username}/surveys/complex')
     assert response.status_code == 404
     assert response.json()['detail'] == 'survey not found'
 
@@ -166,19 +176,20 @@ async def test_fetching_survey_in_draft_mode(
         client,
         headers,
         username,
-        configurationss,
+        survey_name,
+        configuration,
         cleanup,
     ):
     """Test that exception is raised when requesting a survey in draft mode."""
-    configuration = copy.deepcopy(configurationss['complex']['valid'])
-    survey_name = 'tomato'
-    configuration['survey_name'] = survey_name
+    configuration = copy.deepcopy(configuration)
     configuration['draft'] = True
-    response = await client.post(
+    await client.post(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
         json=configuration,
     )
+    # reset cache in order to test fetching with cache miss
+    main.survey_manager.cache.reset()
     response = await client.get(f'/users/{username}/surveys/{survey_name}')
     assert response.status_code == 404
     assert response.json()['detail'] == 'survey not found'
@@ -194,24 +205,21 @@ async def test_creating_survey_with_valid_configuration(
         client,
         headers,
         username,
-        configurationss,
+        survey_name,
+        configuration,
         cleanup,
     ):
-    """Test that survey is correctly created with a valid configuration."""
-    configuration = copy.deepcopy(configurationss['complex']['valid'])
-    survey_name = 'tomato'
-    configuration['survey_name'] = survey_name
+    """Test that survey is correctly created given a valid configuration."""
     response = await client.post(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
         json=configuration,
     )
     assert response.status_code == 200
-    assert main.survey_manager.cache.fetch(username, survey_name) is not None
-    entry = await database.database['configurations'].find_one(
-        filter={'username': username, 'survey_name': survey_name},
-    )
-    assert entry is not None
+    assert main.survey_manager.cache.fetch(username, survey_name)
+    entry = await database.database['configurations'].find_one({})
+    assert entry['username'] == username
+    assert entry['survey_name'] == survey_name
 
 
 @pytest.mark.asyncio
@@ -219,12 +227,11 @@ async def test_creating_survey_with_invalid_configuration(
         client,
         headers,
         username,
+        survey_name,
         configurationss,
     ):
     """Test that survey creation fails with an invalid configuration."""
-    configuration = copy.deepcopy(configurationss['complex']['invalid'][0])
-    survey_name = 'tomato'
-    configuration['survey_name'] = survey_name
+    configuration = configurationss[survey_name]['invalid'][0]
     response = await client.post(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
@@ -234,9 +241,7 @@ async def test_creating_survey_with_invalid_configuration(
     assert response.json()['detail'] == 'invalid configuration'
     with pytest.raises(KeyError):
         main.survey_manager.cache.fetch(username, survey_name)
-    entry = await database.database['configurations'].find_one(
-        filter={'username': username, 'survey_name': survey_name},
-    )
+    entry = await database.database['configurations'].find_one({})
     assert entry is None
 
 
@@ -257,36 +262,52 @@ async def test_creating_survey_with_invalid_configuration(
 @pytest.mark.asyncio
 async def test_creating_valid_submission(
         client,
+        headers,
         username,
-        submissionss,
+        survey_name,
+        configuration,
+        submissions,
         cleanup,
     ):
-    """Test that submission works with valid submissions for test surveys."""
-    survey_name = 'complex'
-    submission = submissionss[survey_name]['valid'][0]
+    """Test that submission works given a valid submission."""
+    response = await client.post(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
     survey = await main.survey_manager.fetch(username, survey_name)
-    url = f'/users/{username}/surveys/{survey_name}/submissions'
-    response = await client.post(url, json=submission)
+    response = await client.post(
+        url=f'/users/{username}/surveys/{survey_name}/submissions',
+        json=submissions[0],
+    )
     assert response.status_code == 200
-    entry = await survey.submissions.find_one({'data': submission})
-    assert entry is not None
+    entry = await survey.submissions.find_one({})
+    assert entry['data'] == submissions[0]
 
 
 @pytest.mark.asyncio
 async def test_creating_invalid_submission(
         client,
+        headers,
         username,
+        survey_name,
+        configuration,
         submissionss,
         cleanup,
     ):
-    """Test that submit correctly fails for invalid test survey submissions."""
-    survey_name = 'complex'
-    submission = submissionss[survey_name]['invalid'][0]
+    """Test that submit correctly fails given an invalid submissions."""
+    response = await client.post(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
     survey = await main.survey_manager.fetch(username, survey_name)
-    url = f'/users/{username}/surveys/{survey_name}/submissions'
-    response = await client.post(url, json=submission)
+    response = await client.post(
+        url=f'/users/{username}/surveys/{survey_name}/submissions',
+        json=submissionss[survey_name]['invalid'][0],
+    )
     assert response.status_code == 400
-    entry = await survey.submissions.find_one()
+    entry = await survey.submissions.find_one({})
     assert entry is None
 
 
@@ -464,34 +485,62 @@ async def test_verifying_with_no_prior_submission(survey):
 ################################################################################
 
 
-# TODO needs more tests
+# TODO test all aggregations in test_aggregation + more tests
 
 
 @pytest.mark.asyncio
 async def test_fetching_results(
+        monkeypatch,
         client,
         headers,
         username,
-        submissionss,
-        resultss,
+        survey_name,
+        configuration,
+        submissions,
+        results,
         cleanup,
     ):
     """Test that aggregation of test submissions returns the correct result."""
-    for survey_name, submissions in submissionss.items():
-        # push test submissions
-        survey = await main.survey_manager.fetch(username, survey_name)
-        await survey.alligator.collection.insert_many([
-            {'data': submission}
-            for submission
-            in submissions['valid']
-        ])
-        # manually close (cached) survey so that we can aggregate
-        survey.end = 0
-        # aggregate and fetch results
-        url = f'/users/{username}/surveys/{survey_name}/results'
-        response = await client.get(url=url, headers=headers)
-        assert response.status_code == 200
-        assert response.json() == resultss[survey_name]
+    await client.post(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    # mock verification token generation
+    tokens = []
+
+    def token():
+        tokens.append(str(len(tokens)))
+        return tokens[-1]
+
+    monkeypatch.setattr(verification, 'token', token)
+    # push test submissions
+    for submission in submissions:
+        await client.post(
+            url=f'/users/{username}/surveys/{survey_name}/submissions',
+            json=submission,
+        )
+    # validate the submissions
+    for x in tokens:
+        await client.get(
+            url=f'/users/{username}/surveys/{survey_name}/verification/{x}',
+            allow_redirects=False,
+        )
+    # close survey so that we can aggregate
+    configuration = copy.deepcopy(configuration)
+    configuration['end'] = 0
+    await client.put(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    # aggregate and fetch results
+    response = await client.get(
+        url=f'/users/{username}/surveys/{survey_name}/results',
+        headers=headers,
+    )
+    assert response.status_code == 200
+    assert response.json() == results
 
 
 ################################################################################
@@ -520,64 +569,117 @@ async def test_generating_access_token_with_non_verified_account(
         client,
         username,
         password,
+        account_data,
+        cleanup,
     ):
     """Test that authentication fails when the account is not verified."""
+    await client.post(url=f'/users/{username}', json=account_data)
     credentials = dict(identifier=username, password=password)
     response = await client.post(f'/authentication', json=credentials)
     assert response.status_code == 400
+    assert response.json()['detail'] == 'account not verified'
 
 
 @pytest.mark.asyncio
 async def test_generating_access_token_with_valid_credentials(
+        monkeypatch,
         client,
         username,
         email_address,
         password,
+        account_data,
         cleanup,
     ):
     """Test that authentication works with valid identifier and password."""
-    await database.database['accounts'].update_one(
-        filter={'_id': username},
-        update={'$set': {'verified': True}}
+
+
+    # mock verification token generation
+    tokens = []
+
+    def token():
+        tokens.append(str(len(tokens)))
+        return tokens[-1]
+
+    monkeypatch.setattr(verification, 'token', token)
+
+
+    await client.post(url=f'/users/{username}', json=account_data)
+    await client.post(
+        url=f'/verification',
+        json={'verification_token': tokens[0], 'password': password},
     )
+
     # test with username as well as email address as identifier
     for identifier in [username, email_address]:
-        credentials = dict(
-            identifier=identifier,
-            password=password,
+        response = await client.post(
+            url='/authentication',
+            json={'identifier': identifier, 'password': password},
         )
-        response = await client.post(f'/authentication', json=credentials)
         assert response.status_code == 200
         assert access.decode(response.json()['access_token']) == username
 
 
 @pytest.mark.asyncio
 async def test_generating_access_token_invalid_username(
+        monkeypatch,
         client,
         username,
+        password,
+        account_data,
+        cleanup,
     ):
     """Test that authentication fails for a user that does not exist."""
-    credentials = dict(identifier='tomato', password='tomato')
-    response = await client.post(f'/authentication', json=credentials)
+
+
+    # mock verification token generation
+    tokens = []
+
+    def token():
+        tokens.append(str(len(tokens)))
+        return tokens[-1]
+
+    monkeypatch.setattr(verification, 'token', token)
+
+
+    await client.post(url=f'/users/{username}', json=account_data)
+    await client.post(
+        url=f'/verification',
+        json={'verification_token': tokens[0], 'password': password},
+    )
+    credentials = dict(identifier='tomato', password=password)
+    response = await client.post(url='/authentication', json=credentials)
     assert response.status_code == 404
 
 
 @pytest.mark.asyncio
 async def test_generating_access_token_with_invalid_password(
+        monkeypatch,
         client,
         username,
+        password,
+        account_data,
         cleanup,
     ):
     """Test that authentication fails given an incorrect password."""
-    await database.database['accounts'].update_one(
-        filter={'_id': username},
-        update={'$set': {'verified': True}}
+
+
+    # mock verification token generation
+    tokens = []
+
+    def token():
+        tokens.append(str(len(tokens)))
+        return tokens[-1]
+
+    monkeypatch.setattr(verification, 'token', token)
+
+
+    await client.post(url=f'/users/{username}', json=account_data)
+    await client.post(
+        url=f'/verification',
+        json={'verification_token': tokens[0], 'password': password},
     )
-    credentials = dict(
-        identifier=username,
-        password='tomato',
-    )
-    response = await client.post(f'/authentication', json=credentials)
+    credentials = dict(identifier=username, password='tomato')
+    response = await client.post(url='/authentication', json=credentials)
     assert response.status_code == 401
 
 
@@ -605,93 +707,120 @@ async def test_refreshing_valid_access_token(client, username, headers):
 
 @pytest.mark.asyncio
 async def test_verifying_email_address_with_valid_credentials(
+        monkeypatch,
         client,
+        headers,
         username,
         password,
+        account_data,
         cleanup,
     ):
     """Test that email verification works given valid credentials."""
-    account_data = await database.database['accounts'].find_one(
-        filter={'_id': username},
-        projection={'_id': False, 'verification_token': True},
+
+
+    # mock verification token generation
+    tokens = []
+
+    def token():
+        tokens.append(str(len(tokens)))
+        return tokens[-1]
+
+    monkeypatch.setattr(verification, 'token', token)
+
+
+    await client.post(url=f'/users/{username}', json=account_data)
+    response = await client.post(
+        url=f'/verification',
+        json={'verification_token': tokens[0], 'password': password},
     )
-    credentials = dict(
-        verification_token=account_data['verification_token'],
-        password=password,
-    )
-    response = await client.post(f'/verification', json=credentials)
     assert response.status_code == 200
     assert access.decode(response.json()['access_token']) == username
-    account_data = await database.database['accounts'].find_one(
-        filter={'_id': username},
-        projection={'_id': False, 'verified': True},
-    )
-    assert account_data['verified']
+    response = await client.get(f'/users/{username}', headers=headers)
+    assert response.json()['verified']
 
 
 @pytest.mark.asyncio
 async def test_verifying_email_address_with_invalid_verification_token(
         client,
+        headers,
         username,
+        password,
+        account_data,
+        cleanup,
     ):
     """Test that email verification fails with invalid verification token."""
-    credentials = dict(verification_token='tomato', password='tomato')
-    response = await client.post(f'/verification', json=credentials)
-    assert response.status_code == 401
-    account_data = await database.database['accounts'].find_one(
-        filter={'_id': username},
-        projection={'_id': False, 'verified': True},
+    await client.post(url=f'/users/{username}', json=account_data)
+    response = await client.post(
+        url=f'/verification',
+        json={'verification_token': 'tomato', 'password': password},
     )
-    assert not account_data['verified']
+    assert response.status_code == 401
+    assert response.json()['detail'] == 'invalid verification token'
+    response = await client.get(f'/users/{username}', headers=headers)
+    assert not response.json()['verified']
 
 
 @pytest.mark.asyncio
 async def test_verifying_email_address_with_invalid_password(
+        monkeypatch,
         client,
+        headers,
         username,
+        account_data,
+        cleanup,
     ):
     """Test that email verification fails given an invalid password."""
-    account_data = await database.database['accounts'].find_one(
-        filter={'_id': username},
-        projection={'_id': False, 'verification_token': True},
+
+
+    # mock verification token generation
+    tokens = []
+
+    def token():
+        tokens.append(str(len(tokens)))
+        return tokens[-1]
+
+    monkeypatch.setattr(verification, 'token', token)
+
+
+    await client.post(url=f'/users/{username}', json=account_data)
+    response = await client.post(
+        url=f'/verification',
+        json={'verification_token': tokens[0], 'password': 'tomato'},
     )
-    credentials = dict(
-        verification_token=account_data['verification_token'],
-        password='tomato',
-    )
-    response = await client.post(f'/verification', json=credentials)
     assert response.status_code == 401
-    account_data = await database.database['accounts'].find_one(
-        filter={'_id': username},
-        projection={'_id': False, 'verified': True},
-    )
-    assert not account_data['verified']
+    assert response.json()['detail'] == 'invalid password'
+    response = await client.get(f'/users/{username}', headers=headers)
+    assert not response.json()['verified']
 
 
 @pytest.mark.asyncio
 async def test_verifying_previously_verified_email_address(
+        monkeypatch,
         client,
+        headers,
         username,
         password,
+        account_data,
         cleanup,
     ):
     """Test that email verification works given valid credentials."""
-    await database.database['accounts'].update_one(
-        filter={'_id': username},
-        update={'$set': {'verified': True}}
-    )
-    account_data = await database.database['accounts'].find_one(
-        filter={'_id': username},
-        projection={'_id': False, 'verification_token': True},
-    )
-    credentials = dict(
-        verification_token=account_data['verification_token'],
-        password=password,
-    )
-    response = await client.post(f'/verification', json=credentials)
+
+
+    # mock verification token generation
+    tokens = []
+
+    def token():
+        tokens.append(str(len(tokens)))
+        return tokens[-1]
+
+    monkeypatch.setattr(verification, 'token', token)
+
+
+    await client.post(url=f'/users/{username}', json=account_data)
+    credentials = {'verification_token': tokens[0], 'password': password}
+    await client.post(url='/verification', json=credentials)
+    response = await client.post(url='/verification', json=credentials)
     assert response.status_code == 400
-    account_data = await database.database['accounts'].find_one(
-        filter={'_id': username},
-        projection={'_id': False, 'verified': True},
-    )
-    assert account_data['verified']
+    assert response.json()['detail'] == 'account already verified'
+    response = await client.get(f'/users/{username}', headers=headers)
+    assert response.json()['verified']

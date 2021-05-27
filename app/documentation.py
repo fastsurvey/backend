@@ -608,7 +608,7 @@ specifications = {
                 'content': {
                     'application/json': {
                         'examples': {
-                            'invalid token': {
+                            'invalid verification token': {
                                 'value': {
                                     'detail': 'invalid verification token',
                                 },

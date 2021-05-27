@@ -1,6 +1,7 @@
 import fastapi
 import pymongo.errors
 import cachetools
+import fastapi.responses
 
 import app.validation as validation
 import app.aggregation as aggregation
@@ -108,16 +109,12 @@ class SurveyManager:
         if not self.validator.validate(configuration):
             raise fastapi.HTTPException(400, 'invalid configuration')
         configuration['username'] = username
-        result = await database.database['configurations'].replace_one(
+        x = await database.database['configurations'].replace_one(
             filter={'username': username, 'survey_name': survey_name},
             replacement=configuration,
         )
-        if result.matched_count == 0:
+        if x.matched_count == 0:
             raise fastapi.HTTPException(400, 'not an existing survey')
-
-        assert '_id' not in configuration.keys()
-        assert '_id' in configuration.keys()
-
         self.cache.update(configuration)
 
     async def _archive(self, username, survey_name):
@@ -282,7 +279,7 @@ class Survey:
             replacement=submission,
             upsert=True,
         )
-        return fastapi.RedirectResponse(
+        return fastapi.responses.RedirectResponse(
             f'{settings.FRONTEND_URL}/{self.username}/{self.survey_name}'
             f'/success'
         )
