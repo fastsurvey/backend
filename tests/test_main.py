@@ -497,7 +497,7 @@ async def test_verifying_with_no_prior_submission(survey):
 @pytest.mark.asyncio
 async def test_fetching_results(
         mock_email_sending,
-        monkeypatch,
+        mock_verification_token_generation,
         client,
         headers,
         username,
@@ -513,24 +513,14 @@ async def test_fetching_results(
         headers=headers,
         json=configuration,
     )
-    # mock verification token generation
-    tokens = []
-
-    def token():
-        tokens.append(str(len(tokens)))
-        return tokens[-1]
-
-    monkeypatch.setattr(verification, 'token', token)
-    # push test submissions
-    for submission in submissions:
+    # push test submissions and validate them
+    for i, submission in enumerate(submissions):
         await client.post(
             url=f'/users/{username}/surveys/{survey_name}/submissions',
             json=submission,
         )
-    # validate the submissions
-    for x in tokens:
         await client.get(
-            url=f'/users/{username}/surveys/{survey_name}/verification/{x}',
+            url=f'/users/{username}/surveys/{survey_name}/verification/{i}',
             allow_redirects=False,
         )
     # close survey so that we can aggregate
@@ -591,7 +581,7 @@ async def test_generating_access_token_with_non_verified_account(
 @pytest.mark.asyncio
 async def test_generating_access_token_with_valid_credentials(
         mock_email_sending,
-        monkeypatch,
+        mock_verification_token_generation,
         client,
         username,
         email_address,
@@ -600,24 +590,11 @@ async def test_generating_access_token_with_valid_credentials(
         cleanup,
     ):
     """Test that authentication works with valid identifier and password."""
-
-
-    # mock verification token generation
-    tokens = []
-
-    def token():
-        tokens.append(str(len(tokens)))
-        return tokens[-1]
-
-    monkeypatch.setattr(verification, 'token', token)
-
-
     await client.post(url=f'/users/{username}', json=account_data)
     await client.post(
         url=f'/verification',
-        json={'verification_token': tokens[0], 'password': password},
+        json={'verification_token': '0', 'password': password},
     )
-
     # test with username as well as email address as identifier
     for identifier in [username, email_address]:
         response = await client.post(
@@ -631,7 +608,7 @@ async def test_generating_access_token_with_valid_credentials(
 @pytest.mark.asyncio
 async def test_generating_access_token_invalid_username(
         mock_email_sending,
-        monkeypatch,
+        mock_verification_token_generation,
         client,
         username,
         password,
@@ -639,22 +616,10 @@ async def test_generating_access_token_invalid_username(
         cleanup,
     ):
     """Test that authentication fails for a user that does not exist."""
-
-
-    # mock verification token generation
-    tokens = []
-
-    def token():
-        tokens.append(str(len(tokens)))
-        return tokens[-1]
-
-    monkeypatch.setattr(verification, 'token', token)
-
-
     await client.post(url=f'/users/{username}', json=account_data)
     await client.post(
         url=f'/verification',
-        json={'verification_token': tokens[0], 'password': password},
+        json={'verification_token': '0', 'password': password},
     )
     credentials = dict(identifier='tomato', password=password)
     response = await client.post(url='/authentication', json=credentials)
@@ -664,7 +629,7 @@ async def test_generating_access_token_invalid_username(
 @pytest.mark.asyncio
 async def test_generating_access_token_with_invalid_password(
         mock_email_sending,
-        monkeypatch,
+        mock_verification_token_generation,
         client,
         username,
         password,
@@ -672,22 +637,10 @@ async def test_generating_access_token_with_invalid_password(
         cleanup,
     ):
     """Test that authentication fails given an incorrect password."""
-
-
-    # mock verification token generation
-    tokens = []
-
-    def token():
-        tokens.append(str(len(tokens)))
-        return tokens[-1]
-
-    monkeypatch.setattr(verification, 'token', token)
-
-
     await client.post(url=f'/users/{username}', json=account_data)
     await client.post(
         url=f'/verification',
-        json={'verification_token': tokens[0], 'password': password},
+        json={'verification_token': '0', 'password': password},
     )
     credentials = dict(identifier=username, password='tomato')
     response = await client.post(url='/authentication', json=credentials)
@@ -719,7 +672,7 @@ async def test_refreshing_valid_access_token(client, username, headers):
 @pytest.mark.asyncio
 async def test_verifying_email_address_with_valid_credentials(
         mock_email_sending,
-        monkeypatch,
+        mock_verification_token_generation,
         client,
         headers,
         username,
@@ -728,22 +681,10 @@ async def test_verifying_email_address_with_valid_credentials(
         cleanup,
     ):
     """Test that email verification works given valid credentials."""
-
-
-    # mock verification token generation
-    tokens = []
-
-    def token():
-        tokens.append(str(len(tokens)))
-        return tokens[-1]
-
-    monkeypatch.setattr(verification, 'token', token)
-
-
     await client.post(url=f'/users/{username}', json=account_data)
     response = await client.post(
         url=f'/verification',
-        json={'verification_token': tokens[0], 'password': password},
+        json={'verification_token': '0', 'password': password},
     )
     assert response.status_code == 200
     assert access.decode(response.json()['access_token']) == username
@@ -776,7 +717,7 @@ async def test_verifying_email_address_with_invalid_verification_token(
 @pytest.mark.asyncio
 async def test_verifying_email_address_with_invalid_password(
         mock_email_sending,
-        monkeypatch,
+        mock_verification_token_generation,
         client,
         headers,
         username,
@@ -784,22 +725,10 @@ async def test_verifying_email_address_with_invalid_password(
         cleanup,
     ):
     """Test that email verification fails given an invalid password."""
-
-
-    # mock verification token generation
-    tokens = []
-
-    def token():
-        tokens.append(str(len(tokens)))
-        return tokens[-1]
-
-    monkeypatch.setattr(verification, 'token', token)
-
-
     await client.post(url=f'/users/{username}', json=account_data)
     response = await client.post(
         url=f'/verification',
-        json={'verification_token': tokens[0], 'password': 'tomato'},
+        json={'verification_token': '0', 'password': 'tomato'},
     )
     assert response.status_code == 401
     assert response.json()['detail'] == 'invalid password'
@@ -810,7 +739,7 @@ async def test_verifying_email_address_with_invalid_password(
 @pytest.mark.asyncio
 async def test_verifying_previously_verified_email_address(
         mock_email_sending,
-        monkeypatch,
+        mock_verification_token_generation,
         client,
         headers,
         username,
@@ -819,20 +748,8 @@ async def test_verifying_previously_verified_email_address(
         cleanup,
     ):
     """Test that email verification works given valid credentials."""
-
-
-    # mock verification token generation
-    tokens = []
-
-    def token():
-        tokens.append(str(len(tokens)))
-        return tokens[-1]
-
-    monkeypatch.setattr(verification, 'token', token)
-
-
     await client.post(url=f'/users/{username}', json=account_data)
-    credentials = {'verification_token': tokens[0], 'password': password}
+    credentials = {'verification_token': '0', 'password': password}
     await client.post(url='/verification', json=credentials)
     response = await client.post(url='/verification', json=credentials)
     assert response.status_code == 400

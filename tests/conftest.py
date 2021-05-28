@@ -5,6 +5,7 @@ import os
 
 import app.main as main
 import app.cryptography.access as access
+import app.cryptography.verification as verification
 import app.resources.database as database
 import app.email as email
 
@@ -200,3 +201,15 @@ def mock_email_sending(monkeypatch):
     async def _send(*args):
         return 200
     monkeypatch.setattr(email, '_send', _send)
+
+
+@pytest.fixture(scope='function')
+def mock_verification_token_generation(monkeypatch):
+    """Mock token generation to have predictable tokens for testing."""
+    global counter
+    counter = 0
+    def token():
+        global counter
+        counter += 1
+        return str(counter-1)
+    monkeypatch.setattr(verification, 'token', token)
