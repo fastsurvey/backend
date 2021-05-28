@@ -250,7 +250,126 @@ async def test_creating_survey_with_invalid_configuration(
     assert entry is None
 
 
-# TODO update survey
+################################################################################
+# Update Survey
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_updating_existing_survey_with_valid_configuration(
+        client,
+        headers,
+        username,
+        survey_name,
+        configuration,
+        cleanup,
+    ):
+    """Test that survey is correctly updated given a valid configuration."""
+    await client.post(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    configuration = copy.deepcopy(configuration)
+    configuration['description'] = 'Hello World!'
+    response = await client.put(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    assert response.status_code == 200
+    survey = main.survey_manager.cache.fetch(username, survey_name)
+    assert survey.configuration['description'] == configuration['description']
+    entry = await database.database['configurations'].find_one({})
+    assert entry['description'] == configuration['description']
+
+
+@pytest.mark.asyncio
+async def test_updating_nonexistent_survey_with_valid_configuration(
+        client,
+        headers,
+        username,
+        survey_name,
+        configuration,
+    ):
+    """Test that survey update fails when the survey does not exist."""
+    response = await client.put(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    assert response.status_code == 400
+    assert response.json()['detail'] == 'not an existing survey'
+    with pytest.raises(KeyError):
+        main.survey_manager.cache.fetch(username, survey_name)
+    entry = await database.database['configurations'].find_one({})
+    assert entry is None
+
+
+@pytest.mark.asyncio
+async def test_updating_survey_name_to_survey_name_not_in_use(
+        client,
+        headers,
+        username,
+        survey_name,
+        configuration,
+        cleanup,
+    ):
+    """Test that survey name is updated when it is not already used."""
+    await client.post(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    configuration = copy.deepcopy(configuration)
+    configuration['survey_name'] = 'tomato'
+    response = await client.put(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    assert response.status_code == 200
+    assert main.survey_manager.cache.fetch(username, 'tomato')
+    entry = await database.database['configurations'].find_one({})
+    assert entry['survey_name'] == 'tomato'
+
+
+@pytest.mark.asyncio
+async def test_updating_survey_name_to_survey_name_in_use(
+        client,
+        headers,
+        username,
+        survey_name,
+        configuration,
+        cleanup,
+    ):
+    """Test that survey name update fails if survey name is already in use."""
+    await client.post(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    configuration = copy.deepcopy(configuration)
+    configuration['survey_name'] = 'tomato'
+    await client.post(
+        url=f'/users/{username}/surveys/tomato',
+        headers=headers,
+        json=configuration,
+    )
+    response = await client.put(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+        json=configuration,
+    )
+    assert response.status_code == 400
+    assert response.json()['detail'] == 'survey name in use'
+    assert main.survey_manager.cache.fetch(username, survey_name)
+    entry = await database.database['configurations'].find_one(
+        filter={'survey_name': survey_name},
+    )
+    assert entry is not None
+
+
 # TODO reset survey
 # TODO delete survey
 

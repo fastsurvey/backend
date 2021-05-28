@@ -312,6 +312,11 @@ specifications = {
                                     'detail': 'not an existing survey',
                                 },
                             },
+                            'survey name in use': {
+                                'value': {
+                                    'detail': 'survey name in use',
+                                },
+                            },
                         },
                     },
                 },

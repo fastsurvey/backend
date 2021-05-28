@@ -70,9 +70,9 @@ class SurveyManager:
     async def create(self, username, survey_name, configuration):
         """Create a new survey configuration in the database and cache.
 
-        The configuration includes the survey_name despite it already being
-        specified in the route. We do this in order to enable changing the
-        survey_name.
+        The configuration includes the survey_name for consistency with the
+        update() function. An exception will be raised if the survey_name in
+        the route differs from the one specified in the configuration.
 
         """
         if survey_name != configuration['survey_name']:
@@ -99,25 +99,30 @@ class SurveyManager:
         This means that the only thing to update in the database is the
         configuration, as there are no existing submissions or results.
 
+        The configuration includes the survey_name despite it already being
+        specified in the route. We do this in order to enable changing the
+        survey_name.
+
         """
 
         # TODO make update only possible if survey has not yet started
         # -> no, if there are no submissions yet!
-        # TODO when survey name ist changed to something that exists already
-        # it'll probably fail due to the index, but that must be handled
 
         if not self.validator.validate(configuration):
             raise fastapi.HTTPException(400, 'invalid configuration')
         configuration['username'] = username
-        x = await database.database['configurations'].replace_one(
-            filter={'username': username, 'survey_name': survey_name},
-            replacement=configuration,
-        )
-        if x.matched_count == 0:
+        try:
+            response = await database.database['configurations'].replace_one(
+                filter={'username': username, 'survey_name': survey_name},
+                replacement=configuration,
+            )
+        except pymongo.errors.DuplicateKeyError:
+            raise fastapi.HTTPException(400, 'survey name in use')
+        if response.matched_count == 0:
             raise fastapi.HTTPException(400, 'not an existing survey')
         self.cache.update(configuration)
 
-    async def _archive(self, username, survey_name):
+    async def archive(self, username, survey_name):
         """Delete submission data of a survey, but keep the results."""
         survey_id = utils.combine(username, survey_name)
         await database.database[f'surveys.{survey_id}.submissions'].drop()
