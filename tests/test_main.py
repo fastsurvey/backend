@@ -27,6 +27,7 @@ async def client():
 
 @pytest.mark.asyncio
 async def test_fetching_existing_user_with_valid_access_token(
+        mock_email_sending,
         client,
         headers,
         username,
@@ -43,6 +44,7 @@ async def test_fetching_existing_user_with_valid_access_token(
 
 @pytest.mark.asyncio
 async def test_fetching_existing_user_with_invalid_access_token(
+        mock_email_sending,
         client,
         username,
         account_data,
@@ -70,6 +72,7 @@ async def test_fetching_nonexistent_user(client, headers, username):
 
 @pytest.mark.asyncio
 async def test_creating_user_with_valid_account_data(
+        mock_email_sending,
         client,
         username,
         account_data,
@@ -96,6 +99,7 @@ async def test_creating_user_with_invalid_account_data(client, account_datas):
 
 @pytest.mark.asyncio
 async def test_creating_user_username_already_taken(
+        mock_email_sending,
         client,
         username,
         email_address,
@@ -115,6 +119,7 @@ async def test_creating_user_username_already_taken(
 
 @pytest.mark.asyncio
 async def test_creating_user_email_address_already_taken(
+        mock_email_sending,
         client,
         username,
         account_data,
@@ -261,6 +266,7 @@ async def test_creating_survey_with_invalid_configuration(
 
 @pytest.mark.asyncio
 async def test_creating_valid_submission(
+        mock_email_sending,
         client,
         headers,
         username,
@@ -490,6 +496,7 @@ async def test_verifying_with_no_prior_submission(survey):
 
 @pytest.mark.asyncio
 async def test_fetching_results(
+        mock_email_sending,
         monkeypatch,
         client,
         headers,
@@ -566,6 +573,7 @@ async def test_decoding_valid_access_token(client, username, headers):
 
 @pytest.mark.asyncio
 async def test_generating_access_token_with_non_verified_account(
+        mock_email_sending,
         client,
         username,
         password,
@@ -582,6 +590,7 @@ async def test_generating_access_token_with_non_verified_account(
 
 @pytest.mark.asyncio
 async def test_generating_access_token_with_valid_credentials(
+        mock_email_sending,
         monkeypatch,
         client,
         username,
@@ -621,6 +630,7 @@ async def test_generating_access_token_with_valid_credentials(
 
 @pytest.mark.asyncio
 async def test_generating_access_token_invalid_username(
+        mock_email_sending,
         monkeypatch,
         client,
         username,
@@ -653,6 +663,7 @@ async def test_generating_access_token_invalid_username(
 
 @pytest.mark.asyncio
 async def test_generating_access_token_with_invalid_password(
+        mock_email_sending,
         monkeypatch,
         client,
         username,
@@ -707,6 +718,7 @@ async def test_refreshing_valid_access_token(client, username, headers):
 
 @pytest.mark.asyncio
 async def test_verifying_email_address_with_valid_credentials(
+        mock_email_sending,
         monkeypatch,
         client,
         headers,
@@ -741,6 +753,7 @@ async def test_verifying_email_address_with_valid_credentials(
 
 @pytest.mark.asyncio
 async def test_verifying_email_address_with_invalid_verification_token(
+        mock_email_sending,
         client,
         headers,
         username,
@@ -762,6 +775,7 @@ async def test_verifying_email_address_with_invalid_verification_token(
 
 @pytest.mark.asyncio
 async def test_verifying_email_address_with_invalid_password(
+        mock_email_sending,
         monkeypatch,
         client,
         headers,
@@ -795,6 +809,7 @@ async def test_verifying_email_address_with_invalid_password(
 
 @pytest.mark.asyncio
 async def test_verifying_previously_verified_email_address(
+        mock_email_sending,
         monkeypatch,
         client,
         headers,

@@ -5,8 +5,13 @@ import os
 
 import app.main as main
 import app.cryptography.access as access
-import app.survey as svy
 import app.resources.database as database
+import app.email as email
+
+
+################################################################################
+# Event Loop Management
+################################################################################
 
 
 @pytest.fixture(scope='session')
@@ -182,3 +187,16 @@ async def cleanup():
     """Reset database after a single test."""
     yield
     await reset()
+
+
+################################################################################
+# Monkey Patches
+################################################################################
+
+
+@pytest.fixture(scope='function')
+def mock_email_sending(monkeypatch):
+    """Mock email sending to avoid constantly sending real emails."""
+    async def _send(*args):
+        return 200
+    monkeypatch.setattr(email, '_send', _send)
