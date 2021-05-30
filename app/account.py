@@ -40,11 +40,14 @@ class AccountManager:
             raise api.HTTPException(400, 'invalid account data')
         if not self.validator.validate(account_data):
             raise api.HTTPException(400, 'invalid account data')
+        timestamp = utils.now()
         account_data = {
             '_id': username,
             'email_address': account_data['email_address'],
             'password_hash': pw.hash(account_data['password']),
-            'creation_time': utils.now(),
+            'superuser': False,
+            'creation_time': timestamp,
+            'modification_time': timestamp,
             'verified': False,
             'verification_token': verification.token(),
         }
@@ -99,23 +102,40 @@ class AccountManager:
         """Update existing user account data in the database."""
 
         # TODO handle username change with transactions
-        # TODO how to change password?
         # TODO handle email change specially, as it needs to be reverified
 
         if not self.validator.validate(account_data):
             raise api.HTTPException(400, 'invalid account data')
-
-        # TODO cannot do a full replace, think password hash!
-
-        result = await database.database['accounts'].replace_one(
+        entry = await database.database['accounts'].find_one(
             filter={'_id': username},
-            replacement=account_data,
+            projection={
+                '_id': False,
+                'email_address': True,
+                'password_hash': True,
+            },
         )
-        if result.matched_count == 0:
+        if entry is None:
             raise api.HTTPException(404, 'user not found')
+        update = {}
+        if account_data['username'] != username:
+            raise api.HTTPException(501, 'not implemented')
+        if account_data['email_address'] != entry['email_address']:
+            raise api.HTTPException(501, 'not implemented')
+        if not pw.verify(account_data['password'], entry['password_hash']):
+            update['password_hash'] = pw.hash(account_data['password'])
+        if update:
+            update['modification_time'] = utils.now()
+            await database.database['accounts'].update_one(
+                filter={'_id': username},
+                update={'$set': update},
+            )
 
     async def delete(self, username):
         """Delete the user including all her surveys from the database."""
+
+        # TODO when the account is deleted the access token needs to be
+        # useless afterwards
+
         await database.database['accounts'].delete_one({'_id': username})
         cursor = database.database['configurations'].find(
             filter={'username': username},

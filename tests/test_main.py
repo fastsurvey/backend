@@ -6,6 +6,7 @@ import copy
 import app.main as main
 import app.resources.database as database
 import app.cryptography.access as access
+import app.cryptography.password as pw
 
 
 @pytest.fixture(scope='module')
@@ -142,6 +143,39 @@ async def test_creating_user_email_address_already_taken(
     assert response.json()['detail'] == 'email address already taken'
     entry = await database.database['accounts'].find_one({})
     assert entry['_id'] == username
+
+
+################################################################################
+# Update User
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_updating_existing_user_with_valid_password(
+        mock_email_sending,
+        client,
+        headers,
+        username,
+        account_data,
+        account_datas,
+        cleanup,
+):
+    """Test that account is correctly updated given valid account data."""
+    await client.post(url=f'/users/{username}', json=account_data)
+    account_data = copy.deepcopy(account_data)
+    account_data['password'] = account_datas['valid'][1]['password']
+    response = await client.put(
+        url=f'/users/{username}',
+        headers=headers,
+        json=account_data,
+    )
+    assert response.status_code == 200
+    entry = await database.database['accounts'].find_one({})
+    assert pw.verify(
+        password=account_datas['valid'][1]['password'],
+        password_hash=entry['password_hash'],
+    )
+
 
 
 # TODO update user

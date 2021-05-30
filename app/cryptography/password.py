@@ -9,6 +9,6 @@ def hash(password):
     return _CONTEXT.hash(password)
 
 
-def verify(password, pwdhash):
+def verify(password, password_hash):
     """Return true if the password results in the hash, else False."""
-    return _CONTEXT.verify(password, pwdhash)
+    return _CONTEXT.verify(password, password_hash)
