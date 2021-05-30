@@ -150,6 +150,34 @@ async def test_creating_user_email_address_already_taken(
 ################################################################################
 
 
+# TODO test_updating_existing_user_with_valid_username_not_in_use
+# TODO test_updating_existent_user_with_valid_username_in_use
+# TODO test_updating_existing_user_with_valid_email_address_in_use
+# TODO test_updating_existing_user_with_valid_email_address_not_in_use
+# TODO test_updating_nonexistent_user_with_valid_account_data
+
+
+@pytest.mark.asyncio
+async def test_updating_existing_user_with_no_changes(
+        mock_email_sending,
+        client,
+        headers,
+        username,
+        account_data,
+        cleanup,
+):
+    """Test that account is correctly updated given valid account data."""
+    await client.post(url=f'/users/{username}', json=account_data)
+    entry = await database.database['accounts'].find_one({})
+    response = await client.put(
+        url=f'/users/{username}',
+        headers=headers,
+        json=account_data,
+    )
+    assert response.status_code == 200
+    assert entry == await database.database['accounts'].find_one({})
+
+
 @pytest.mark.asyncio
 async def test_updating_existing_user_with_valid_password(
         mock_email_sending,
@@ -177,8 +205,6 @@ async def test_updating_existing_user_with_valid_password(
     )
 
 
-
-# TODO update user
 # TODO delete user
 # TODO fetch surveys
 
