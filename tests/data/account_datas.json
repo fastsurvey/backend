@@ -1,57 +1,57 @@
 {
     "valid": [
         {
-            "username": "fastsurvey",
-            "email_address": "support@fastsurvey.de",
+            "username": "lychee",
+            "email_address": "test+lychee@fastsurvey.de",
             "password": "12345678"
         },
         {
-            "username": "tomato-man",
+            "username": "tomato",
             "email_address": "test+tomato@fastsurvey.de",
             "password": "best-password-on-earth"
         },
         {
-            "username": "banana-man",
+            "username": "banana",
             "email_address": "test+banana@fastsurvey.de",
-            "password": "nobody-catches-banana-man"
+            "password": "drowssap"
         }
     ],
     "invalid": [
         {
-            "username": "mango-man",
+            "username": "mango",
             "email_address": "mangolicious!",
             "password": "MMMMMMMM"
         },
         {
-            "username": "fastsurvey",
-            "email_address": "support@fastsurvey.de",
+            "username": "lychee",
+            "email_address": "test+lychee@fastsurvey.de",
             "password": "1234"
         },
         {
-            "username": "fastsurvey",
+            "username": "lychee",
             "password": "12345678"
         },
         {
-            "email_address": "support@fastsurvey.de",
+            "email_address": "test+lychee@fastsurvey.de",
             "password": "12345678"
         },
         {
-            "username": "fastsurvey",
-            "email_address": "support@fastsurvey.de"
+            "username": "lychee",
+            "email_address": "test+lychee@fastsurvey.de"
         },
         {
-            "1": "fastsurvey",
-            "email_address": "support@fastsurvey.de",
+            "1": "lychee",
+            "email_address": "test+lychee@fastsurvey.de",
             "password": "12345678"
         },
         {
             "username": "x",
-            "email_address": "support@fastsurvey.de",
+            "email_address": "test+lychee@fastsurvey.de",
             "password": "12345678"
         },
         {
-            "username": "fastsurvey",
-            "email_address": "support@fastsurvey.de",
+            "username": "lychee",
+            "email_address": "test+lychee@fastsurvey.de",
             "password": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
         }
     ]

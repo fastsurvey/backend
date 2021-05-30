@@ -6,7 +6,6 @@ import copy
 import app.main as main
 import app.resources.database as database
 import app.cryptography.access as access
-import app.cryptography.verification as verification
 
 
 @pytest.fixture(scope='module')
@@ -104,13 +103,17 @@ async def test_creating_user_username_already_taken(
         username,
         email_address,
         account_data,
+        account_datas,
         cleanup,
     ):
     """Test that account creation fails when the username is already taken."""
     await client.post(url=f'/users/{username}', json=account_data)
-    account_data = copy.deepcopy(account_data)
-    account_data['email_address'] = 'test@fastsurvey.de'
-    response = await client.post(url=f'/users/{username}', json=account_data)
+    account_data_duplicate = copy.deepcopy(account_datas['valid'][1])
+    account_data_duplicate['username'] = username
+    response = await client.post(
+        url=f'/users/{account_data_duplicate["username"]}',
+        json=account_data_duplicate,
+    )
     assert response.status_code == 400
     assert response.json()['detail'] == 'username already taken'
     entry = await database.database['accounts'].find_one({})
@@ -122,14 +125,19 @@ async def test_creating_user_email_address_already_taken(
         mock_email_sending,
         client,
         username,
+        email_address,
         account_data,
+        account_datas,
         cleanup,
     ):
     """Test that account creation fails when the email address is in use."""
     await client.post(url=f'/users/{username}', json=account_data)
-    account_data = copy.deepcopy(account_data)
-    account_data['username'] = 'tomato'
-    response = await client.post(url='/users/tomato', json=account_data)
+    account_data_duplicate = copy.deepcopy(account_datas['valid'][1])
+    account_data_duplicate['email_address'] = email_address
+    response = await client.post(
+        url=f'/users/{account_data_duplicate["username"]}',
+        json=account_data_duplicate,
+    )
     assert response.status_code == 400
     assert response.json()['detail'] == 'email address already taken'
     entry = await database.database['accounts'].find_one({})
