@@ -152,9 +152,11 @@ async def test_creating_user_email_address_already_taken(
 
 # TODO test_updating_existing_user_with_valid_username_not_in_use
 # TODO test_updating_existent_user_with_valid_username_in_use
-# TODO test_updating_existing_user_with_valid_email_address_in_use
 # TODO test_updating_existing_user_with_valid_email_address_not_in_use
+
 # TODO test_updating_nonexistent_user_with_valid_account_data
+# this should return a 401, not a 404, we need to implement that an access
+# token is useless when the user is deleted/does not exist for this
 
 
 @pytest.mark.asyncio
@@ -203,6 +205,34 @@ async def test_updating_existing_user_with_valid_password(
         password=account_datas['valid'][1]['password'],
         password_hash=entry['password_hash'],
     )
+
+
+@pytest.mark.skip(reason='todo')
+@pytest.mark.asyncio
+async def test_updating_existing_user_with_valid_email_address_in_use(
+        mock_email_sending,
+        mock_verification_token_generation,
+        client,
+        headers,
+        username,
+        account_data,
+        account_datas,
+        cleanup,
+):
+    """Test that updating the email address to one in use fails correctly."""
+    for i, acc in enumerate(account_datas['valid'][:2]):
+        await client.post(url=f'/users/{acc["username"]}', json=acc)
+        credentials = dict(verification_token=str(i), password=acc['password'])
+        await client.post(url='/verification', json=credentials)
+    account_data = copy.deepcopy(account_data)
+    account_data['email_address'] = account_datas['valid'][1]['email_address']
+    response = await client.put(
+        url=f'/users/{username}',
+        headers=headers,
+        json=account_data,
+    )
+    assert response.status_code == 400
+    assert response.json()['detail'] == 'email address already taken'
 
 
 # TODO delete user
