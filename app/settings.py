@@ -35,5 +35,3 @@ MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
 MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
 # sender email address
 SENDER = 'FastSurvey <noreply@fastsurvey.io>'
-# where test emails are sent to
-RECEIVER = 'test@fastsurvey.io'

@@ -24,14 +24,10 @@ async def _send(email_address, subject, content):
     """Send the given email to the given email address."""
     data = {
         'from': settings.SENDER,
-        'to': (
-            settings.RECEIVER
-            if settings.ENVIRONMENT == 'testing'
-            else email_address
-        ),
+        'to': email_address,
         'subject': subject,
         'html': content,
-        'o:testmode': settings.ENVIRONMENT == 'testing',
+        'o:testmode': settings.ENVIRONMENT == 'test',
         'o:tag': [f'{settings.ENVIRONMENT} transactional'],
     }
     response = await http.client.post('/messages', data=data)
