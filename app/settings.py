@@ -17,7 +17,7 @@ for env in _ENVS:
     assert os.getenv(env), f'environment variable {env} not set'
 
 
-# development / production / testing environment
+# development / production / test environment
 ENVIRONMENT = os.getenv('ENVIRONMENT')
 # frontend url
 FRONTEND_URL = os.getenv('FRONTEND_URL')
