@@ -1,9 +1,9 @@
 import functools
 import jwt
-import fastapi
 
 import app.utils as utils
 import app.settings as settings
+import app.errors as errors
 
 
 def authorize(func):
@@ -19,7 +19,7 @@ def authorize(func):
     @functools.wraps(func)
     async def wrapper(**kwargs):
         if kwargs['username'] != decode(kwargs['access_token']):
-            raise fastapi.HTTPException(401, 'invalid access token')
+            raise errors.InvalidAccessTokenError()
         return await func(**kwargs)
     return wrapper
 
@@ -63,4 +63,4 @@ def decode(access_token):
         jwt.DecodeError,
         jwt.InvalidTokenError,
     ):
-        raise fastapi.HTTPException(401, 'invalid access token')
+        raise errors.InvalidAccessTokenError()
