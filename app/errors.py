@@ -14,11 +14,9 @@ USERNAME_ALREADY_TAKEN = 'username already taken'
 EMAIL_ADDRESS_ALREADY_TAKEN = 'email address already taken'
 SURVEY_NAME_ALREADY_TAKEN = 'survey name already taken'
 
-SURVEY_IS_CLOSED = 'survey is closed'
-SURVEY_IS_NOT_OPEN = 'survey is not open'
-SURVEY_IS_NOT_CLOSED = 'survey is not closed'
-
-ACCOUNT_ALREADY_VERIFIED = 'account already verified'
+SURVEY_DOES_NOT_ACCEPT_SUBMISSIONS_AT_THE_MOMENT = (
+    'survey does not accept submissions at the moment'
+)
 
 
 class InvalidAccountDataError(fastapi.HTTPException):
@@ -51,24 +49,9 @@ class SurveyNameAlreadyTakenError(fastapi.HTTPException):
         super().__init__(400, SURVEY_NAME_ALREADY_TAKEN)
 
 
-class SurveyIsClosedError(fastapi.HTTPException):
+class SurveyDoesNotAcceptSubmissionsAtTheMomentError(fastapi.HTTPException):
     def __init__(self):
-        super().__init__(400, SURVEY_IS_CLOSED)
-
-
-class SurveyIsNotOpenError(fastapi.HTTPException):
-    def __init__(self):
-        super().__init__(400, SURVEY_IS_NOT_OPEN)
-
-
-class SurveyIsNotClosedError(fastapi.HTTPException):
-    def __init__(self):
-        super().__init__(400, SURVEY_IS_NOT_CLOSED)
-
-
-class AccountAlreadyVerifiedError(fastapi.HTTPException):
-    def __init__(self):
-        super().__init__(400, ACCOUNT_ALREADY_VERIFIED)
+        super().__init__(400, SURVEY_DOES_NOT_ACCEPT_SUBMISSIONS_AT_THE_MOMENT)
 
 
 ################################################################################
@@ -101,7 +84,13 @@ class InvalidPasswordError(fastapi.HTTPException):
 ################################################################################
 
 
+ACCESS_FORBIDDEN = 'access forbidden'
 ACCOUNT_NOT_VERIFIED = 'account not verified'
+
+
+class AccessForbiddenError(fastapi.HTTPException):
+    def __init__(self):
+        super().__init__(403, ACCESS_FORBIDDEN)
 
 
 class AccountNotVerifiedError(fastapi.HTTPException):

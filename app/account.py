@@ -1,4 +1,3 @@
-import fastapi as api
 import pymongo.errors
 import pymongo
 
@@ -9,6 +8,7 @@ import app.cryptography.password as pw
 import app.cryptography.verification as verification
 import app.utils as utils
 import app.resources.database as database
+import app.errors as errors
 
 
 class AccountManager:
@@ -31,15 +31,15 @@ class AccountManager:
             },
         )
         if account_data is None:
-            raise api.HTTPException(404, 'user not found')
+            raise errors.UserNotFoundError()
         return account_data
 
     async def create(self, username, account_data):
         """Create new user account with some default account data."""
         if username != account_data['username']:
-            raise api.HTTPException(400, 'invalid account data')
+            raise errors.InvalidAccountDataError()
         if not self.validator.validate(account_data):
-            raise api.HTTPException(400, 'invalid account data')
+            raise errors.InvalidAccountDataError()
         timestamp = utils.now()
         account_data = {
             '_id': username,
@@ -58,13 +58,13 @@ class AccountManager:
             except pymongo.errors.DuplicateKeyError as error:
                 index = str(error).split()[7]
                 if index == '_id_':
-                    raise api.HTTPException(400, 'username already taken')
+                    raise errors.UsernameAlreadyTakenError()
                 if index == 'email_address_index':
-                    raise api.HTTPException(400, 'email address already taken')
+                    raise errors.EmailAddressAlreadyTakenError()
                 if index == 'verification_token_index':
                     account_data['verification_token'] = verification.token()
                 else:
-                    raise api.HTTPException(500, 'account creation error')
+                    raise errors.InternalServerError()
 
         status = await email.send_account_verification(
             account_data['email_address'],
@@ -75,7 +75,7 @@ class AccountManager:
             # we do not delete the unverified account here, as the user could
             # request a new verification email, and the account gets deleted
             # anyways after a few minutes
-            raise api.HTTPException(500, 'email delivery failure')
+            raise errors.InternalServerError()
 
     async def verify(self, verification_token, password):
         """Verify an existing account via its unique verification token."""
@@ -83,19 +83,16 @@ class AccountManager:
             filter={'verification_token': verification_token},
             projection={'password_hash': True, 'verified': True},
         )
-        if account_data is None:
-            raise api.HTTPException(401, 'invalid verification token')
-        password_hash = account_data['password_hash']
-        if not pw.verify(password, password_hash):
-            raise api.HTTPException(401, 'invalid password')
-        if account_data['verified'] is True:
-            raise api.HTTPException(400, 'account already verified')
+        if account_data is None or account_data['verified']:
+            raise errors.InvalidVerificationTokenError()
+        if not pw.verify(password, account_data['password_hash']):
+            raise errors.InvalidPasswordError()
         result = await database.database['accounts'].update_one(
             filter={'verification_token': verification_token},
             update={'$set': {'verified': True}}
         )
         if result.matched_count == 0:
-            raise api.HTTPException(401, 'invalid verification token')
+            raise errors.InvalidVerificationTokenError()
         return access.generate(account_data['_id'])
 
     async def update(self, username, account_data):
@@ -105,7 +102,7 @@ class AccountManager:
         # TODO handle email change specially, as it needs to be reverified
 
         if not self.validator.validate(account_data):
-            raise api.HTTPException(400, 'invalid account data')
+            raise errors.InvalidAccountDataError()
         entry = await database.database['accounts'].find_one(
             filter={'_id': username},
             projection={
@@ -115,23 +112,25 @@ class AccountManager:
             },
         )
         if entry is None:
-            raise api.HTTPException(404, 'user not found')
+            raise errors.UserNotFoundError()
         update = {}
         if account_data['username'] != username:
-            raise api.HTTPException(501, 'not implemented')
+            raise errors.NotImplementedError()
         if account_data['email_address'] != entry['email_address']:
-            raise api.HTTPException(501, 'not implemented')
+            raise errors.NotImplementedError()
         if not pw.verify(account_data['password'], entry['password_hash']):
             update['password_hash'] = pw.hash(account_data['password'])
         if update:
             update['modification_time'] = utils.now()
-            await database.database['accounts'].update_one(
+            result = await database.database['accounts'].update_one(
                 filter={'_id': username},
                 update={'$set': update},
             )
+            if result.matched_count == 0:
+                raise errors.UserNotFoundError()
 
     async def delete(self, username):
-        """Delete the user including all her surveys from the database."""
+        """Delete the user including all their surveys from the database."""
 
         # TODO when the account is deleted the access token needs to be
         # useless afterwards
@@ -150,7 +149,7 @@ class AccountManager:
             await self.survey_manager.delete(username, survey_name)
 
     async def authenticate(self, identifier, password):
-        """Authenticate user by her username or email and her password."""
+        """Authenticate user by their username or email and their password."""
         expression = (
             {'email_address': identifier}
             if '@' in identifier
@@ -161,12 +160,12 @@ class AccountManager:
             projection={'password_hash': True, 'verified': True},
         )
         if account_data is None:
-            raise api.HTTPException(404, 'user not found')
+            raise errors.UserNotFoundError()
         password_hash = account_data['password_hash']
         if not pw.verify(password, password_hash):
-            raise api.HTTPException(401, 'invalid password')
+            raise errors.InvalidPasswordError()
         if account_data['verified'] is False:
-            raise api.HTTPException(400, 'account not verified')
+            raise errors.AccountNotVerifiedError()
         return access.generate(account_data['_id'])
 
     async def fetch_configurations(self, username, skip, limit):

@@ -19,7 +19,7 @@ def authorize(func):
     @functools.wraps(func)
     async def wrapper(**kwargs):
         if kwargs['username'] != decode(kwargs['access_token']):
-            raise errors.InvalidAccessTokenError()
+            raise errors.AccessForbiddenError()
         return await func(**kwargs)
     return wrapper
 

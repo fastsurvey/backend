@@ -1,4 +1,3 @@
-import fastapi
 import pymongo.errors
 import cachetools
 import fastapi.responses
@@ -10,6 +9,7 @@ import app.cryptography.verification as verification
 import app.email as email
 import app.settings as settings
 import app.resources.database as database
+import app.errors as errors
 
 
 class SurveyManager:
@@ -49,7 +49,7 @@ class SurveyManager:
                 projection={'_id': False},
             )
             if configuration is None:
-                raise fastapi.HTTPException(404, 'survey not found')
+                raise errors.SurveyNotFoundError()
             self.cache.update(configuration)
             return self.cache.fetch(username, survey_name)
 
@@ -76,9 +76,9 @@ class SurveyManager:
 
         """
         if survey_name != configuration['survey_name']:
-            raise fastapi.HTTPException(400, 'invalid configuration')
+            raise errors.InvalidConfigurationError()
         if not self.validator.validate(configuration):
-            raise fastapi.HTTPException(400, 'invalid configuration')
+            raise errors.InvalidConfigurationError()
         configuration['username'] = username
         try:
             await database.database['configurations'].insert_one(configuration)
@@ -90,7 +90,7 @@ class SurveyManager:
 
             self.cache.update(configuration)
         except pymongo.errors.DuplicateKeyError:
-            raise fastapi.HTTPException(400, 'survey exists')
+            raise errors.SurveyNameAlreadyTakenError()
 
     async def update(self, username, survey_name, configuration):
         """Update a survey configuration in the database and cache.
@@ -109,7 +109,7 @@ class SurveyManager:
         # -> no, if there are no submissions yet!
 
         if not self.validator.validate(configuration):
-            raise fastapi.HTTPException(400, 'invalid configuration')
+            raise errors.InvalidConfigurationError()
         configuration['username'] = username
         try:
             response = await database.database['configurations'].replace_one(
@@ -117,9 +117,9 @@ class SurveyManager:
                 replacement=configuration,
             )
         except pymongo.errors.DuplicateKeyError:
-            raise fastapi.HTTPException(400, 'survey name in use')
+            raise errors.SurveyNameAlreadyTakenError()
         if response.matched_count == 0:
-            raise fastapi.HTTPException(400, 'not an existing survey')
+            raise errors.SurveyNotFoundError()
         self.cache.update(configuration)
 
     async def archive(self, username, survey_name):
@@ -151,9 +151,9 @@ class SurveyManager:
 
 
 class SurveyCache:
-    """A cache layer for survey objects operating by LRU.
+    """A cache layer for survey objects replacing by least recently used.
 
-    When the survey is already cached, the time to get a it is reduced by a
+    When the survey is already cached, the time to get it is reduced by a
     factor of about 10.
 
     """
@@ -233,12 +233,10 @@ class Survey:
     async def submit(self, submission):
         """Save a user submission in the submissions collection."""
         submission_time = utils.now()
-        if submission_time < self.start:
-            raise fastapi.HTTPException(400, 'survey is not open yet')
-        if submission_time >= self.end:
-            raise fastapi.HTTPException(400, 'survey is closed')
+        if submission_time < self.start or submission_time >= self.end:
+            raise errors.SurveyDoesNotAcceptSubmissionsAtTheMomentError()
         if not self.validator.validate(submission):
-            raise fastapi.HTTPException(400, 'invalid submission')
+            raise errors.InvalidSubmissionError()
         submission = {
             'submission_time': submission_time,
             'data': submission,
@@ -261,22 +259,20 @@ class Survey:
                 submission['_id'],
             )
             if status != 200:
-                raise fastapi.HTTPException(500, 'email delivery failure')
+                raise errors.InternalServerError()
 
     async def verify(self, verification_token):
         """Verify the user's email address and save submission as verified."""
         verification_time = utils.now()
         if self.authentication != 'email':
-            raise fastapi.HTTPException(400, 'survey is not of type email')
-        if verification_time < self.start:
-            raise fastapi.HTTPException(400, 'survey is not open yet')
-        if verification_time >= self.end:
-            raise fastapi.HTTPException(400, 'survey is closed')
+            raise errors.InvalidVerificationTokenError()
+        if verification_time < self.start or verification_time >= self.end:
+            raise errors.SurveyDoesNotAcceptSubmissionsAtTheMomentError()
         submission = await self.submissions.find_one(
             {'_id': verification_token},
         )
         if submission is None:
-            raise fastapi.HTTPException(401, 'invalid verification token')
+            raise errors.InvalidVerificationTokenError()
         submission['verification_time'] = verification_time
         submission['_id'] = submission['data'][str(self.ei + 1)]
         await self.verified_submissions.find_one_and_replace(
@@ -292,6 +288,6 @@ class Survey:
     async def aggregate(self):
         """Query the survey submissions and return aggregated results."""
         if utils.now() < self.end:
-            raise fastapi.HTTPException(400, 'survey is not yet closed')
+            raise errors.NotImplementedError()
         self.results = self.results or await self.alligator.fetch()
         return self.results
