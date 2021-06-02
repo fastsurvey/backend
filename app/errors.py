@@ -6,52 +6,53 @@ import fastapi
 ################################################################################
 
 
-INVALID_ACCOUNT_DATA = 'invalid account data'
-INVALID_CONFIGURATION = 'invalid configuration'
-INVALID_SUBMISSION = 'invalid submission'
-
-USERNAME_ALREADY_TAKEN = 'username already taken'
-EMAIL_ADDRESS_ALREADY_TAKEN = 'email address already taken'
-SURVEY_NAME_ALREADY_TAKEN = 'survey name already taken'
-
-SURVEY_DOES_NOT_ACCEPT_SUBMISSIONS_AT_THE_MOMENT = (
-    'survey does not accept submissions at the moment'
-)
-
-
 class InvalidAccountDataError(fastapi.HTTPException):
+    STATUS_CODE = 400
+    DETAIL = 'invalid account data'
     def __init__(self):
-        super().__init__(400, INVALID_ACCOUNT_DATA)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 class InvalidConfigurationError(fastapi.HTTPException):
+    STATUS_CODE = 400
+    DETAIL = 'invalid configuration'
     def __init__(self):
-        super().__init__(400, INVALID_CONFIGURATION)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 class InvalidSubmissionError(fastapi.HTTPException):
+    STATUS_CODE = 400
+    DETAIL = 'invalid submission'
     def __init__(self):
-        super().__init__(400, INVALID_SUBMISSION)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 class UsernameAlreadyTakenError(fastapi.HTTPException):
+    STATUS_CODE = 400
+    DETAIL = 'username already taken'
     def __init__(self):
-        super().__init__(400, USERNAME_ALREADY_TAKEN)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 class EmailAddressAlreadyTakenError(fastapi.HTTPException):
+    STATUS_CODE = 400
+    DETAIL = 'email address already taken'
     def __init__(self):
-        super().__init__(400, EMAIL_ADDRESS_ALREADY_TAKEN)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 class SurveyNameAlreadyTakenError(fastapi.HTTPException):
+    STATUS_CODE = 400
+    DETAIL = 'survey name already taken'
     def __init__(self):
-        super().__init__(400, SURVEY_NAME_ALREADY_TAKEN)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 class SurveyDoesNotAcceptSubmissionsAtTheMomentError(fastapi.HTTPException):
+    STATUS_CODE = 400
+    DETAIL = 'survey does not accept submissions at the moment'
     def __init__(self):
-        super().__init__(400, SURVEY_DOES_NOT_ACCEPT_SUBMISSIONS_AT_THE_MOMENT)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 ################################################################################
@@ -59,24 +60,25 @@ class SurveyDoesNotAcceptSubmissionsAtTheMomentError(fastapi.HTTPException):
 ################################################################################
 
 
-INVALID_ACCESS_TOKEN = 'invalid access token'
-INVALID_VERIFICATION_TOKEN = 'invalid verification token'
-INVALID_PASSWORD = 'invalid password'
-
-
 class InvalidAccessTokenError(fastapi.HTTPException):
+    STATUS_CODE = 401
+    DETAIL = 'invalid access token'
     def __init__(self):
-        super().__init__(401, INVALID_ACCESS_TOKEN)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 class InvalidVerificationTokenError(fastapi.HTTPException):
+    STATUS_CODE = 401
+    DETAIL = 'invalid verification token'
     def __init__(self):
-        super().__init__(401, INVALID_VERIFICATION_TOKEN)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 class InvalidPasswordError(fastapi.HTTPException):
+    STATUS_CODE = 401
+    DETAIL = 'invalid password'
     def __init__(self):
-        super().__init__(401, INVALID_PASSWORD)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 ################################################################################
@@ -84,18 +86,18 @@ class InvalidPasswordError(fastapi.HTTPException):
 ################################################################################
 
 
-ACCESS_FORBIDDEN = 'access forbidden'
-ACCOUNT_NOT_VERIFIED = 'account not verified'
-
-
 class AccessForbiddenError(fastapi.HTTPException):
+    STATUS_CODE = 403
+    DETAIL = 'access forbidden'
     def __init__(self):
-        super().__init__(403, ACCESS_FORBIDDEN)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 class AccountNotVerifiedError(fastapi.HTTPException):
+    STATUS_CODE = 403
+    DETAIL = 'account not verified'
     def __init__(self):
-        super().__init__(403, ACCOUNT_NOT_VERIFIED)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 ################################################################################
@@ -103,18 +105,18 @@ class AccountNotVerifiedError(fastapi.HTTPException):
 ################################################################################
 
 
-USER_NOT_FOUND = 'user not found'
-SURVEY_NOT_FOUND = 'survey not found'
-
-
 class UserNotFoundError(fastapi.HTTPException):
+    STATUS_CODE = 404
+    DETAIL = 'user not found'
     def __init__(self):
-        super().__init__(404, USER_NOT_FOUND)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 class SurveyNotFoundError(fastapi.HTTPException):
+    STATUS_CODE = 404
+    DETAIL = 'survey not found'
     def __init__(self):
-        super().__init__(404, SURVEY_NOT_FOUND)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 ################################################################################
@@ -122,12 +124,11 @@ class SurveyNotFoundError(fastapi.HTTPException):
 ################################################################################
 
 
-INTERNAL_SERVER_ERROR = 'internal server error'
-
-
 class InternalServerError(fastapi.HTTPException):
+    STATUS_CODE = 500
+    DETAIL = 'internal server error'
     def __init__(self):
-        super().__init__(500, INTERNAL_SERVER_ERROR)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 ################################################################################
@@ -135,9 +136,8 @@ class InternalServerError(fastapi.HTTPException):
 ################################################################################
 
 
-NOT_IMPLEMENTED = 'not implemented'
-
-
 class NotImplementedError(fastapi.HTTPException):
+    STATUS_CODE = 501
+    DETAIL = 'not implemented'
     def __init__(self):
-        super().__init__(501, NOT_IMPLEMENTED)
+        super().__init__(self.STATUS_CODE, self.DETAIL)
