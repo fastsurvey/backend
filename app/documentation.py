@@ -1,8 +1,10 @@
 import pydantic
-import fastapi as api
+import fastapi
+
+import app.errors as errors
 
 
-class ExceptionResponse(pydantic.BaseModel):
+class ErrorResponse(pydantic.BaseModel):
     detail: str
 
 
@@ -34,26 +36,27 @@ survey = {
     },
 }
 
+
 arguments = {
-    'username': api.Path(
+    'username': fastapi.Path(
         ...,
         description='The name of the user',
         example='fastsurvey',
     ),
-    'access_token': api.Depends(
-        api.security.OAuth2PasswordBearer('/authentication')
+    'access_token': fastapi.Depends(
+        fastapi.security.OAuth2PasswordBearer('/authentication')
     ),
-    'survey_name': api.Path(
+    'survey_name': fastapi.Path(
         ...,
         description='The name of the survey',
         example='hello-world',
     ),
-    'configuration': api.Body(
+    'configuration': fastapi.Body(
         ...,
         description='The new configuration',
         example=survey['configuration'],
     ),
-    'account_data': api.Body(
+    'account_data': fastapi.Body(
         ...,
         description='The updated account data',
         example={
@@ -62,27 +65,27 @@ arguments = {
             'password': '12345678'
         },
     ),
-    'skip': api.Query(
+    'skip': fastapi.Query(
         0,
         description='The index of the first returned configuration',
         example=0,
     ),
-    'limit': api.Query(
+    'limit': fastapi.Query(
         10,
         description='The query result count limit; 0 means no limit',
         example=10,
     ),
-    'verification_token': api.Path(
+    'verification_token': fastapi.Path(
         ...,
         description='The verification token',
         example='cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
     ),
-    'submission': api.Body(
+    'submission': fastapi.Body(
         ...,
         description='The user submission',
         example=survey['submission'],
     ),
-    'authentication_credentials': api.Body(
+    'authentication_credentials': fastapi.Body(
         ...,
         description='The username or email address with the password',
         example={
@@ -90,7 +93,7 @@ arguments = {
             'password': '12345678'
         },
     ),
-    'verification_credentials': api.Body(
+    'verification_credentials': fastapi.Body(
         ...,
         description='The verification token together with the password',
         example={
@@ -99,6 +102,32 @@ arguments = {
         },
     ),
 }
+
+
+def build_error_documentation(error_classes):
+    """Generate the OpenAPI error specifications for given route errors."""
+    out = dict()
+    status_codes = [error.STATUS_CODE for error in error_classes]
+    for status, error in zip(status_codes, error_classes):
+        multiple = status_codes.count(error.STATUS_CODE) > 1
+        template = {
+            'model': ErrorResponse,
+            'content': {
+                'application/json': {
+                    'examples' if multiple else 'example': {},
+                },
+            },
+        }
+        out.setdefault(status, template)
+        if multiple:
+            examples = out[status]['content']['application/json']['examples']
+            examples[error.DETAIL] = {'value': {'detail': error.DETAIL}}
+        else:
+            out[status]['content']['application/json']['example'] = {
+                'detail': error.DETAIL,
+            }
+    return out
+
 
 specifications = {
     'fetch_user': {
@@ -115,106 +144,36 @@ specifications = {
                     },
                 },
             },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
-            404: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'user not found',
-                        },
-                    },
-                },
-            },
+            **build_error_documentation([
+                errors.InvalidAccessTokenError,
+                errors.AccessForbiddenError,
+                errors.UserNotFoundError,
+            ]),
         },
     },
     'create_user': {
         'path': '/users/{username}',
-        'responses': {
-            400: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'examples': {
-                            'invalid account data': {
-                                'value': {
-                                    'detail': 'invalid account data',
-                                },
-                            },
-                            'username already taken': {
-                                'value': {
-                                    'detail': 'username already taken',
-                                },
-                            },
-                            'email address already taken': {
-                                'value': {
-                                    'detail': 'email address already taken',
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        },
+        'responses': build_error_documentation([
+            errors.InvalidAccountDataError,
+            errors.UsernameAlreadyTakenError,
+            errors.EmailAddressAlreadyTakenError,
+        ]),
     },
     'update_user': {
         'path': '/users/{username}',
-        'responses': {
-            400: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid account data',
-                        },
-                    },
-                },
-            },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
-            404: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'user not found',
-                        },
-                    },
-                },
-            },
-        },
+        'responses': build_error_documentation([
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+            errors.InvalidAccountDataError,
+            errors.UserNotFoundError,
+        ]),
     },
     'delete_user': {
         'path': '/users/{username}',
-        'responses': {
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
-        },
+        'responses': build_error_documentation([
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+        ]),
     },
     'fetch_surveys': {
         'path': '/users/{username}/surveys',
@@ -226,16 +185,10 @@ specifications = {
                     },
                 },
             },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
+            **build_error_documentation([
+                errors.InvalidAccessTokenError,
+                errors.AccessForbiddenError,
+            ]),
         },
     },
     'fetch_survey': {
@@ -248,208 +201,61 @@ specifications = {
                     },
                 },
             },
-            404: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'survey not found',
-                        },
-                    },
-                },
-            },
+            **build_error_documentation([
+                errors.InvalidAccessTokenError,
+                errors.AccessForbiddenError,
+                errors.SurveyNotFoundError,
+            ]),
         },
     },
     'create_survey': {
         'path': '/users/{username}/surveys/{survey_name}',
-        'responses': {
-            400: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'examples': {
-                            'invalid configuration': {
-                                'value': {
-                                    'detail': 'invalid configuration',
-                                },
-                            },
-                            'survey exists': {
-                                'value': {
-                                    'detail': 'survey exists',
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
-        },
+        'responses': build_error_documentation([
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+            errors.InvalidConfigurationError,
+            errors.SurveyNameAlreadyTakenError,
+        ]),
     },
     'update_survey': {
         'path': '/users/{username}/surveys/{survey_name}',
-        'responses': {
-            400: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'examples': {
-                            'invalid configuration': {
-                                'value': {
-                                    'detail': 'invalid configuration',
-                                },
-                            },
-                            'not an existing survey': {
-                                'value': {
-                                    'detail': 'not an existing survey',
-                                },
-                            },
-                            'survey name in use': {
-                                'value': {
-                                    'detail': 'survey name in use',
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
-        },
+        'responses': build_error_documentation([
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+            errors.InvalidConfigurationError,
+            errors.SurveyNameAlreadyTakenError,
+            errors.SurveyNotFoundError,
+        ]),
     },
     'delete_survey': {
         'path': '/users/{username}/surveys/{survey_name}',
-        'responses': {
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
-        },
+        'responses': build_error_documentation([
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+        ]),
     },
     'create_submission': {
         'path': '/users/{username}/surveys/{survey_name}/submissions',
-        'responses': {
-            400: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'examples': {
-                            'survey is not open yet': {
-                                'value': {
-                                    'detail': 'survey is not open yet',
-                                },
-                            },
-                            'survey is closed': {
-                                'value': {
-                                    'detail': 'survey is closed',
-                                },
-                            },
-                            'invalid submission': {
-                                'value': {
-                                    'detail': 'invalid submission',
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-            404: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'survey not found',
-                        },
-                    },
-                },
-            },
-        },
+        'responses': build_error_documentation([
+            errors.SurveyDoesNotAcceptSubmissionsAtTheMomentError,
+            errors.InvalidSubmissionError,
+            errors.SurveyNotFoundError,
+        ]),
     },
     'reset_survey': {
         'path': '/users/{username}/surveys/{survey_name}/submissions',
-        'responses': {
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
-        },
+        'responses': build_error_documentation([
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+        ]),
     },
     'verify_submission': {
         'path': '/users/{username}/surveys/{survey_name}/verification/{verification_token}',
-        'responses': {
-            400: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'examples': {
-                            'survey is not of type email': {
-                                'value': {
-                                    'detail': 'survey is not of type email',
-                                },
-                            },
-                            'survey is not open yet': {
-                                'value': {
-                                    'detail': 'survey is not open yet',
-                                },
-                            },
-                            'survey is closed': {
-                                'value': {
-                                    'detail': 'survey is closed',
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid verification token',
-                        },
-                    },
-                },
-            },
-            404: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'survey not found',
-                        },
-                    },
-                },
-            },
-        },
+        'responses': build_error_documentation([
+            errors.InvalidVerificationTokenError,
+            errors.SurveyNotFoundError,
+            errors.SurveyDoesNotAcceptSubmissionsAtTheMomentError,
+        ]),
     },
     'fetch_results': {
         'path': '/users/{username}/surveys/{survey_name}/results',
@@ -461,36 +267,11 @@ specifications = {
                     },
                 },
             },
-            400: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'survey is not yet closed',
-                        },
-                    },
-                },
-            },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
-            404: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'survey not found',
-                        },
-                    },
-                },
-            },
+            **build_error_documentation([
+                errors.InvalidAccessTokenError,
+                errors.AccessForbiddenError,
+                errors.SurveyNotFoundError,
+            ]),
         },
     },
     'decode_access_token': {
@@ -503,16 +284,9 @@ specifications = {
                     },
                 },
             },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
+            **build_error_documentation([
+                errors.InvalidAccessTokenError,
+            ]),
         },
     },
     'generate_access_token': {
@@ -528,36 +302,11 @@ specifications = {
                     },
                 },
             },
-            400: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'account not verified',
-                        },
-                    },
-                },
-            },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid password',
-                        },
-                    },
-                },
-            },
-            404: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'user not found',
-                        },
-                    },
-                },
-            },
+            **build_error_documentation([
+                errors.InvalidPasswordError,
+                errors.AccountNotVerifiedError,
+                errors.UserNotFoundError,
+            ]),
         },
     },
     'refresh_access_token': {
@@ -573,16 +322,10 @@ specifications = {
                     },
                 },
             },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'invalid access token',
-                        },
-                    },
-                },
-            },
+            **build_error_documentation([
+                errors.InvalidAccessTokenError,
+                errors.AccessForbiddenError,
+            ]),
         },
     },
     'verify_email_address': {
@@ -598,35 +341,10 @@ specifications = {
                     },
                 },
             },
-            400: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'detail': 'account already verified',
-                        },
-                    },
-                },
-            },
-            401: {
-                'model': ExceptionResponse,
-                'content': {
-                    'application/json': {
-                        'examples': {
-                            'invalid verification token': {
-                                'value': {
-                                    'detail': 'invalid verification token',
-                                },
-                            },
-                            'invalid password': {
-                                'value': {
-                                    'detail': 'invalid password',
-                                },
-                            },
-                        },
-                    },
-                },
-            },
+            **build_error_documentation([
+                errors.InvalidVerificationTokenError,
+                errors.InvalidPasswordError,
+            ]),
         },
     },
 }
