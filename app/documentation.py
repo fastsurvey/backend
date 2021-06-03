@@ -53,12 +53,12 @@ arguments = {
     ),
     'configuration': fastapi.Body(
         ...,
-        description='The new configuration',
+        description='The survey configuration',
         example=survey['configuration'],
     ),
     'account_data': fastapi.Body(
         ...,
-        description='The updated account data',
+        description='The account data',
         example={
             'username': 'fastsurvey',
             'email_address': 'support@fastsurvey.de',

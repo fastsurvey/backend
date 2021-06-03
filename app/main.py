@@ -210,6 +210,7 @@ async def fetch_results(
 async def decode_access_token(
         access_token: str = docs.arguments['access_token'],
     ):
+    """Decode the given access token and return the contained username."""
     return access.decode(access_token)
 
 
@@ -219,6 +220,7 @@ async def generate_access_token(
             docs.arguments['authentication_credentials']
         ),
     ):
+    """Generate a JWT access token containing the user's username."""
     return await account_manager.authenticate(
         authentication_credentials.identifier,
         authentication_credentials.password,
@@ -229,6 +231,7 @@ async def generate_access_token(
 async def refresh_access_token(
         access_token: str = docs.arguments['access_token'],
     ):
+    """Generate a new access token with a refreshed expiration time."""
     return access.generate(access.decode(access_token))
 
 
@@ -238,6 +241,7 @@ async def verify_email_address(
             docs.arguments['verification_credentials']
         ),
     ):
+    """Verify an email address given the verification token sent via email."""
     return await account_manager.verify(
         verification_credentials.verification_token,
         verification_credentials.password,
