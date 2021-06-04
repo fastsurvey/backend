@@ -22,7 +22,7 @@ async def client():
 
 
 def check_error(response, error):
-    """Check that a HTTPX request returned a specific HTML error."""
+    """Check that a HTTPX request returned with a specific error."""
     return (
         response.status_code == error.STATUS_CODE
         and response.json()['detail'] == error.DETAIL
@@ -64,14 +64,14 @@ async def test_fetching_existing_user_with_invalid_access_token(
     access_token = access.generate('tomato')['access_token']
     headers = {'Authorization': f'Bearer {access_token}'}
     response = await client.get(f'/users/{username}', headers=headers)
-    assert response.status_code == 401
+    assert check_error(response, errors.AccessForbiddenError)
 
 
 @pytest.mark.asyncio
 async def test_fetching_nonexistent_user(client, headers, username):
     """Test that correct account data is returned on valid request."""
     response = await client.get(f'/users/{username}', headers=headers)
-    assert response.status_code == 404
+    assert check_error(response, errors.UserNotFoundError)
 
 
 ################################################################################
@@ -100,8 +100,7 @@ async def test_creating_user_with_invalid_account_data(client, account_datas):
     account_data = account_datas['invalid'][0]
     username = account_data['username']
     response = await client.post(url=f'/users/{username}', json=account_data)
-    assert response.status_code == 400
-    assert response.json()['detail'] == 'invalid account data'
+    assert check_error(response, errors.InvalidAccountDataError)
     entry = await database.database['accounts'].find_one({})
     assert entry is None
 
@@ -124,8 +123,7 @@ async def test_creating_user_username_already_taken(
         url=f'/users/{account_data_duplicate["username"]}',
         json=account_data_duplicate,
     )
-    assert response.status_code == 400
-    assert response.json()['detail'] == 'username already taken'
+    assert check_error(response, errors.UsernameAlreadyTakenError)
     entry = await database.database['accounts'].find_one({})
     assert entry['email_address'] == email_address
 
@@ -148,8 +146,7 @@ async def test_creating_user_email_address_already_taken(
         url=f'/users/{account_data_duplicate["username"]}',
         json=account_data_duplicate,
     )
-    assert response.status_code == 400
-    assert response.json()['detail'] == 'email address already taken'
+    assert check_error(response, errors.EmailAddressAlreadyTakenError)
     entry = await database.database['accounts'].find_one({})
     assert entry['_id'] == username
 
@@ -240,8 +237,7 @@ async def test_updating_existing_user_with_valid_email_address_in_use(
         headers=headers,
         json=account_data,
     )
-    assert response.status_code == 400
-    assert response.json()['detail'] == 'email address already taken'
+    assert check_error(response, errors.EmailAddressAlreadyTakenError)
 
 
 # TODO delete user
@@ -279,8 +275,7 @@ async def test_fetching_existing_survey(
 async def test_fetching_nonexistent_survey(client, username):
     """Test that exception is raised when requesting a nonexistent survey."""
     response = await client.get(f'/users/{username}/surveys/complex')
-    assert response.status_code == 404
-    assert response.json()['detail'] == 'survey not found'
+    assert check_error(response, errors.SurveyNotFoundError)
 
 
 @pytest.mark.asyncio
@@ -303,8 +298,7 @@ async def test_fetching_survey_in_draft_mode(
     # reset cache in order to test fetching with cache miss
     main.survey_manager.cache.reset()
     response = await client.get(f'/users/{username}/surveys/{survey_name}')
-    assert response.status_code == 404
-    assert response.json()['detail'] == 'survey not found'
+    assert check_error(response, errors.SurveyNotFoundError)
 
 
 ################################################################################
@@ -349,8 +343,7 @@ async def test_creating_survey_with_invalid_configuration(
         headers=headers,
         json=configuration,
     )
-    assert response.status_code == 400
-    assert response.json()['detail'] == 'invalid configuration'
+    assert check_error(response, errors.InvalidConfigurationError)
     with pytest.raises(KeyError):
         main.survey_manager.cache.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one({})
@@ -405,8 +398,7 @@ async def test_updating_nonexistent_survey_with_valid_configuration(
         headers=headers,
         json=configuration,
     )
-    assert response.status_code == 400
-    assert response.json()['detail'] == 'not an existing survey'
+    assert check_error(response, errors.SurveyNotFoundError)
     with pytest.raises(KeyError):
         main.survey_manager.cache.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one({})
@@ -468,8 +460,7 @@ async def test_updating_survey_name_to_survey_name_in_use(
         headers=headers,
         json=configuration,
     )
-    assert response.status_code == 400
-    assert response.json()['detail'] == 'survey name in use'
+    assert check_error(response, errors.SurveyNameAlreadyTakenError)
     assert main.survey_manager.cache.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one(
         filter={'survey_name': survey_name},
@@ -538,7 +529,7 @@ async def test_creating_invalid_submission(
         url=f'/users/{username}/surveys/{survey_name}/submissions',
         json=submissionss[survey_name]['invalid'][0],
     )
-    assert response.status_code == 400
+    assert check_error(response, errors.InvalidSubmissionError)
     entry = await survey.submissions.find_one({})
     assert entry is None
 
@@ -800,8 +791,7 @@ async def test_generating_access_token_with_non_verified_account(
     await client.post(url=f'/users/{username}', json=account_data)
     credentials = dict(identifier=username, password=password)
     response = await client.post(f'/authentication', json=credentials)
-    assert response.status_code == 400
-    assert response.json()['detail'] == 'account not verified'
+    assert check_error(response, errors.AccountNotVerifiedError)
 
 
 @pytest.mark.asyncio
@@ -849,7 +839,7 @@ async def test_generating_access_token_invalid_username(
     )
     credentials = dict(identifier='tomato', password=password)
     response = await client.post(url='/authentication', json=credentials)
-    assert response.status_code == 404
+    assert check_error(response, errors.UserNotFoundError)
 
 
 @pytest.mark.asyncio
@@ -870,7 +860,7 @@ async def test_generating_access_token_with_invalid_password(
     )
     credentials = dict(identifier=username, password='tomato')
     response = await client.post(url='/authentication', json=credentials)
-    assert response.status_code == 401
+    assert check_error(response, errors.InvalidPasswordError)
 
 
 ################################################################################
@@ -934,8 +924,7 @@ async def test_verifying_email_address_with_invalid_verification_token(
         url=f'/verification',
         json={'verification_token': 'tomato', 'password': password},
     )
-    assert response.status_code == 401
-    assert response.json()['detail'] == 'invalid verification token'
+    assert check_error(response, errors.InvalidVerificationTokenError)
     response = await client.get(f'/users/{username}', headers=headers)
     assert not response.json()['verified']
 
@@ -956,8 +945,7 @@ async def test_verifying_email_address_with_invalid_password(
         url=f'/verification',
         json={'verification_token': '0', 'password': 'tomato'},
     )
-    assert response.status_code == 401
-    assert response.json()['detail'] == 'invalid password'
+    assert check_error(response, errors.InvalidPasswordError)
     response = await client.get(f'/users/{username}', headers=headers)
     assert not response.json()['verified']
 
@@ -978,7 +966,6 @@ async def test_verifying_previously_verified_email_address(
     credentials = {'verification_token': '0', 'password': password}
     await client.post(url='/verification', json=credentials)
     response = await client.post(url='/verification', json=credentials)
-    assert response.status_code == 400
-    assert response.json()['detail'] == 'account already verified'
+    assert check_error(response, errors.InvalidVerificationTokenError)
     response = await client.get(f'/users/{username}', headers=headers)
     assert response.json()['verified']
