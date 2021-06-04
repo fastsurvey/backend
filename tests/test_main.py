@@ -7,6 +7,7 @@ import app.main as main
 import app.resources.database as database
 import app.cryptography.access as access
 import app.cryptography.password as pw
+import app.errors as errors
 
 
 @pytest.fixture(scope='module')
@@ -18,6 +19,14 @@ async def client():
     )
     yield client
     await client.aclose()
+
+
+def check_error(response, error):
+    """Check that a HTTPX request returned a specific HTML error."""
+    return (
+        response.status_code == error.STATUS_CODE
+        and response.json()['detail'] == error.DETAIL
+    )
 
 
 ################################################################################
