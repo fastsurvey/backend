@@ -2,7 +2,7 @@
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/0886890b76260c1eb047/maintainability)](https://codeclimate.com/github/fastsurvey/backend/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/0886890b76260c1eb047/test_coverage)](https://codeclimate.com/github/fastsurvey/backend/test_coverage)
 
-**Project Documentation:** [docs.fastsurvey.io](https://docs.fastsurvey.io/)
+**Project Documentation:** [docs.fastsurvey.io](https://docs.fastsurvey.io/)</br>
 **API Documentation:** [backend.dev.fastsurvey.io/documentation/redoc](https://backend.dev.fastsurvey.io/documentation/redoc)
 
 ---
