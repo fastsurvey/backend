@@ -1,58 +1,51 @@
 import fastapi
 
 
+class _CustomError(fastapi.HTTPException):
+    """Error class from which all more specific HTTP errors inherit from."""
+
+    def __init__(self):
+        super().__init__(self.STATUS_CODE, self.DETAIL)
+
+
 ################################################################################
 # 400 Bad Request
 ################################################################################
 
 
-class InvalidAccountDataError(fastapi.HTTPException):
+class InvalidAccountDataError(_CustomError):
     STATUS_CODE = 400
     DETAIL = 'invalid account data'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
-class InvalidConfigurationError(fastapi.HTTPException):
+class InvalidConfigurationError(_CustomError):
     STATUS_CODE = 400
     DETAIL = 'invalid configuration'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
-class InvalidSubmissionError(fastapi.HTTPException):
+class InvalidSubmissionError(_CustomError):
     STATUS_CODE = 400
     DETAIL = 'invalid submission'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
-class UsernameAlreadyTakenError(fastapi.HTTPException):
+class UsernameAlreadyTakenError(_CustomError):
     STATUS_CODE = 400
     DETAIL = 'username already taken'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
-class EmailAddressAlreadyTakenError(fastapi.HTTPException):
+class EmailAddressAlreadyTakenError(_CustomError):
     STATUS_CODE = 400
     DETAIL = 'email address already taken'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
-class SurveyNameAlreadyTakenError(fastapi.HTTPException):
+class SurveyNameAlreadyTakenError(_CustomError):
     STATUS_CODE = 400
     DETAIL = 'survey name already taken'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
-class SurveyDoesNotAcceptSubmissionsAtTheMomentError(fastapi.HTTPException):
+class SurveyDoesNotAcceptSubmissionsAtTheMomentError(_CustomError):
     STATUS_CODE = 400
     DETAIL = 'survey does not accept submissions at the moment'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 ################################################################################
@@ -60,25 +53,19 @@ class SurveyDoesNotAcceptSubmissionsAtTheMomentError(fastapi.HTTPException):
 ################################################################################
 
 
-class InvalidAccessTokenError(fastapi.HTTPException):
+class InvalidAccessTokenError(_CustomError):
     STATUS_CODE = 401
     DETAIL = 'invalid access token'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
-class InvalidVerificationTokenError(fastapi.HTTPException):
+class InvalidVerificationTokenError(_CustomError):
     STATUS_CODE = 401
     DETAIL = 'invalid verification token'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
-class InvalidPasswordError(fastapi.HTTPException):
+class InvalidPasswordError(_CustomError):
     STATUS_CODE = 401
     DETAIL = 'invalid password'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 ################################################################################
@@ -86,18 +73,14 @@ class InvalidPasswordError(fastapi.HTTPException):
 ################################################################################
 
 
-class AccessForbiddenError(fastapi.HTTPException):
+class AccessForbiddenError(_CustomError):
     STATUS_CODE = 403
     DETAIL = 'access forbidden'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
-class AccountNotVerifiedError(fastapi.HTTPException):
+class AccountNotVerifiedError(_CustomError):
     STATUS_CODE = 403
     DETAIL = 'account not verified'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 ################################################################################
@@ -105,18 +88,14 @@ class AccountNotVerifiedError(fastapi.HTTPException):
 ################################################################################
 
 
-class UserNotFoundError(fastapi.HTTPException):
+class UserNotFoundError(_CustomError):
     STATUS_CODE = 404
     DETAIL = 'user not found'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
-class SurveyNotFoundError(fastapi.HTTPException):
+class SurveyNotFoundError(_CustomError):
     STATUS_CODE = 404
     DETAIL = 'survey not found'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 ################################################################################
@@ -124,11 +103,9 @@ class SurveyNotFoundError(fastapi.HTTPException):
 ################################################################################
 
 
-class InternalServerError(fastapi.HTTPException):
+class InternalServerError(_CustomError):
     STATUS_CODE = 500
     DETAIL = 'internal server error'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
 
 
 ################################################################################
@@ -136,8 +113,6 @@ class InternalServerError(fastapi.HTTPException):
 ################################################################################
 
 
-class NotImplementedError(fastapi.HTTPException):
+class NotImplementedError(_CustomError):
     STATUS_CODE = 501
     DETAIL = 'not implemented'
-    def __init__(self):
-        super().__init__(self.STATUS_CODE, self.DETAIL)
