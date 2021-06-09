@@ -28,7 +28,7 @@ database['accounts'].create_indexes([
         pymongo.IndexModel(
             keys='creation_time',
             name='creation_time_index',
-            expireAfterSeconds=10*60,  # delete unverifed accounts after 10 mins
+            expireAfterSeconds=24*60*60,  # delete draft accounts after 24 hours
             partialFilterExpression={'verified': {'$eq': False}},
         ),
     ]
