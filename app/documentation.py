@@ -4,40 +4,38 @@ import fastapi
 import app.errors as errors
 
 
-class ErrorResponse(pydantic.BaseModel):
-    detail: str
+_SAMPLE_SURVEY_NAME = 'option'
 
+_SAMPLE_CONFIGURATION = {
+    'survey_name': 'option',
+    'title': 'Option Test',
+    'description': '',
+    'start': 1000000000,
+    'end': 2000000000,
+    'draft': False,
+    'authentication': 'open',
+    'limit': 0,
+    'fields': [
+        {
+            'type': 'option',
+            'title': 'I have read and agree to the terms and conditions',
+            'description': '',
+            'required': True
+        }
+    ],
+}
 
-survey = {
-    'configuration': {
-        'survey_name': 'option',
-        'title': 'Option Test',
-        'description': '',
-        'start': 1000000000,
-        'end': 2000000000,
-        'draft': False,
-        'authentication': 'open',
-        'limit': 0,
-        'fields': [
-            {
-                'type': 'option',
-                'title': 'I have read and agree to the terms and conditions',
-                'description': '',
-                'required': True
-            }
-        ],
-    },
-    'submission': {
-        '1': True,
-    },
-    'results': {
-        'count': 1,
-        '1': 1,
-    },
+_SAMPLE_SUBMISSION = {
+    '1': True,
+},
+
+_SAMPLE_RESULTS = {
+    'count': 1,
+    '1': 1,
 }
 
 
-arguments = {
+ARGUMENTS = {
     'username': fastapi.Path(
         ...,
         description='The name of the user',
@@ -49,12 +47,12 @@ arguments = {
     'survey_name': fastapi.Path(
         ...,
         description='The name of the survey',
-        example='hello-world',
+        example=_SAMPLE_SURVEY_NAME,
     ),
     'configuration': fastapi.Body(
         ...,
         description='The survey configuration',
-        example=survey['configuration'],
+        example=_SAMPLE_CONFIGURATION,
     ),
     'account_data': fastapi.Body(
         ...,
@@ -83,7 +81,7 @@ arguments = {
     'submission': fastapi.Body(
         ...,
         description='The user submission',
-        example=survey['submission'],
+        example=_SAMPLE_SUBMISSION,
     ),
     'authentication_credentials': fastapi.Body(
         ...,
@@ -104,7 +102,11 @@ arguments = {
 }
 
 
-def _build_error_documentation(error_classes):
+class ErrorResponse(pydantic.BaseModel):
+    detail: str
+
+
+def _generate_error_documentation(error_classes):
     """Generate the OpenAPI error specifications for given route errors."""
     out = dict()
     status_codes = [error_class.STATUS_CODE for error_class in error_classes]
@@ -131,8 +133,7 @@ def _build_error_documentation(error_classes):
     return out
 
 
-def _generate_specification(path, response=None, error_classes=[]):
-    """Generate the OpenAPI specification for a route."""
+def _generate_responses_documentation(path, response=None, error_classes=[]):
     responses = {}
     if response:
         responses[200] = {
@@ -142,13 +143,12 @@ def _generate_specification(path, response=None, error_classes=[]):
                 }
             },
         }
-    responses.update(_build_error_documentation(error_classes))
+    responses.update(_generate_error_documentation(error_classes))
     return {'path': path, 'responses': responses}
 
 
-
-specifications = {
-    'fetch_user': _generate_specification(
+SPECIFICATIONS = {
+    'fetch_user': _generate_responses_documentation(
         path='/users/{username}',
         response={
             'email_address': 'support@fastsurvey.de',
@@ -161,200 +161,144 @@ specifications = {
             errors.UserNotFoundError,
         ],
     ),
-    'create_user': {
-        'path': '/users/{username}',
-        'responses': _build_error_documentation([
+    'create_user': _generate_responses_documentation(
+        path='/users/{username}',
+        error_classes=[
             errors.InvalidAccountDataError,
             errors.UsernameAlreadyTakenError,
             errors.EmailAddressAlreadyTakenError,
-        ]),
-    },
-    'update_user': {
-        'path': '/users/{username}',
-        'responses': _build_error_documentation([
+        ],
+    ),
+    'update_user': _generate_responses_documentation(
+        path='/users/{username}',
+        error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
             errors.InvalidAccountDataError,
             errors.UserNotFoundError,
-        ]),
-    },
-    'delete_user': {
-        'path': '/users/{username}',
-        'responses': _build_error_documentation([
+        ],
+    ),
+    'delete_user': _generate_responses_documentation(
+        path='/users/{username}',
+        error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
-        ]),
-    },
-    'fetch_surveys': {
-        'path': '/users/{username}/surveys',
-        'responses': {
-            200: {
-                'content': {
-                    'application/json': {
-                        'example': [survey['configuration']],
-                    },
-                },
-            },
-            **_build_error_documentation([
-                errors.InvalidAccessTokenError,
-                errors.AccessForbiddenError,
-            ]),
-        },
-    },
-    'fetch_survey': {
-        'path': '/users/{username}/surveys/{survey_name}',
-        'responses': {
-            200: {
-                'content': {
-                    'application/json': {
-                        'example': survey['configuration'],
-                    },
-                },
-            },
-            **_build_error_documentation([
-                errors.InvalidAccessTokenError,
-                errors.AccessForbiddenError,
-                errors.SurveyNotFoundError,
-            ]),
-        },
-    },
-    'create_survey': {
-        'path': '/users/{username}/surveys/{survey_name}',
-        'responses': _build_error_documentation([
+        ],
+    ),
+    'fetch_surveys': _generate_responses_documentation(
+        path='/users/{username}/surveys',
+        response=[_SAMPLE_CONFIGURATION],
+        error_classes=[
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+        ],
+    ),
+    'fetch_survey': _generate_responses_documentation(
+        path='/users/{username}/surveys/{survey_name}',
+        response=_SAMPLE_CONFIGURATION,
+        error_classes=[
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+            errors.SurveyNotFoundError,
+        ],
+    ),
+    'create_survey': _generate_responses_documentation(
+        path='/users/{username}/surveys/{survey_name}',
+        error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
             errors.InvalidConfigurationError,
             errors.SurveyNameAlreadyTakenError,
-        ]),
-    },
-    'update_survey': {
-        'path': '/users/{username}/surveys/{survey_name}',
-        'responses': _build_error_documentation([
+        ],
+    ),
+    'update_survey': _generate_responses_documentation(
+        path='/users/{username}/surveys/{survey_name}',
+        error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
             errors.InvalidConfigurationError,
             errors.SurveyNameAlreadyTakenError,
             errors.SurveyNotFoundError,
-        ]),
-    },
-    'delete_survey': {
-        'path': '/users/{username}/surveys/{survey_name}',
-        'responses': _build_error_documentation([
+        ],
+    ),
+    'delete_survey': _generate_responses_documentation(
+        path='/users/{username}/surveys/{survey_name}',
+        error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
-        ]),
-    },
-    'create_submission': {
-        'path': '/users/{username}/surveys/{survey_name}/submissions',
-        'responses': _build_error_documentation([
+        ],
+    ),
+    'create_submission': _generate_responses_documentation(
+        path='/users/{username}/surveys/{survey_name}/submissions',
+        error_classes=[
             errors.SurveyDoesNotAcceptSubmissionsAtTheMomentError,
             errors.InvalidSubmissionError,
             errors.SurveyNotFoundError,
-        ]),
-    },
-    'reset_survey': {
-        'path': '/users/{username}/surveys/{survey_name}/submissions',
-        'responses': _build_error_documentation([
+        ],
+    ),
+    'reset_survey': _generate_responses_documentation(
+        path='/users/{username}/surveys/{survey_name}/submissions',
+        error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
-        ]),
-    },
-    'verify_submission': {
-        'path': '/users/{username}/surveys/{survey_name}/verification/{verification_token}',
-        'responses': _build_error_documentation([
+        ],
+    ),
+    'verify_submission': _generate_responses_documentation(
+        path='/users/{username}/surveys/{survey_name}/verification/{verification_token}',
+        error_classes=[
             errors.InvalidVerificationTokenError,
             errors.SurveyNotFoundError,
             errors.SurveyDoesNotAcceptSubmissionsAtTheMomentError,
-        ]),
-    },
-    'fetch_results': {
-        'path': '/users/{username}/surveys/{survey_name}/results',
-        'responses': {
-            200: {
-                'content': {
-                    'application/json': {
-                        'example': survey['results'],
-                    },
-                },
-            },
-            **_build_error_documentation([
-                errors.InvalidAccessTokenError,
-                errors.AccessForbiddenError,
-                errors.SurveyNotFoundError,
-            ]),
+        ],
+    ),
+    'fetch_results': _generate_responses_documentation(
+        path='/users/{username}/surveys/{survey_name}/results',
+        response=_SAMPLE_RESULTS,
+        error_classes=[
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+            errors.SurveyNotFoundError,
+        ],
+    ),
+    'decode_access_token': _generate_responses_documentation(
+        path='/authentication',
+        response='fastsurvey',
+        error_classes=[
+            errors.InvalidAccessTokenError,
+        ],
+    ),
+    'generate_access_token': _generate_responses_documentation(
+        path='/authentication',
+        response={
+            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJGYXN0U3VydmV5Iiwic3ViIjoiYXBwbGUiLCJpYXQiOjE2MTYzNTA5NjAsImV4cCI6MTYxNjM1ODE2MH0.Vl8ndfMgE-LKcH5GOZZ_JEn2rL87Mg9wpihTvo-Cfukqr3vBI6I49EP109B2ZnEASnoXSzDRQSM438Pxxpm6aFMGSaxCJvVbPN3YhxKDKWel-3t7cslF5iwE8AlsYHQV6_6JZv-bZolUmScnGjXKEUBWn3x72AeFBm5I4O4VRWDt96umGfgtaPkBvXwW0eDIbGDIXR-MQF0vjiGnEd0GYwexgCj0uO80QTlN2oIH1kFtb612oqWJ3_Ipb2Ui6jwo0wVZW_I7zi5rKGrELsdGManwt7wUgp-V4779XXZ33IuojgS6kO45-aAkppBycv3cDqQdR_yjoRy6sZ4nryHEPzYKPtumtuY28Va2d9RpSxVHo1DkiyXmlrVWnmzyOuFVUxAMmblwaslc0es4igWtX_bZ141Vb6Vj96xk6pR6Wq9jjEhw9RsfyIVr2TwplzZZayVDl_9Pou3b8cZGRlotAYgWlYj9h0ZiI7hUvvXD24sFykx_HV3-hBPJJDmW3jwPRvRUtZEMic-1jAy-gMJs-irmeVOW6_Mh8LLncTRfutwJI4k6TqnPguX3LKEWu3uyGKT5zT2ZXanaTmBRVuFbON7-xb6ZvncdI5ttALixff2O67gXUjM7E9OrbauVWN6xqQ4-Wv70VJvtJa1MEvZOtC-JGwaF6C2WFNYKbnvB6hY',
+            'token_type': 'bearer',
         },
-    },
-    'decode_access_token': {
-        'path': '/authentication',
-        'responses': {
-            200: {
-                'content': {
-                    'application/json': {
-                        'example': 'fastsurvey',
-                    },
-                },
-            },
-            **_build_error_documentation([
-                errors.InvalidAccessTokenError,
-            ]),
+        error_classes=[
+            errors.InvalidPasswordError,
+            errors.AccountNotVerifiedError,
+            errors.UserNotFoundError,
+        ],
+    ),
+    'refresh_access_token': _generate_responses_documentation(
+        path='/authentication',
+        response={
+            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJGYXN0U3VydmV5Iiwic3ViIjoiYXBwbGUiLCJpYXQiOjE2MTYzNTA5NjAsImV4cCI6MTYxNjM1ODE2MH0.Vl8ndfMgE-LKcH5GOZZ_JEn2rL87Mg9wpihTvo-Cfukqr3vBI6I49EP109B2ZnEASnoXSzDRQSM438Pxxpm6aFMGSaxCJvVbPN3YhxKDKWel-3t7cslF5iwE8AlsYHQV6_6JZv-bZolUmScnGjXKEUBWn3x72AeFBm5I4O4VRWDt96umGfgtaPkBvXwW0eDIbGDIXR-MQF0vjiGnEd0GYwexgCj0uO80QTlN2oIH1kFtb612oqWJ3_Ipb2Ui6jwo0wVZW_I7zi5rKGrELsdGManwt7wUgp-V4779XXZ33IuojgS6kO45-aAkppBycv3cDqQdR_yjoRy6sZ4nryHEPzYKPtumtuY28Va2d9RpSxVHo1DkiyXmlrVWnmzyOuFVUxAMmblwaslc0es4igWtX_bZ141Vb6Vj96xk6pR6Wq9jjEhw9RsfyIVr2TwplzZZayVDl_9Pou3b8cZGRlotAYgWlYj9h0ZiI7hUvvXD24sFykx_HV3-hBPJJDmW3jwPRvRUtZEMic-1jAy-gMJs-irmeVOW6_Mh8LLncTRfutwJI4k6TqnPguX3LKEWu3uyGKT5zT2ZXanaTmBRVuFbON7-xb6ZvncdI5ttALixff2O67gXUjM7E9OrbauVWN6xqQ4-Wv70VJvtJa1MEvZOtC-JGwaF6C2WFNYKbnvB6hY',
+            'token_type': 'bearer',
         },
-    },
-    'generate_access_token': {
-        'path': '/authentication',
-        'responses': {
-            200: {
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJGYXN0U3VydmV5Iiwic3ViIjoiYXBwbGUiLCJpYXQiOjE2MTYzNTA5NjAsImV4cCI6MTYxNjM1ODE2MH0.Vl8ndfMgE-LKcH5GOZZ_JEn2rL87Mg9wpihTvo-Cfukqr3vBI6I49EP109B2ZnEASnoXSzDRQSM438Pxxpm6aFMGSaxCJvVbPN3YhxKDKWel-3t7cslF5iwE8AlsYHQV6_6JZv-bZolUmScnGjXKEUBWn3x72AeFBm5I4O4VRWDt96umGfgtaPkBvXwW0eDIbGDIXR-MQF0vjiGnEd0GYwexgCj0uO80QTlN2oIH1kFtb612oqWJ3_Ipb2Ui6jwo0wVZW_I7zi5rKGrELsdGManwt7wUgp-V4779XXZ33IuojgS6kO45-aAkppBycv3cDqQdR_yjoRy6sZ4nryHEPzYKPtumtuY28Va2d9RpSxVHo1DkiyXmlrVWnmzyOuFVUxAMmblwaslc0es4igWtX_bZ141Vb6Vj96xk6pR6Wq9jjEhw9RsfyIVr2TwplzZZayVDl_9Pou3b8cZGRlotAYgWlYj9h0ZiI7hUvvXD24sFykx_HV3-hBPJJDmW3jwPRvRUtZEMic-1jAy-gMJs-irmeVOW6_Mh8LLncTRfutwJI4k6TqnPguX3LKEWu3uyGKT5zT2ZXanaTmBRVuFbON7-xb6ZvncdI5ttALixff2O67gXUjM7E9OrbauVWN6xqQ4-Wv70VJvtJa1MEvZOtC-JGwaF6C2WFNYKbnvB6hY',
-                            'token_type': 'bearer',
-                        },
-                    },
-                },
-            },
-            **_build_error_documentation([
-                errors.InvalidPasswordError,
-                errors.AccountNotVerifiedError,
-                errors.UserNotFoundError,
-            ]),
+        error_classes=[
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+        ],
+    ),
+    'verify_email_address': _generate_responses_documentation(
+        path='/verification',
+        response={
+            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJGYXN0U3VydmV5Iiwic3ViIjoiYXBwbGUiLCJpYXQiOjE2MTYzNTA5NjAsImV4cCI6MTYxNjM1ODE2MH0.Vl8ndfMgE-LKcH5GOZZ_JEn2rL87Mg9wpihTvo-Cfukqr3vBI6I49EP109B2ZnEASnoXSzDRQSM438Pxxpm6aFMGSaxCJvVbPN3YhxKDKWel-3t7cslF5iwE8AlsYHQV6_6JZv-bZolUmScnGjXKEUBWn3x72AeFBm5I4O4VRWDt96umGfgtaPkBvXwW0eDIbGDIXR-MQF0vjiGnEd0GYwexgCj0uO80QTlN2oIH1kFtb612oqWJ3_Ipb2Ui6jwo0wVZW_I7zi5rKGrELsdGManwt7wUgp-V4779XXZ33IuojgS6kO45-aAkppBycv3cDqQdR_yjoRy6sZ4nryHEPzYKPtumtuY28Va2d9RpSxVHo1DkiyXmlrVWnmzyOuFVUxAMmblwaslc0es4igWtX_bZ141Vb6Vj96xk6pR6Wq9jjEhw9RsfyIVr2TwplzZZayVDl_9Pou3b8cZGRlotAYgWlYj9h0ZiI7hUvvXD24sFykx_HV3-hBPJJDmW3jwPRvRUtZEMic-1jAy-gMJs-irmeVOW6_Mh8LLncTRfutwJI4k6TqnPguX3LKEWu3uyGKT5zT2ZXanaTmBRVuFbON7-xb6ZvncdI5ttALixff2O67gXUjM7E9OrbauVWN6xqQ4-Wv70VJvtJa1MEvZOtC-JGwaF6C2WFNYKbnvB6hY',
+            'token_type': 'bearer',
         },
-    },
-    'refresh_access_token': {
-        'path': '/authentication',
-        'responses': {
-            200: {
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJGYXN0U3VydmV5Iiwic3ViIjoiYXBwbGUiLCJpYXQiOjE2MTYzNTA5NjAsImV4cCI6MTYxNjM1ODE2MH0.Vl8ndfMgE-LKcH5GOZZ_JEn2rL87Mg9wpihTvo-Cfukqr3vBI6I49EP109B2ZnEASnoXSzDRQSM438Pxxpm6aFMGSaxCJvVbPN3YhxKDKWel-3t7cslF5iwE8AlsYHQV6_6JZv-bZolUmScnGjXKEUBWn3x72AeFBm5I4O4VRWDt96umGfgtaPkBvXwW0eDIbGDIXR-MQF0vjiGnEd0GYwexgCj0uO80QTlN2oIH1kFtb612oqWJ3_Ipb2Ui6jwo0wVZW_I7zi5rKGrELsdGManwt7wUgp-V4779XXZ33IuojgS6kO45-aAkppBycv3cDqQdR_yjoRy6sZ4nryHEPzYKPtumtuY28Va2d9RpSxVHo1DkiyXmlrVWnmzyOuFVUxAMmblwaslc0es4igWtX_bZ141Vb6Vj96xk6pR6Wq9jjEhw9RsfyIVr2TwplzZZayVDl_9Pou3b8cZGRlotAYgWlYj9h0ZiI7hUvvXD24sFykx_HV3-hBPJJDmW3jwPRvRUtZEMic-1jAy-gMJs-irmeVOW6_Mh8LLncTRfutwJI4k6TqnPguX3LKEWu3uyGKT5zT2ZXanaTmBRVuFbON7-xb6ZvncdI5ttALixff2O67gXUjM7E9OrbauVWN6xqQ4-Wv70VJvtJa1MEvZOtC-JGwaF6C2WFNYKbnvB6hY',
-                            'token_type': 'bearer',
-                        },
-                    },
-                },
-            },
-            **_build_error_documentation([
-                errors.InvalidAccessTokenError,
-                errors.AccessForbiddenError,
-            ]),
-        },
-    },
-    'verify_email_address': {
-        'path': '/verification',
-        'responses': {
-            200: {
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJGYXN0U3VydmV5Iiwic3ViIjoiYXBwbGUiLCJpYXQiOjE2MTYzNTA5NjAsImV4cCI6MTYxNjM1ODE2MH0.Vl8ndfMgE-LKcH5GOZZ_JEn2rL87Mg9wpihTvo-Cfukqr3vBI6I49EP109B2ZnEASnoXSzDRQSM438Pxxpm6aFMGSaxCJvVbPN3YhxKDKWel-3t7cslF5iwE8AlsYHQV6_6JZv-bZolUmScnGjXKEUBWn3x72AeFBm5I4O4VRWDt96umGfgtaPkBvXwW0eDIbGDIXR-MQF0vjiGnEd0GYwexgCj0uO80QTlN2oIH1kFtb612oqWJ3_Ipb2Ui6jwo0wVZW_I7zi5rKGrELsdGManwt7wUgp-V4779XXZ33IuojgS6kO45-aAkppBycv3cDqQdR_yjoRy6sZ4nryHEPzYKPtumtuY28Va2d9RpSxVHo1DkiyXmlrVWnmzyOuFVUxAMmblwaslc0es4igWtX_bZ141Vb6Vj96xk6pR6Wq9jjEhw9RsfyIVr2TwplzZZayVDl_9Pou3b8cZGRlotAYgWlYj9h0ZiI7hUvvXD24sFykx_HV3-hBPJJDmW3jwPRvRUtZEMic-1jAy-gMJs-irmeVOW6_Mh8LLncTRfutwJI4k6TqnPguX3LKEWu3uyGKT5zT2ZXanaTmBRVuFbON7-xb6ZvncdI5ttALixff2O67gXUjM7E9OrbauVWN6xqQ4-Wv70VJvtJa1MEvZOtC-JGwaF6C2WFNYKbnvB6hY',
-                            'token_type': 'bearer',
-                        },
-                    },
-                },
-            },
-            **_build_error_documentation([
-                errors.InvalidVerificationTokenError,
-                errors.InvalidPasswordError,
-            ]),
-        },
-    },
+        error_classes=[
+            errors.InvalidVerificationTokenError,
+            errors.InvalidPasswordError,
+        ],
+    ),
 }
