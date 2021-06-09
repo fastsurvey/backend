@@ -104,12 +104,12 @@ arguments = {
 }
 
 
-def build_error_documentation(error_classes):
+def _build_error_documentation(error_classes):
     """Generate the OpenAPI error specifications for given route errors."""
     out = dict()
-    status_codes = [error.STATUS_CODE for error in error_classes]
-    for status, error in zip(status_codes, error_classes):
-        multiple = status_codes.count(error.STATUS_CODE) > 1
+    status_codes = [error_class.STATUS_CODE for error_class in error_classes]
+    for status, error_class in zip(status_codes, error_classes):
+        multiple = status_codes.count(error_class.STATUS_CODE) > 1
         template = {
             'model': ErrorResponse,
             'content': {
@@ -121,39 +121,49 @@ def build_error_documentation(error_classes):
         out.setdefault(status, template)
         if multiple:
             examples = out[status]['content']['application/json']['examples']
-            examples[error.DETAIL] = {'value': {'detail': error.DETAIL}}
+            examples[error_class.DETAIL] = {'value': {
+                'detail': error_class.DETAIL,
+            }}
         else:
             out[status]['content']['application/json']['example'] = {
-                'detail': error.DETAIL,
+                'detail': error_class.DETAIL,
             }
     return out
 
 
-specifications = {
-    'fetch_user': {
-        'path': '/users/{username}',
-        'responses': {
-            200: {
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'email_address': 'support@fastsurvey.de',
-                            'creation_time': 1618530873,
-                            'verified': True,
-                        },
-                    },
-                },
+def _generate_specification(path, response=None, error_classes=[]):
+    """Generate the OpenAPI specification for a route."""
+    responses = {}
+    if response:
+        responses[200] = {
+            'content': {
+                'application/json': {
+                    'example': response,
+                }
             },
-            **build_error_documentation([
-                errors.InvalidAccessTokenError,
-                errors.AccessForbiddenError,
-                errors.UserNotFoundError,
-            ]),
+        }
+    responses.update(_build_error_documentation(error_classes))
+    return {'path': path, 'responses': responses}
+
+
+
+specifications = {
+    'fetch_user': _generate_specification(
+        path='/users/{username}',
+        response={
+            'email_address': 'support@fastsurvey.de',
+            'creation_time': 1618530873,
+            'verified': True,
         },
-    },
+        error_classes=[
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+            errors.UserNotFoundError,
+        ],
+    ),
     'create_user': {
         'path': '/users/{username}',
-        'responses': build_error_documentation([
+        'responses': _build_error_documentation([
             errors.InvalidAccountDataError,
             errors.UsernameAlreadyTakenError,
             errors.EmailAddressAlreadyTakenError,
@@ -161,7 +171,7 @@ specifications = {
     },
     'update_user': {
         'path': '/users/{username}',
-        'responses': build_error_documentation([
+        'responses': _build_error_documentation([
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
             errors.InvalidAccountDataError,
@@ -170,7 +180,7 @@ specifications = {
     },
     'delete_user': {
         'path': '/users/{username}',
-        'responses': build_error_documentation([
+        'responses': _build_error_documentation([
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
         ]),
@@ -185,7 +195,7 @@ specifications = {
                     },
                 },
             },
-            **build_error_documentation([
+            **_build_error_documentation([
                 errors.InvalidAccessTokenError,
                 errors.AccessForbiddenError,
             ]),
@@ -201,7 +211,7 @@ specifications = {
                     },
                 },
             },
-            **build_error_documentation([
+            **_build_error_documentation([
                 errors.InvalidAccessTokenError,
                 errors.AccessForbiddenError,
                 errors.SurveyNotFoundError,
@@ -210,7 +220,7 @@ specifications = {
     },
     'create_survey': {
         'path': '/users/{username}/surveys/{survey_name}',
-        'responses': build_error_documentation([
+        'responses': _build_error_documentation([
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
             errors.InvalidConfigurationError,
@@ -219,7 +229,7 @@ specifications = {
     },
     'update_survey': {
         'path': '/users/{username}/surveys/{survey_name}',
-        'responses': build_error_documentation([
+        'responses': _build_error_documentation([
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
             errors.InvalidConfigurationError,
@@ -229,14 +239,14 @@ specifications = {
     },
     'delete_survey': {
         'path': '/users/{username}/surveys/{survey_name}',
-        'responses': build_error_documentation([
+        'responses': _build_error_documentation([
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
         ]),
     },
     'create_submission': {
         'path': '/users/{username}/surveys/{survey_name}/submissions',
-        'responses': build_error_documentation([
+        'responses': _build_error_documentation([
             errors.SurveyDoesNotAcceptSubmissionsAtTheMomentError,
             errors.InvalidSubmissionError,
             errors.SurveyNotFoundError,
@@ -244,14 +254,14 @@ specifications = {
     },
     'reset_survey': {
         'path': '/users/{username}/surveys/{survey_name}/submissions',
-        'responses': build_error_documentation([
+        'responses': _build_error_documentation([
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
         ]),
     },
     'verify_submission': {
         'path': '/users/{username}/surveys/{survey_name}/verification/{verification_token}',
-        'responses': build_error_documentation([
+        'responses': _build_error_documentation([
             errors.InvalidVerificationTokenError,
             errors.SurveyNotFoundError,
             errors.SurveyDoesNotAcceptSubmissionsAtTheMomentError,
@@ -267,7 +277,7 @@ specifications = {
                     },
                 },
             },
-            **build_error_documentation([
+            **_build_error_documentation([
                 errors.InvalidAccessTokenError,
                 errors.AccessForbiddenError,
                 errors.SurveyNotFoundError,
@@ -284,7 +294,7 @@ specifications = {
                     },
                 },
             },
-            **build_error_documentation([
+            **_build_error_documentation([
                 errors.InvalidAccessTokenError,
             ]),
         },
@@ -302,7 +312,7 @@ specifications = {
                     },
                 },
             },
-            **build_error_documentation([
+            **_build_error_documentation([
                 errors.InvalidPasswordError,
                 errors.AccountNotVerifiedError,
                 errors.UserNotFoundError,
@@ -322,7 +332,7 @@ specifications = {
                     },
                 },
             },
-            **build_error_documentation([
+            **_build_error_documentation([
                 errors.InvalidAccessTokenError,
                 errors.AccessForbiddenError,
             ]),
@@ -341,7 +351,7 @@ specifications = {
                     },
                 },
             },
-            **build_error_documentation([
+            **_build_error_documentation([
                 errors.InvalidVerificationTokenError,
                 errors.InvalidPasswordError,
             ]),
