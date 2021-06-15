@@ -292,7 +292,7 @@ class SubmissionValidator(cerberus.Validator):
         """Validate the structure of a submission for the email field."""
         return (
             type(value) is str
-            and len(value) <= 1024
+            and len(value) <= _LENGTHS['M']
             and re.match(_REGEXES['email_address'], value)
         )
 

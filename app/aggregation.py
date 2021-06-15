@@ -2,8 +2,8 @@ import app.utils as utils
 import app.resources.database as database
 
 
-class Alligator:
-    """Does it aggregate ... or does it alligate ... ?"""
+class Aggregator:
+    """Handles the aggregation of survey submissions into results."""
 
     def __init__(self, configuration):
         """Initialize alligator with some pipeline parts already defined."""
@@ -14,7 +14,7 @@ class Alligator:
         )
         self.collection = (
             database.database[f'surveys.{self.survey_id}.submissions']
-            if self.configuration['authentication'] == 'open'
+            if configuration['authentication'] == 'open'
             else database.database[f'surveys.{self.survey_id}.verified-submissions']
         )
         self.resultss = database.database['resultss']

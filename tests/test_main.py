@@ -708,9 +708,6 @@ async def test_verifying_with_no_prior_submission(survey):
 ################################################################################
 
 
-# TODO test all aggregations in test_aggregation + more tests
-
-
 @pytest.mark.asyncio
 async def test_fetching_results(
         mock_email_sending,

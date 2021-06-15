@@ -209,7 +209,7 @@ class Survey:
         self.authentication = self.configuration['authentication']
         self.ei = Survey._get_email_field_index(self.configuration)
         self.validator = validation.SubmissionValidator.create(configuration)
-        self.alligator = aggregation.Alligator(self.configuration)
+        self.aggregator = aggregation.Aggregator(self.configuration)
         self.submissions = database.database[
             f'surveys'
             f'.{utils.combine(self.username, self.survey_name)}'
@@ -289,5 +289,5 @@ class Survey:
         """Query the survey submissions and return aggregated results."""
         if utils.now() < self.end:
             raise errors.NotImplementedError()
-        self.results = self.results or await self.alligator.fetch()
+        self.results = self.results or await self.aggregator.fetch()
         return self.results
