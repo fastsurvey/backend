@@ -59,8 +59,8 @@ class VerificationCredentials(pydantic.BaseModel):
 @app.get('/status')
 async def fetch_server_status():
     return dict(
-        commit=settings.COMMIT,
-        branch=settings.BRANCH,
+        commit=settings.COMMIT_SHA,
+        branch=settings.BRANCH_NAME,
         timestamp=settings.TIMESTAMP,
     )
 

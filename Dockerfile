@@ -1,13 +1,15 @@
 FROM python:3.8
 
-ARG COMMIT
-ARG BRANCH
+ARG commit_sha
+ARG branch_name
 
 LABEL maintainer="Felix Böhm <felix@felixboehm.dev>"
 LABEL source="https://github.com/fastsurvey/backend"
+LABEL commit_sha=${commit_sha}
+LABEL branch_name=${branch_name}
 
-ENV COMMIT=${COMMIT}
-ENV BRANCH=${BRANCH}
+ENV COMMIT_SHA=${commit_sha}
+ENV BRANCH_NAME=${branch_name}
 
 RUN pip install --upgrade pip
 RUN pip install poetry

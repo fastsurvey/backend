@@ -5,8 +5,8 @@ if ! docker info >/dev/null 2>&1; then
     exit 1
 fi
 
-COMMIT="$(git rev-parse --verify HEAD)"
-BRANCH="$(git branch --show-current)"
+COMMIT_SHA="$(git rev-parse --verify HEAD)"
+BRANCH_NAME="$(git branch --show-current)"
 
-docker build --build-arg COMMIT="$COMMIT" --build-arg BRANCH="$BRANCH" --tag backend .
+docker build --build-arg commit_sha="$COMMIT_SHA" --build-arg branch_name="$BRANCH_NAME" --tag backend .
 yes | docker image prune

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-COMMIT="$(git rev-parse --verify HEAD)"
-BRANCH="$(git branch --show-current)"
+COMMIT_SHA="$(git rev-parse --verify HEAD)"
+BRANCH_NAME="$(git branch --show-current)"
 
-COMMIT="$COMMIT" BRANCH="$BRANCH" env $(grep -v '^#' .env | xargs) poetry run pytest -sx --cov=app --cov-report=term-missing tests "$@"
+COMMIT_SHA="$COMMIT_SHA" BRANCH_NAME="$BRANCH_NAME" env $(grep -v '^#' .env | xargs) poetry run pytest -sx --cov=app --cov-report=term-missing tests "$@"

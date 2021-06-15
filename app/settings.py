@@ -14,8 +14,8 @@ _ENVS = [
     'PRIVATE_RSA_KEY',
     'MONGODB_CONNECTION_STRING',
     'MAILGUN_API_KEY',
-    'COMMIT',
-    'BRANCH',
+    'COMMIT_SHA',
+    'BRANCH_NAME',
 ]
 for env in _ENVS:
     assert os.getenv(env), f'environment variable {env} not set'
@@ -38,9 +38,9 @@ MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
 # Mailgun api key
 MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
 # git commit hash
-COMMIT = os.getenv('COMMIT')
+COMMIT_SHA = os.getenv('COMMIT_SHA')
 # git branch name
-BRANCH = os.getenv('BRANCH')
+BRANCH_NAME = os.getenv('BRANCH_NAME')
 # server start time
 TIMESTAMP = utils.now()
 # sender email address

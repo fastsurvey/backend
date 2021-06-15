@@ -25,8 +25,8 @@ jobs:
         PRIVATE_RSA_KEY: ${{ secrets.PRIVATE_RSA_KEY }}
         MONGODB_CONNECTION_STRING: ${{ secrets.MONGODB_CONNECTION_STRING }}
         MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
-        COMMIT: $GITHUB_SHA
-        BRANCH: ${GITHUB_REF#refs/heads/}
+        COMMIT_SHA: $GITHUB_SHA
+        BRANCH_NAME: ${GITHUB_REF#refs/heads/}
     - name: Push Coverage Report to CodeClimate
       uses: paambaati/codeclimate-action@v2.3.0
       env:
