@@ -11,9 +11,9 @@ jobs:
       with:
         python-version: 3.8
     - name: Install poetry
-      uses: snok/install-poetry@v1.1.1
+      uses: snok/install-poetry@v1.1.6
     - name: Install Python Dependencies
-      run: poetry install
+      run: poetry install --no-ansi --no-interaction
     - name: Test with pytest
       run: poetry run pytest --cov=app --cov-report=term-missing --cov-report=xml tests
       env:
