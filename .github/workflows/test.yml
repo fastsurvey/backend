@@ -1,12 +1,9 @@
 name: Test
-
 on:
   push:
-
 jobs:
   test:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.8
@@ -28,6 +25,8 @@ jobs:
         PRIVATE_RSA_KEY: ${{ secrets.PRIVATE_RSA_KEY }}
         MONGODB_CONNECTION_STRING: ${{ secrets.MONGODB_CONNECTION_STRING }}
         MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+        COMMIT: $GITHUB_SHA
+        BRANCH: ${GITHUB_REF#refs/heads/}
     - name: Push Coverage Report to CodeClimate
       uses: paambaati/codeclimate-action@v2.3.0
       env:
