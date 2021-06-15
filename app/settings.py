@@ -41,7 +41,7 @@ MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
 COMMIT_SHA = os.getenv('COMMIT_SHA')
 # git branch name
 BRANCH_NAME = os.getenv('BRANCH_NAME')
-# server start time
-TIMESTAMP = utils.now()
+# timestamp of when the server was started
+START_TIME = utils.now()
 # sender email address
 SENDER = 'FastSurvey <noreply@fastsurvey.io>'

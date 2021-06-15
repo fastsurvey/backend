@@ -62,7 +62,7 @@ async def server_status():
     return dict(
         commit_sha=settings.COMMIT_SHA,
         branch_name=settings.BRANCH_NAME,
-        timestamp=settings.TIMESTAMP,
+        start_time=settings.START_TIME,
     )
 
 
