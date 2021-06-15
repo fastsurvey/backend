@@ -21,14 +21,14 @@ steps:
     args:
     - 'run'
     - 'deploy'
-    - 'backend-dev'
+    - '${_SERVICE_NAME}'
     - '--image'
     - '${_IMAGE}'
     - '--region'
-    - 'europe-west1'
+    - '${_DEPLOY_REGION}'
     - '--platform'
-    - 'managed'
+    - '${_PLATFORM}'
 images:
   - '${_IMAGE}'
 substitutions:
-  _IMAGE: 'eu.gcr.io/${PROJECT_ID}/${REPO_NAME}:${COMMIT_SHA}'
+  _IMAGE: '${_GCR_HOSTNAME}/${PROJECT_ID}/${REPO_NAME}:${COMMIT_SHA}'
