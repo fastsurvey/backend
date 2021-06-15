@@ -1,5 +1,14 @@
 FROM python:3.8
 
+ARG COMMIT
+ARG BRANCH
+
+LABEL maintainer="Felix Böhm <felix@felixboehm.dev>"
+LABEL source="https://github.com/fastsurvey/backend"
+
+ENV COMMIT=${COMMIT}
+ENV BRANCH=${BRANCH}
+
 RUN pip install --upgrade pip
 RUN pip install poetry
 RUN poetry config virtualenvs.create false

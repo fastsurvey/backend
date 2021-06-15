@@ -6,6 +6,7 @@ import app.account as ac
 import app.survey as sv
 import app.documentation as docs
 import app.cryptography.access as access
+import app.settings as settings
 
 
 # create fastapi app
@@ -53,6 +54,15 @@ class VerificationCredentials(pydantic.BaseModel):
 ################################################################################
 # Routes
 ################################################################################
+
+
+@app.get('/status')
+async def fetch_server_status():
+    return dict(
+        commit=settings.COMMIT,
+        branch=settings.BRANCH,
+        timestamp=settings.TIMESTAMP,
+    )
 
 
 @app.get(**docs.SPECIFICATIONS['fetch_user'])

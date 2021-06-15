@@ -1,6 +1,8 @@
 import os
 import base64
 
+import app.utils as utils
+
 
 # check that required environment variables are set
 _ENVS = [
@@ -12,6 +14,8 @@ _ENVS = [
     'PRIVATE_RSA_KEY',
     'MONGODB_CONNECTION_STRING',
     'MAILGUN_API_KEY',
+    'COMMIT',
+    'BRANCH',
 ]
 for env in _ENVS:
     assert os.getenv(env), f'environment variable {env} not set'
@@ -33,5 +37,11 @@ PRIVATE_RSA_KEY = base64.b64decode(os.getenv('PRIVATE_RSA_KEY'))
 MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
 # Mailgun api key
 MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
+# git commit hash
+COMMIT = os.getenv('COMMIT')
+# git branch name
+BRANCH = os.getenv('BRANCH')
+# server start time
+TIMESTAMP = utils.now()
 # sender email address
 SENDER = 'FastSurvey <noreply@fastsurvey.io>'
