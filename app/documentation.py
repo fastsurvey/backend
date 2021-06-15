@@ -148,6 +148,14 @@ def _generate_responses_documentation(path, response=None, error_classes=[]):
 
 
 SPECIFICATIONS = {
+    'server_status': _generate_responses_documentation(
+        path='/status',
+        response={
+            'commit_sha': '219170f284f2d5e959d70689043aa0747cc52fc1',
+            'branch_name': 'master',
+            'timestamp': 1623779418,
+        },
+    ),
     'fetch_user': _generate_responses_documentation(
         path='/users/{username}',
         response={

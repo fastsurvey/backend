@@ -56,11 +56,12 @@ class VerificationCredentials(pydantic.BaseModel):
 ################################################################################
 
 
-@app.get('/status')
-async def fetch_server_status():
+@app.get(**docs.SPECIFICATIONS['server_status'])
+async def server_status():
+    """Return some information about the server."""
     return dict(
-        commit=settings.COMMIT_SHA,
-        branch=settings.BRANCH_NAME,
+        commit_sha=settings.COMMIT_SHA,
+        branch_name=settings.BRANCH_NAME,
         timestamp=settings.TIMESTAMP,
     )
 
