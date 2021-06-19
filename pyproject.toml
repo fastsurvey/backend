@@ -19,7 +19,6 @@ passlib = "^1.7.4"
 python-multipart = "^0.0.5"
 cryptography = "^3.2.1"
 argon2-cffi = "^20.1.0"
-python-dotenv = "^0.17.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.1"
