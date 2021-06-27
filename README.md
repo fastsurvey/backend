@@ -13,9 +13,12 @@ We take security very seriously. If you believe you have discovered a vulnerabil
 
 ## Running
 
-- install dependencies via `poetry install --remove-untracked`
 - specify your environment variables in a `.env` file
+- build and run with docker via `./scripts/build && ./scripts/run`
+
+## Development
+
+- specify your environment variables in a `.env` file
+- install dependencies via `poetry install --remove-untracked`
 - run tests via `./scripts/test`
 - run in development mode via `./scripts/develop`
-- run with docker via `./scripts/build && ./scripts/run`
-- the server is reachable under `localhost:8000`
