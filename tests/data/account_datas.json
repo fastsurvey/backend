@@ -1,8 +1,8 @@
 {
     "valid": [
         {
-            "username": "lychee",
-            "email_address": "test+lychee@fastsurvey.de",
+            "username": "blueberry",
+            "email_address": "test+blueberry@fastsurvey.de",
             "password": "12345678"
         },
         {
@@ -11,9 +11,9 @@
             "password": "best-password-on-earth"
         },
         {
-            "username": "banana",
-            "email_address": "test+banana@fastsurvey.de",
-            "password": "drowssap"
+            "username": "strawberry",
+            "email_address": "test+strawberry@fastsurvey.de",
+            "password": "password"
         }
     ],
     "invalid": [
@@ -23,35 +23,35 @@
             "password": "MMMMMMMM"
         },
         {
-            "username": "lychee",
-            "email_address": "test+lychee@fastsurvey.de",
+            "username": "blueberry",
+            "email_address": "test+blueberry@fastsurvey.de",
             "password": "1234"
         },
         {
-            "username": "lychee",
+            "username": "blueberry",
             "password": "12345678"
         },
         {
-            "email_address": "test+lychee@fastsurvey.de",
+            "email_address": "test+blueberry@fastsurvey.de",
             "password": "12345678"
         },
         {
-            "username": "lychee",
-            "email_address": "test+lychee@fastsurvey.de"
+            "username": "blueberry",
+            "email_address": "test+blueberry@fastsurvey.de"
         },
         {
-            "1": "lychee",
-            "email_address": "test+lychee@fastsurvey.de",
+            "1": "blueberry",
+            "email_address": "test+blueberry@fastsurvey.de",
             "password": "12345678"
         },
         {
             "username": "x",
-            "email_address": "test+lychee@fastsurvey.de",
+            "email_address": "test+blueberry@fastsurvey.de",
             "password": "12345678"
         },
         {
-            "username": "lychee",
-            "email_address": "test+lychee@fastsurvey.de",
+            "username": "blueberry",
+            "email_address": "test+blueberry@fastsurvey.de",
             "password": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
         }
     ]

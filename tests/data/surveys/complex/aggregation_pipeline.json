@@ -1,1 +1,70 @@
-{}
+[
+    {
+        "$project": {
+            "data.2": {
+                "$toInt": "$data.2"
+            },
+            "data.3.1": {
+                "$toInt": "$data.3.1"
+            },
+            "data.3.2": {
+                "$toInt": "$data.3.2"
+            },
+            "data.3.3": {
+                "$toInt": "$data.3.3"
+            },
+            "data.3.4": {
+                "$toInt": "$data.3.4"
+            },
+            "data.4.1": {
+                "$toInt": "$data.4.1"
+            },
+            "data.4.2": {
+                "$toInt": "$data.4.2"
+            },
+            "data.4.3": {
+                "$toInt": "$data.4.3"
+            }
+        }
+    },
+    {
+        "$group": {
+            "_id": "blueberry.complex",
+            "count": {
+                "$sum": 1
+            },
+            "2": {
+                "$sum": "$data.2"
+            },
+            "3+1": {
+                "$sum": "$data.3.1"
+            },
+            "3+2": {
+                "$sum": "$data.3.2"
+            },
+            "3+3": {
+                "$sum": "$data.3.3"
+            },
+            "3+4": {
+                "$sum": "$data.3.4"
+            },
+            "4+1": {
+                "$sum": "$data.4.1"
+            },
+            "4+2": {
+                "$sum": "$data.4.2"
+            },
+            "4+3": {
+                "$sum": "$data.4.3"
+            }
+        }
+    },
+    {
+        "$merge": {
+            "into": "resultss",
+            "on": "_id",
+            "whenMatched": "replace",
+            "whenNotMatched": "insert"
+        }
+    }
+]

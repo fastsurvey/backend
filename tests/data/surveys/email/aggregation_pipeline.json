@@ -1,7 +1,7 @@
 [
     {
         "$group": {
-            "_id": "lychee.email",
+            "_id": "blueberry.email",
             "count": {
                 "$sum": 1
             }
