@@ -1,6 +1,26 @@
 import app.aggregation as aggregation
 
 
+def test_building_aggregation_pipeline(
+        username,
+        configurationss,
+        aggregation_pipelines,
+    ):
+    """Test that correct aggregation pipeline is built from configuration."""
+    configuration = {
+        'username': username,
+        **configurationss['email']['valid'],
+    }
+    pipeline = aggregation.build_pipeline(configuration)
+
+    '''
+    import json
+    print(json.dumps(x, indent=4))
+    '''
+
+    assert pipeline == aggregation_pipelines['email']
+
+
 def test_adding_email_to_aggregation_pipeline(username, configurationss):
     """Test adding an email field to the aggregation pipeline."""
     configuration = configurationss['email']['valid']

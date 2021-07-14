@@ -34,7 +34,7 @@ def event_loop(request):
 
 
 ################################################################################
-# Test Data Loading
+# Test Data Loading (Surveys)
 ################################################################################
 
 
@@ -45,9 +45,10 @@ def test_survey_data():
     survey_names = [s for s in os.listdir(folder) if s[0] != '.']
     survey_parameters = {
         'configurationss': dict(),
-        'resultss': dict(),
-        'schemas': dict(),
         'submissionss': dict(),
+        'schemas': dict(),
+        'aggregation_pipelines': dict(),
+        'resultss': dict(),
     }
     for survey_name in survey_names:
         subfolder = f'{folder}/{survey_name}'
@@ -64,27 +65,9 @@ def configurationss(test_survey_data):
 
 
 @pytest.fixture(scope='session')
-def configuration(configurationss):
-    """Convenience method to access a general valid test configuration."""
-    return configurationss['complex']['valid']
-
-
-@pytest.fixture(scope='session')
-def survey_name(configuration):
-    """Convenience method to access the name of the general configuration."""
-    return configuration['survey_name']
-
-
-@pytest.fixture(scope='session')
-def resultss(test_survey_data):
-    """Convenience method to access test survey results."""
-    return test_survey_data['resultss']
-
-
-@pytest.fixture(scope='session')
-def results(survey_name, resultss):
-    """Convenience method to access the results of the general survey."""
-    return resultss[survey_name]
+def submissionss(test_survey_data):
+    """Convenience method to access test survey submissions."""
+    return test_survey_data['submissionss']
 
 
 @pytest.fixture(scope='session')
@@ -94,21 +77,55 @@ def schemas(test_survey_data):
 
 
 @pytest.fixture(scope='session')
-def schema(survey_name, schemas):
-    """Convenience method to access the schema of the general survey."""
-    return schemas[survey_name]
+def aggregation_pipelines(test_survey_data):
+    """Convenience method to access test survey aggregation pipelines."""
+    return test_survey_data['aggregation_pipelines']
 
 
 @pytest.fixture(scope='session')
-def submissionss(test_survey_data):
-    """Convenience method to access test survey submissions."""
-    return test_survey_data['submissionss']
+def resultss(test_survey_data):
+    """Convenience method to access test survey results."""
+    return test_survey_data['resultss']
+
+
+################################################################################
+# Convenience Methods To Access Test Data Of A Generic Survey
+################################################################################
+
+
+@pytest.fixture(scope='session')
+def survey_name():
+    """Convenience method to access the name of a generic configuration."""
+    return 'complex'
+
+
+@pytest.fixture(scope='session')
+def configuration(survey_name, configurationss):
+    """Convenience method to access a generic valid test configuration."""
+    return configurationss[survey_name]['valid']
 
 
 @pytest.fixture(scope='session')
 def submissions(survey_name, submissionss):
-    """Convenience method to access valid submissions of the general survey."""
+    """Convenience method to access valid submissions of a generic survey."""
     return submissionss[survey_name]['valid']
+
+
+@pytest.fixture(scope='session')
+def schema(survey_name, schemas):
+    """Convenience method to access the schema of a generic survey."""
+    return schemas[survey_name]
+
+
+@pytest.fixture(scope='session')
+def results(survey_name, resultss):
+    """Convenience method to access the results of a generic survey."""
+    return resultss[survey_name]
+
+
+################################################################################
+# Test Data Loading (Accounts)
+################################################################################
 
 
 @pytest.fixture(scope='session')
@@ -143,17 +160,22 @@ def password(account_data):
 
 
 @pytest.fixture(scope='session')
-def variables():
-    """Provide the some miscellaneous values used for testing."""
-    with open('tests/data/variables.json', 'r') as e:
-        return json.load(e)
-
-
-@pytest.fixture(scope='session')
 def headers(username):
     """Provide an authentication header to access protected routes."""
     access_token = access.generate(username)['access_token']
     return {'Authorization': f'Bearer {access_token}'}
+
+
+################################################################################
+# Test Data Loading (Other)
+################################################################################
+
+
+@pytest.fixture(scope='session')
+def variables():
+    """Provide the some miscellaneous values used for testing."""
+    with open('tests/data/variables.json', 'r') as e:
+        return json.load(e)
 
 
 ################################################################################

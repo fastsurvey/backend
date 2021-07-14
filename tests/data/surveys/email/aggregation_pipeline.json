@@ -1,0 +1,18 @@
+[
+    {
+        "$group": {
+            "_id": "lychee.email",
+            "count": {
+                "$sum": 1
+            }
+        }
+    },
+    {
+        "$merge": {
+            "into": "resultss",
+            "on": "_id",
+            "whenMatched": "replace",
+            "whenNotMatched": "insert"
+        }
+    }
+]
