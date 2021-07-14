@@ -7,6 +7,11 @@ def combine(username, survey_name):
     return f'{username}.{survey_name}'
 
 
+def identify(configuration):
+    """Build unique survey identifier from username and survey_name."""
+    return combine(configuration['username'], configuration['survey_name'])
+
+
 def isregex(value):
     """Check if a given value is a valid regular expression."""
     try:

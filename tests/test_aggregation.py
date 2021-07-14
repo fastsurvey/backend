@@ -12,5 +12,5 @@ def test_building_aggregation_pipeline(
             'username': username,
             **configurations['valid'],
         }
-        x = aggregation.build_aggregation_pipeline(configuration)
+        x = aggregation._build_aggregation_pipeline(configuration)
         assert x == aggregation_pipelines[survey_name]

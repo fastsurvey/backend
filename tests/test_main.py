@@ -504,7 +504,7 @@ async def test_creating_valid_submission(
         json=submissions[0],
     )
     assert response.status_code == 200
-    entry = await survey.submissions.find_one({})
+    entry = await survey.unverified_submissions.find_one({})
     assert entry['data'] == submissions[0]
 
 
@@ -530,7 +530,7 @@ async def test_creating_invalid_submission(
         json=submissionss[survey_name]['invalid'][0],
     )
     assert check_error(response, errors.InvalidSubmissionError)
-    entry = await survey.submissions.find_one({})
+    entry = await survey.unverified_submissions.find_one({})
     assert entry is None
 
 

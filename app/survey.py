@@ -126,7 +126,7 @@ class SurveyManager:
         """Delete submission data of a survey, but keep the results."""
         survey_id = utils.combine(username, survey_name)
         await database.database[f'surveys.{survey_id}.submissions'].drop()
-        s = f'surveys.{survey_id}.verified-submissions'
+        s = f'surveys.{survey_id}.unverified-submissions'
         await database.database[s].drop()
 
     async def reset(self, username, survey_name):
@@ -134,7 +134,7 @@ class SurveyManager:
         survey_id = utils.combine(username, survey_name)
         await database.database['resultss'].delete_one({'_id': survey_id})
         await database.database[f'surveys.{survey_id}.submissions'].drop()
-        s = f'surveys.{survey_id}.verified-submissions'
+        s = f'surveys.{survey_id}.unverified-submissions'
         await database.database[s].drop()
 
     async def delete(self, username, survey_name):
@@ -146,7 +146,7 @@ class SurveyManager:
         survey_id = utils.combine(username, survey_name)
         await database.database['resultss'].delete_one({'_id': survey_id})
         await database.database[f'surveys.{survey_id}.submissions'].drop()
-        s = f'surveys.{survey_id}.verified-submissions'
+        s = f'surveys.{survey_id}.unverified-submissions'
         await database.database[s].drop()
 
 
@@ -209,18 +209,16 @@ class Survey:
         self.authentication = self.configuration['authentication']
         self.ei = Survey._get_email_field_index(self.configuration)
         self.validator = validation.SubmissionValidator.create(configuration)
-        self.aggregator = aggregation.Aggregator(self.configuration)
         self.submissions = database.database[
             f'surveys'
             f'.{utils.combine(self.username, self.survey_name)}'
             f'.submissions'
         ]
-        self.verified_submissions = database.database[
+        self.unverified_submissions = database.database[
             f'surveys'
             f'.{utils.combine(self.username, self.survey_name)}'
-            f'.verified-submissions'
+            f'.unverified-submissions'
         ]
-        self.results = None
 
     @staticmethod
     def _get_email_field_index(configuration):
@@ -247,7 +245,7 @@ class Survey:
             submission['_id'] = verification.token()
             while True:
                 try:
-                    await self.submissions.insert_one(submission)
+                    await self.unverified_submissions.insert_one(submission)
                     break
                 except pymongo.errors.DuplicateKeyError:
                     submission['_id'] = verification.token()
@@ -268,14 +266,14 @@ class Survey:
             raise errors.InvalidVerificationTokenError()
         if verification_time < self.start or verification_time >= self.end:
             raise errors.SurveyDoesNotAcceptSubmissionsAtTheMomentError()
-        submission = await self.submissions.find_one(
+        submission = await self.unverified_submissions.find_one(
             {'_id': verification_token},
         )
         if submission is None:
             raise errors.InvalidVerificationTokenError()
         submission['verification_time'] = verification_time
         submission['_id'] = submission['data'][str(self.ei + 1)]
-        await self.verified_submissions.find_one_and_replace(
+        await self.submissions.find_one_and_replace(
             filter={'_id': submission['_id']},
             replacement=submission,
             upsert=True,
@@ -287,7 +285,4 @@ class Survey:
 
     async def aggregate(self):
         """Query the survey submissions and return aggregated results."""
-        if utils.now() < self.end:
-            raise errors.NotImplementedError()
-        self.results = self.results or await self.aggregator.fetch()
-        return self.results
+        return await aggregation.aggregate(self.configuration)
