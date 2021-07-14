@@ -43,9 +43,9 @@ class SurveyNameAlreadyTakenError(_CustomError):
     DETAIL = 'survey name already taken'
 
 
-class SurveyDoesNotAcceptSubmissionsAtTheMomentError(_CustomError):
+class ActionNotAllowedAtTheMoment(_CustomError):
     STATUS_CODE = 400
-    DETAIL = 'survey does not accept submissions at the moment'
+    DETAIL = 'action not allowed at the moment'
 
 
 ################################################################################

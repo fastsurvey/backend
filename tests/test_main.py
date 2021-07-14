@@ -721,7 +721,7 @@ async def test_fetching_results(
         results,
         cleanup,
     ):
-    """Test that aggregation of test submissions returns the correct result."""
+    """Test that aggregating test submissions returns the correct result."""
     await client.post(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
@@ -737,14 +737,6 @@ async def test_fetching_results(
             url=f'/users/{username}/surveys/{survey_name}/verification/{i}',
             allow_redirects=False,
         )
-    # close survey so that we can aggregate
-    configuration = copy.deepcopy(configuration)
-    configuration['end'] = 0
-    await client.put(
-        url=f'/users/{username}/surveys/{survey_name}',
-        headers=headers,
-        json=configuration,
-    )
     # aggregate and fetch results
     response = await client.get(
         url=f'/users/{username}/surveys/{survey_name}/results',
