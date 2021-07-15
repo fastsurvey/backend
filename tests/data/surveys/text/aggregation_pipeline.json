@@ -6,13 +6,5 @@
                 "$sum": 1
             }
         }
-    },
-    {
-        "$merge": {
-            "into": "resultss",
-            "on": "_id",
-            "whenMatched": "replace",
-            "whenNotMatched": "insert"
-        }
     }
 ]

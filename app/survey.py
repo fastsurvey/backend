@@ -122,20 +122,11 @@ class SurveyManager:
             raise errors.SurveyNotFoundError()
         self.cache.update(configuration)
 
-    async def archive(self, username, survey_name):
-        """Delete submission data of a survey, but keep the results."""
-        survey_id = utils.combine(username, survey_name)
-        await database.database[f'surveys.{survey_id}.submissions'].drop()
-        s = f'surveys.{survey_id}.unverified-submissions'
-        await database.database[s].drop()
-
     async def reset(self, username, survey_name):
-        """Delete all submission data including the results of a survey."""
-        survey_id = utils.combine(username, survey_name)
-        await database.database['resultss'].delete_one({'_id': survey_id})
-        await database.database[f'surveys.{survey_id}.submissions'].drop()
-        s = f'surveys.{survey_id}.unverified-submissions'
-        await database.database[s].drop()
+        """Delete all submission data but keep the configuration."""
+        x = f'surveys.{utils.combine(username, survey_name)}'
+        await database.database[f'{x}.submissions'].drop()
+        await database.database[f'{x}.unverified-submissions'].drop()
 
     async def delete(self, username, survey_name):
         """Delete the survey and all its data from the database and cache."""
@@ -143,11 +134,9 @@ class SurveyManager:
             filter={'username': username, 'survey_name': survey_name},
         )
         self.cache.delete(username, survey_name)
-        survey_id = utils.combine(username, survey_name)
-        await database.database['resultss'].delete_one({'_id': survey_id})
-        await database.database[f'surveys.{survey_id}.submissions'].drop()
-        s = f'surveys.{survey_id}.unverified-submissions'
-        await database.database[s].drop()
+        x = f'surveys.{utils.combine(username, survey_name)}'
+        await database.database[f'{x}.submissions'].drop()
+        await database.database[f'{x}.unverified-submissions'].drop()
 
 
 class SurveyCache:

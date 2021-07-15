@@ -54,14 +54,14 @@ def _build_aggregation_pipeline(configuration):
                 'count': {'$sum': 1},
             },
         },
-        {
-            '$merge': {
-                'into': 'resultss',
-                'on': '_id',
-                'whenMatched': 'replace',
-                'whenNotMatched': 'insert',
-            },
-        },
+#       {
+#           '$merge': {
+#               'into': 'resultss',
+#               'on': '_id',
+#               'whenMatched': 'replace',
+#               'whenNotMatched': 'insert',
+#           },
+#       },
     ]
     for index, field in enumerate(configuration['fields']):
         FMAP[field['type']](aggregation_pipeline, field, index+1)
@@ -87,18 +87,10 @@ async def aggregate(configuration):
     """Aggregate and return the results of the survey."""
     survey_id = utils.identify(configuration)
     submissions = database.database[f'surveys.{survey_id}.submissions']
-
-    # TODO do something if there are no submissions
-    # maybe it's better to simply check if the collection exists?
-    if await submissions.count_documents({}) == 0: return {}
-
     cursor = submissions.aggregate(
         pipeline=_build_aggregation_pipeline(configuration),
         allowDiskUse=True,
     )
-    async for _ in cursor: pass  # make sure that aggregation finished
-    results = await database.database['resultss'].find_one(
-        filter={'_id': survey_id},
-        projection={'_id': False},
-    )
+    results = (await cursor.to_list(length=None))[0]
+    results.pop('_id')
     return _structure_results(results)

@@ -743,6 +743,25 @@ async def test_fetching_results(
         assert response.json() == resultss[survey_name]
 
 
+@pytest.mark.asyncio
+async def test_fetching_results_without_submissions(
+        mock_email_sending,
+        mock_verification_token_generation,
+        client,
+        headers,
+        username,
+        survey_name,
+        configuration,
+        cleanup,
+    ):
+    """Test that aggregation works when no submissions have yet been made."""
+    path = f'/users/{username}/surveys/{survey_name}'
+    await client.post(url=path, headers=headers, json=configuration)
+    response = await client.get(url=f'{path}/results', headers=headers)
+    assert response.status_code == 200
+    assert response.json() == {}
+
+
 ################################################################################
 # Decode Access Token
 #

@@ -16,13 +16,5 @@
                 "$sum": "$data.1"
             }
         }
-    },
-    {
-        "$merge": {
-            "into": "resultss",
-            "on": "_id",
-            "whenMatched": "replace",
-            "whenNotMatched": "insert"
-        }
     }
 ]

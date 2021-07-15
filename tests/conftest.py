@@ -190,7 +190,7 @@ async def reset():
     collections are simply dropped entirely.
 
     """
-    static = {'accounts', 'configurations', 'resultss'}
+    static = {'accounts', 'configurations'}
     for name in static:
         await database.database[name].delete_many({})
     other = await database.database.list_collection_names()

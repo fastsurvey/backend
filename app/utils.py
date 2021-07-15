@@ -1,5 +1,6 @@
 import re
 import time
+import json
 
 
 def combine(username, survey_name):
