@@ -9,18 +9,28 @@ def _add_email_aggregation_commands(pipeline, field, index):
 
 def _add_option_aggregation_commands(pipeline, field, index):
     """Add commands to aggregate option field to aggregation pipeline."""
-    path = f'data.{index}'
-    pipeline[0]['$project'][path] = {'$toInt': f'${path}'}
-    pipeline[1]['$group'][str(index)] = {'$sum': f'${path}'}
+    pipeline[0]['$group'][str(index)] = {
+        '$sum': {
+            '$toInt': f'$data.{index+1}',
+        },
+    }
+    pipeline[1]['$project'][str(index)] = True
 
 
 def _add_radio_aggregation_commands(pipeline, field, index):
     """Add commands to aggregate radio field to aggregation pipeline."""
     subfields = field['fields']
     for i in range(len(subfields)):
-        path = f'data.{index}.{i+1}'
-        pipeline[0]['$project'][path] = {'$toInt': f'${path}'}
-        pipeline[1]['$group'][f'{index}+{i+1}'] = {'$sum': f'${path}'}
+        pipeline[0]['$group'][f'{index}+{i}'] = {
+            '$sum': {
+                '$toInt': f'$data.{index+1}.{i+1}',
+            },
+        }
+    pipeline[1]['$project'][str(index)] = [
+        f'${index}+{i}'
+        for i
+        in range(len(subfields))
+    ]
 
 
 def _add_selection_aggregation_commands(pipeline, field, index):
@@ -46,41 +56,27 @@ def _build_aggregation_pipeline(configuration):
     """Build pymongo aggregation pipeline to aggregate survey submissions."""
     aggregation_pipeline = [
         {
-            '$project': {}
-        },
-        {
             '$group': {
-                '_id': utils.identify(configuration),
+                '_id': None,
                 'count': {'$sum': 1},
             },
         },
-#       {
-#           '$merge': {
-#               'into': 'resultss',
-#               'on': '_id',
-#               'whenMatched': 'replace',
-#               'whenNotMatched': 'insert',
-#           },
-#       },
+        {
+            '$project': {
+                '_id': False,
+                'count': True,
+            }
+        },
+        {
+            '$project': {
+                'count': True,
+                'data': [f'${i}' for i in range(len(configuration['fields']))],
+            }
+        },
     ]
     for index, field in enumerate(configuration['fields']):
-        FMAP[field['type']](aggregation_pipeline, field, index+1)
-    if not aggregation_pipeline[0]['$project']:
-        aggregation_pipeline.pop(0)
+        FMAP[field['type']](aggregation_pipeline, field, index)
     return aggregation_pipeline
-
-
-def _structure_results(results):
-    """Make planar results from MongoDB aggregation nested."""
-    out = {}
-    for key, value in results.items():
-        if '+' in key:
-            split = key.split('+', maxsplit=1)
-            out.setdefault(split[0], {})
-            out[split[0]][split[1]] = value
-        else:
-            out[key] = value
-    return out
 
 
 async def aggregate(configuration):
@@ -91,6 +87,5 @@ async def aggregate(configuration):
         pipeline=_build_aggregation_pipeline(configuration),
         allowDiskUse=True,
     )
-    results = (await cursor.to_list(length=None))[0]
-    results.pop('_id')
-    return _structure_results(results)
+    results = await cursor.to_list(length=None)
+    return results[0]
