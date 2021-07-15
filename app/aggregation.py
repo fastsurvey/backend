@@ -79,6 +79,27 @@ def _build_aggregation_pipeline(configuration):
     return aggregation_pipeline
 
 
+def _build_default_value(field):
+    """Build default field aggregation value for zero submissions."""
+    if field['type'] == 'option':
+        return 0
+    if field['type'] in ['radio', 'selection']:
+        return [0] * len(field['fields'])
+    return None
+
+
+def _build_default_results(configuration):
+    """Build default results to return when there are no submissions."""
+    return {
+        'count': 0,
+        'data': [
+            _build_default_value(field)
+            for field
+            in configuration['fields']
+        ]
+    }
+
+
 async def aggregate(configuration):
     """Aggregate and return the results of the survey."""
     survey_id = utils.identify(configuration)
@@ -88,4 +109,4 @@ async def aggregate(configuration):
         allowDiskUse=True,
     )
     results = await cursor.to_list(length=None)
-    return results[0]
+    return results[0] if len(results) else _build_default_results(configuration)

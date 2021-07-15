@@ -759,7 +759,16 @@ async def test_fetching_results_without_submissions(
     await client.post(url=path, headers=headers, json=configuration)
     response = await client.get(url=f'{path}/results', headers=headers)
     assert response.status_code == 200
-    assert response.json() == {}
+    assert response.json() == {
+        'count': 0,
+        'data': [
+            None,
+            0,
+            [0, 0, 0, 0],
+            [0, 0, 0],
+            None,
+        ]
+    }
 
 
 ################################################################################
