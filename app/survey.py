@@ -232,7 +232,7 @@ class Survey:
         """Save a user submission in the submissions collection."""
         submission_time = utils.now()
         if submission_time < self.start or submission_time >= self.end:
-            raise errors.ActionNotAllowedAtTheMoment()
+            raise errors.InvalidTimingError()
         if not self.validator.validate(submission):
             raise errors.InvalidSubmissionError()
         submission = {
@@ -265,7 +265,7 @@ class Survey:
         if self.authentication != 'email':
             raise errors.InvalidVerificationTokenError()
         if verification_time < self.start or verification_time >= self.end:
-            raise errors.ActionNotAllowedAtTheMoment()
+            raise errors.InvalidTimingError()
         submission = await self.unverified_submissions.find_one(
             {'_id': verification_token},
         )

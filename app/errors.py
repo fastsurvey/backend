@@ -43,9 +43,9 @@ class SurveyNameAlreadyTakenError(_CustomError):
     DETAIL = 'survey name already taken'
 
 
-class ActionNotAllowedAtTheMoment(_CustomError):
+class InvalidTimingError(_CustomError):
     STATUS_CODE = 400
-    DETAIL = 'action not allowed at the moment'
+    DETAIL = 'invalid timing'
 
 
 ################################################################################

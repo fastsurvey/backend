@@ -477,7 +477,6 @@ async def test_updating_survey_name_to_survey_name_in_use(
 #
 # It suffices here to test only one valid and one invalid submission, instead
 # of all examples that we have, as the validation is tested on its own.
-# Additionally, that gets us a pretty nice speed-up.
 ################################################################################
 
 
@@ -715,35 +714,33 @@ async def test_fetching_results(
         client,
         headers,
         username,
-        survey_name,
-        configuration,
-        submissions,
-        results,
+        configurationss,
+        submissionss,
+        resultss,
         cleanup,
     ):
     """Test that aggregating test submissions returns the correct result."""
-    await client.post(
-        url=f'/users/{username}/surveys/{survey_name}',
-        headers=headers,
-        json=configuration,
-    )
-    # push test submissions and validate them
-    for i, submission in enumerate(submissions):
+    counter = 0
+    for survey_name, configurations in configurationss.items():
+        path = f'/users/{username}/surveys/{survey_name}'
         await client.post(
-            url=f'/users/{username}/surveys/{survey_name}/submissions',
-            json=submission,
+            url=path,
+            headers=headers,
+            json=configurations['valid'],
         )
-        await client.get(
-            url=f'/users/{username}/surveys/{survey_name}/verification/{i}',
-            allow_redirects=False,
-        )
-    # aggregate and fetch results
-    response = await client.get(
-        url=f'/users/{username}/surveys/{survey_name}/results',
-        headers=headers,
-    )
-    assert response.status_code == 200
-    assert response.json() == results
+        # push test submissions and validate them
+        for submission in submissionss[survey_name]['valid']:
+            await client.post(url=f'{path}/submissions', json=submission)
+            if configurations['valid']['authentication'] != 'open':
+                await client.get(
+                    url=f'{path}/verification/{counter}',
+                    allow_redirects=False,
+                )
+                counter += 1
+        # aggregate and fetch results
+        response = await client.get(url=f'{path}/results', headers=headers)
+        assert response.status_code == 200
+        assert response.json() == resultss[survey_name]
 
 
 ################################################################################

@@ -239,7 +239,7 @@ SPECIFICATIONS = {
     'create_submission': _generate_responses_documentation(
         path='/users/{username}/surveys/{survey_name}/submissions',
         error_classes=[
-            errors.ActionNotAllowedAtTheMoment,
+            errors.InvalidTimingError,
             errors.InvalidSubmissionError,
             errors.SurveyNotFoundError,
         ],
@@ -256,7 +256,7 @@ SPECIFICATIONS = {
         error_classes=[
             errors.InvalidVerificationTokenError,
             errors.SurveyNotFoundError,
-            errors.ActionNotAllowedAtTheMoment,
+            errors.InvalidTimingError,
         ],
     ),
     'fetch_results': _generate_responses_documentation(
