@@ -1,20 +1,30 @@
 [
     {
-        "$project": {
-            "data.1": {
-                "$toInt": "$data.1"
+        "$group": {
+            "_id": null,
+            "count": {
+                "$sum": 1
+            },
+            "0": {
+                "$sum": {
+                    "$toInt": "$data.1"
+                }
             }
         }
     },
     {
-        "$group": {
-            "_id": "blueberry.option",
-            "count": {
-                "$sum": 1
-            },
-            "1": {
-                "$sum": "$data.1"
-            }
+        "$project": {
+            "_id": false,
+            "count": true,
+            "0": true
+        }
+    },
+    {
+        "$project": {
+            "count": true,
+            "data": [
+                "$0"
+            ]
         }
     }
 ]

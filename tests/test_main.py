@@ -708,7 +708,7 @@ async def test_verifying_with_no_prior_submission(survey):
 
 
 @pytest.mark.asyncio
-async def test_fetching_results(
+async def test_fetching_results_a(
         mock_email_sending,
         mock_verification_token_generation,
         client,
