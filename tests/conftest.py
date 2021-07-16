@@ -229,9 +229,27 @@ def mock_email_sending(monkeypatch):
 def mock_verification_token_generation(monkeypatch):
     """Mock token generation to have predictable tokens for testing."""
     global counter
-    counter = 0
+    counter = -1
     def token():
         global counter
         counter += 1
-        return str(counter-1)
+        return str(counter)
+    monkeypatch.setattr(verification, 'token', token)
+
+
+@pytest.fixture(scope='function')
+def mock_verification_token_generation_with_duplication(monkeypatch):
+    """Mock token generation for predictable tokens with duplicates.
+
+    Duplicate tokens account for potential token collisions in the actual
+    token creation function. The tokens that are used after duplication
+    resolution are: 0, 1, 2, ...
+
+    """
+    global counter
+    counter = -1
+    def token():
+        global counter
+        counter += 1
+        return str(counter//4)
     monkeypatch.setattr(verification, 'token', token)
