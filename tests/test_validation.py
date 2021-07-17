@@ -16,14 +16,14 @@ def configuration_validator():
 
 
 @pytest.fixture(scope='module')
-def submission_validators(configurationss):
+def submission_validators(configurations):
     """Provide submission validator for every test survey."""
     return {
         survey_name: validation.SubmissionValidator.create(
-            configurations['valid']
+            configurations
         )
         for survey_name, configurations
-        in configurationss.items()
+        in configurations.items()
     }
 
 ################################################################################
@@ -48,16 +48,19 @@ def test_account_data_failing(account_validator, account_datas):
 ################################################################################
 
 
-def test_configurations_passing(configuration_validator, configurationss):
+def test_configurations_passing(configuration_validator, configurations):
     """Test that configuration validator passes some valid configurations."""
-    for configurations in configurationss.values():
-        assert configuration_validator.validate(configurations['valid'])
+    for configuration in configurations.values():
+        assert configuration_validator.validate(configuration)
 
 
-def test_configurations_failing(configuration_validator, configurationss):
+def test_configurations_failing(
+        configuration_validator,
+        invalid_configurationss,
+    ):
     """Test that configuration validator fails some invalid configurations."""
-    for configurations in configurationss.values():
-        for configuration in configurations['invalid']:
+    for invalid_configurations in invalid_configurationss.values():
+        for configuration in invalid_configurations:
             assert not configuration_validator.validate(configuration)
 
 
@@ -66,11 +69,11 @@ def test_configurations_failing(configuration_validator, configurationss):
 ################################################################################
 
 
-def test_generating_submission_validation_schema(configurationss, schemas):
+def test_generating_submission_validation_schema(configurations, schemas):
     """Test that the schema generation function returns the correct result."""
-    for survey_name, configurations in configurationss.items():
+    for survey_name, configuration in configurations.items():
         schema = validation.SubmissionValidator._generate_validation_schema(
-            configurations['valid']
+            configuration
         )
         assert schema == schemas[survey_name]
 
@@ -78,12 +81,12 @@ def test_generating_submission_validation_schema(configurationss, schemas):
 def test_submissions_passing(submission_validators, submissionss):
     """Test that submission validator passes some valid submissions."""
     for survey_name, submissions in submissionss.items():
-        for submission in submissions['valid']:
+        for submission in submissions:
             assert submission_validators[survey_name].validate(submission)
 
 
-def test_submissions_failing(submission_validators, submissionss):
+def test_submissions_failing(submission_validators, invalid_submissionss):
     """Test that submission validator fails some invalid submissions."""
-    for survey_name, submissions in submissionss.items():
-        for submission in submissions['invalid']:
+    for survey_name, invalid_submissions in invalid_submissionss.items():
+        for submission in invalid_submissions:
             assert not submission_validators[survey_name].validate(submission)

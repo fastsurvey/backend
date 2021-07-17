@@ -333,10 +333,10 @@ async def test_creating_survey_with_invalid_configuration(
         headers,
         username,
         survey_name,
-        configurationss,
+        invalid_configurationss,
     ):
     """Test that survey creation fails with an invalid configuration."""
-    configuration = configurationss[survey_name]['invalid'][0]
+    configuration = invalid_configurationss[survey_name][0]
     response = await client.post(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
@@ -513,7 +513,7 @@ async def test_creating_invalid_submission(
         username,
         survey_name,
         configuration,
-        submissionss,
+        invalid_submissionss,
         cleanup,
     ):
     """Test that submit correctly fails given an invalid submissions."""
@@ -525,7 +525,7 @@ async def test_creating_invalid_submission(
     survey = await main.survey_manager.fetch(username, survey_name)
     response = await client.post(
         url=f'/users/{username}/surveys/{survey_name}/submissions',
-        json=submissionss[survey_name]['invalid'][0],
+        json=invalid_submissionss[survey_name][0],
     )
     assert check_error(response, errors.InvalidSubmissionError)
     entry = await survey.unverified_submissions.find_one({})
@@ -657,23 +657,23 @@ async def test_fetching_results(
         client,
         headers,
         username,
-        configurationss,
+        configurations,
         submissionss,
         resultss,
         cleanup,
     ):
     """Test that aggregating test submissions returns the correct result."""
     counter = 0
-    for survey_name, configurations in configurationss.items():
+    for survey_name, configuration in configurations.items():
         path = f'/users/{username}/surveys/{survey_name}'
         await client.post(
             url=path,
             headers=headers,
-            json=configurations['valid'],
+            json=configuration,
         )
         survey = await main.survey_manager.fetch(username, survey_name)
         # push test submissions and validate them
-        for submission in submissionss[survey_name]['valid']:
+        for submission in submissionss[survey_name]:
             await client.post(url=f'{path}/submissions', json=submission)
             if survey.index is not None:
                 await client.get(
