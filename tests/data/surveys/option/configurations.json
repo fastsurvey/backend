@@ -1,12 +1,11 @@
 {
     "valid": {
         "survey_name": "option",
-        "title": "Option Survey",
+        "title": "Option Test Survey",
         "description": "",
         "start": 0,
         "end": 4102444800,
         "draft": false,
-        "authentication": "open",
         "limit": 0,
         "fields": [
             {
@@ -20,12 +19,11 @@
     "invalid": [
         {
             "survey_name": "option",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444801,
             "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": [
                 {
@@ -38,12 +36,11 @@
         },
         {
             "survey_name": "option",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": "",
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": [
                 {
@@ -56,12 +53,11 @@
         },
         {
             "survey_name": "option",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": null,
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": [
                 {
@@ -74,30 +70,11 @@
         },
         {
             "survey_name": "option",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": 42,
-            "limit": 0,
-            "fields": [
-                {
-                    "type": "option",
-                    "title": "I have read and agree to the terms and conditions",
-                    "description": "",
-                    "required": true
-                }
-            ]
-        },
-        {
-            "survey_name": "option",
-            "title": "Option Test",
-            "description": "",
-            "start": 0,
-            "end": 4102444800,
-            "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": [
                 {
@@ -109,45 +86,41 @@
         },
         {
             "survey_name": "option",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": []
         },
         {
             "survey_name": "option",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": [1, 2, 3]
         },
         {
             "survey_name": "option",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": null
         },
         {
             "survey_name": "o$",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": [
                 {
@@ -160,12 +133,11 @@
         },
         {
             "survey_name": "option",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": [
                 {
@@ -183,7 +155,6 @@
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": [
                 {
@@ -196,12 +167,11 @@
         },
         {
             "survey_name": "option",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
             "limit": 3.14,
             "fields": [
                 {
@@ -214,66 +184,11 @@
         },
         {
             "survey_name": "option",
-            "title": "Option Test",
+            "title": "Option Test Survey",
             "description": "",
             "start": 3.14,
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
-            "limit": 0,
-            "fields": [
-                {
-                    "type": "option",
-                    "title": "I have read and agree to the terms and conditions",
-                    "description": "",
-                    "required": true
-                }
-            ]
-        },
-        {
-            "survey_name": "option",
-            "title": "Option Test",
-            "description": "",
-            "start": 0,
-            "end": 4102444800,
-            "draft": false,
-            "authentication": "open",
-            "limit": "22",
-            "fields": [
-                {
-                    "type": "option",
-                    "title": "I have read and agree to the terms and conditions",
-                    "description": "",
-                    "required": true
-                }
-            ]
-        },
-        {
-            "survey_name": "option",
-            "title": "Option Test",
-            "description": "",
-            "start": 0,
-            "end": 4102444800,
-            "draft": false,
-            "authentication": "tomato",
-            "limit": 0,
-            "fields": [
-                {
-                    "type": "option",
-                    "title": "I have read and agree to the terms and conditions",
-                    "description": "",
-                    "required": true
-                }
-            ]
-        },
-        {
-            "survey_name": "option",
-            "title": "Option Test",
-            "description": "",
-            "start": 0,
-            "end": 4102444800,
-            "draft": false,
-            "authentication": "email",
             "limit": 0,
             "fields": [
                 {
@@ -290,7 +205,7 @@
         "tomato",
         {
             "survey_name": null,
-            "title": "Option Test"
+            "title": "Option Test Survey"
         }
     ]
 }

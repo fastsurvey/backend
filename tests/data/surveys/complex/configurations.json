@@ -1,20 +1,20 @@
 {
     "valid": {
         "survey_name": "complex",
-        "title": "Complex Survey",
+        "title": "Complex Test Survey",
         "description": "",
         "start": 0,
         "end": 4102444800,
         "draft": false,
-        "authentication": "email",
         "limit": 0,
         "fields": [
             {
                 "type": "email",
-                "title": "What is your email address?",
+                "title": "What's your email address?",
                 "description": "",
+                "hint": "Your email address ...",
                 "regex": ".*",
-                "hint": "Your email address ..."
+                "verify": true
             },
             {
                 "type": "option",
@@ -92,20 +92,20 @@
     "invalid": [
         {
             "survey_name": "complex-survey",
-            "title": "Complex Survey Test",
+            "title": "Complex Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "email",
             "limit": 0,
             "fields": [
                 {
                     "type": "email",
-                    "title": "What is your email address?",
+                    "title": "What's your email address?",
                     "description": "",
+                    "hint": "Your email address ...",
                     "regex": ".*",
-                    "hint": "Your email address ..."
+                    "verify": true
                 },
                 {
                     "type": "option",

@@ -1,12 +1,11 @@
 {
     "valid": {
         "survey_name": "selection",
-        "title": "Selection Survey",
+        "title": "Selection Test Survey",
         "description": "",
         "start": 0,
         "end": 4102444800,
         "draft": false,
-        "authentication": "open",
         "limit": 0,
         "fields": [
             {

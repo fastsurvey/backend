@@ -1,179 +1,180 @@
 {
     "valid": {
         "survey_name": "email",
-        "title": "Email Survey",
+        "title": "Email Test Survey",
         "description": "",
         "start": 0,
         "end": 4102444800,
         "draft": false,
-        "authentication": "email",
         "limit": 0,
         "fields": [
             {
                 "type": "email",
-                "title": "What is your email address?",
+                "title": "What's your email address?",
                 "description": "",
+                "hint": "Your email address ...",
                 "regex": ".*",
-                "hint": "Your email address ..."
+                "verify": true
             }
         ]
     },
     "invalid": [
         {
             "survey_name": "email",
-            "title": "Email Test",
+            "title": "Email Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "open",
             "limit": 0,
             "fields": [
                 {
                     "type": "email",
-                    "title": "What is your email address?",
+                    "title": "What's your email address?",
                     "description": "",
+                    "hint": "Your email address ...",
                     "regex": ".*",
-                    "hint": "Your email address ..."
+                    "verify": true
+                },
+                {
+                    "type": "email",
+                    "title": "What's your email address?",
+                    "description": "",
+                    "hint": "Your email address ...",
+                    "regex": ".*",
+                    "verify": true
                 }
             ]
         },
         {
             "survey_name": "email",
-            "title": "Email Test",
+            "title": "Email Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "email",
+            "limit": 0,
+            "fields": [
+                {
+                    "type": "email",
+                    "title": "What's your email address?",
+                    "description": "",
+                    "hint": "Your email address ...",
+                    "regex": ".*",
+                    "verify": 1
+                }
+            ]
+        },
+        {
+            "survey_name": "email",
+            "title": "Email Test Survey",
+            "description": "",
+            "start": 0,
+            "end": 4102444800,
+            "draft": false,
             "limit": 0,
             "fields": [
                 {
                     "type": "text",
-                    "title": "What is your email address?",
+                    "title": "What's your email address?",
                     "description": "",
+                    "hint": "Your email address ...",
                     "regex": ".*",
-                    "hint": "Your email address ..."
+                    "verify": true
                 }
             ]
         },
         {
             "survey_name": "email",
-            "title": "Email Test",
+            "title": "Email Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "email",
             "limit": 0,
             "fields": [
                 {
                     "type": "email",
-                    "title": "What is your email address?",
+                    "title": "What's your email address?",
                     "description": "",
+                    "hint": "Your email address ...",
                     "regex": "*",
-                    "hint": "Your email address ..."
+                    "verify": true
                 }
             ]
         },
         {
             "survey_name": "email",
-            "title": "Email Test",
+            "title": "Email Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
-            "authentication": "email",
             "limit": 0,
             "fields": [
                 {
                     "type": "email",
-                    "title": "What is your email address?",
+                    "title": "What's your email address?",
                     "description": "",
+                    "hint": "Your email address ...",
                     "regex": ".*",
-                    "hint": "Your email address ..."
+                    "verify": true
                 }
             ]
         },
         {
             "survey_name": "email",
-            "title": "Email Test",
+            "title": "Email Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "email",
             "limit": 0,
             "fields": [
                 {
                     "type": "EMAIL",
-                    "title": "What is your email address?",
+                    "title": "What's your email address?",
                     "description": "",
+                    "hint": "Your email address ...",
                     "regex": ".*",
-                    "hint": "Your email address ..."
+                    "verify": true
                 }
             ]
         },
         {
             "survey_name": "email",
-            "title": "Email Test",
+            "title": "Email Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "email",
             "limit": 0,
             "fields": [
                 {
                     "type": "email",
-                    "title": "What is your email address?",
+                    "title": "What's your email address?",
                     "description": "",
-                    "regex": ".*",
-                    "hint": "Your email address ..."
-                },
-                {
-                    "type": "email",
-                    "title": "What is your email address?",
-                    "description": "",
-                    "regex": ".*",
-                    "hint": "Your email address ..."
-                }
-            ]
-        },
-        {
-            "survey_name": "email",
-            "title": "Email Test",
-            "description": "",
-            "start": 0,
-            "end": 4102444800,
-            "draft": false,
-            "authentication": "email",
-            "limit": 0,
-            "fields": [
-                {
-                    "type": "email",
-                    "title": "What is your email address?",
-                    "description": "",
+                    "hint": "Your email address ...",
                     "regex": null,
-                    "hint": "Your email address ..."
+                    "verify": true
                 }
             ]
         },
         {
             "survey_name": "email",
-            "title": "Email Test",
+            "title": "Email Test Survey",
             "description": "",
             "start": 0,
             "end": 4102444800,
             "draft": false,
-            "authentication": "email",
             "limit": 0,
             "fields": [
                 {
                     "type": "email",
-                    "title": "What is your email address?",
+                    "title": "What's your email address?",
                     "description": "",
+                    "hint": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$",
                     "regex": ".*",
-                    "hint": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+                    "verify": true
                 }
             ]
         }
