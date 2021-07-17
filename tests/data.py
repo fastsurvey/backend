@@ -27,39 +27,139 @@ def _build_invalid_configurationss(test_survey_datas):
 
 
 def _build_invalid_complex_configurations(configuration):
-    """Build some invalid configurations for the complex test survey."""
+    """Build some invalid configurations for the complex test survey.
+
+    With this general survey we mostly test the validation of the header
+    fields. With the other, more specific, test surveys we test the individual
+    field validations.
+
+    """
     invalid_configurations = []
-    # invalid limit type
+    # limit parameter has invalid type
     x = copy.deepcopy(configuration)
     x['limit'] = True
     invalid_configurations.append(x)
+    # limit parameter has invalid type
+    x = copy.deepcopy(configuration)
+    x['limit'] = 3.14
+    invalid_configurations.append(x)
+    # start parameter has invalid type
+    x = copy.deepcopy(configuration)
+    x['start'] = ''
+    invalid_configurations.append(x)
+    # start parameter has invalid type
+    x = copy.deepcopy(configuration)
+    x['start'] = 3.14
+    invalid_configurations.append(x)
+    # start parameter has invalid type
+    x = copy.deepcopy(configuration)
+    x['start'] = None
+    invalid_configurations.append(x)
+    # fields parameter has invalid type
+    x = copy.deepcopy(configuration)
+    x['fields'] = None
+    invalid_configurations.append(x)
+    # end parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['end'] = 4102444801
+    invalid_configurations.append(x)
+    # survey_name parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['survey_name'] = '$' * 8
+    invalid_configurations.append(x)
+    # title parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['title'] = '@' * 129
+    invalid_configurations.append(x)
+    # draft parameter is missing
+    x = copy.deepcopy(configuration)
+    x.pop('draft')
+    invalid_configurations.append(x)
+    # field list is empty
+    x = copy.deepcopy(configuration)
+    x['fields'] = []
+    invalid_configurations.append(x)
+    # field item is empty
+    x = copy.deepcopy(configuration)
+    x['fields'][2] = {}
+    invalid_configurations.append(x)
+    # field item has invalid type
+    x = copy.deepcopy(configuration)
+    x['fields'][2] = 42
+    invalid_configurations.append(x)
+    # configuration has invalid type
+    invalid_configurations.append([])
+    # configuration has invalid type
+    invalid_configurations.append('tomato')
+    # configuration has invalid type
+    invalid_configurations.append(None)
 
     return invalid_configurations
 
 
 def _build_invalid_option_configurations(configuration):
     """Build some invalid configurations for the option test survey."""
-    pass
+    invalid_configurations = []
+    # required parameter has invalid type
+    x = copy.deepcopy(configuration)
+    x['fields'][0]['required'] = 1
+    invalid_configurations.append(x)
+    # type parameter is missing
+    x = copy.deepcopy(configuration)
+    x['fields'][0].pop('type')
+    invalid_configurations.append(x)
+
+    return invalid_configurations
 
 
 def _build_invalid_radio_configurations(configuration):
     """Build some invalid configurations for the radio test survey."""
-    pass
+    return []
 
 
 def _build_invalid_selection_configurations(configuration):
     """Build some invalid configurations for the selection test survey."""
-    pass
+    return []
 
 
 def _build_invalid_text_configurations(configuration):
     """Build some invalid configurations for the text test survey."""
-    pass
+    return []
 
 
 def _build_invalid_email_configurations(configuration):
     """Build some invalid configurations for the email test survey."""
-    pass
+    invalid_configurations = []
+    # more than one email field to verify
+    x = copy.deepcopy(configuration)
+    x['fields'].append(x['fields'][0])
+    invalid_configurations.append(x)
+    # verify parameter has invalid type
+    x = copy.deepcopy(configuration)
+    x['fields'][0]['verify'] = 1
+    invalid_configurations.append(x)
+    # type parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['fields'][0]['type'] = 'text'
+    invalid_configurations.append(x)
+    # type parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['fields'][0]['type'] = 'EMAIL'
+    invalid_configurations.append(x)
+    # regex parameter has invalid regex
+    x = copy.deepcopy(configuration)
+    x['fields'][0]['regex'] = '*'
+    invalid_configurations.append(x)
+    # regex parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['fields'][0]['regex'] = None
+    invalid_configurations.append(x)
+    # hint parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['fields'][0]['hint'] = '$' * 129
+    invalid_configurations.append(x)
+
+    return invalid_configurations
 
 
 ################################################################################
@@ -88,13 +188,21 @@ def _build_invalid_submissionss(test_survey_datas):
 def _build_invalid_complex_submissions(submission):
     """Build some invalid submissions for the complex test survey."""
     invalid_submissions = []
-    # radio field input has wrong type
+    # radio field input has invalid type
     x = copy.deepcopy(submission)
     x['3']['3'] = None
     invalid_submissions.append(x)
-    # text field input not long enough
+    # text field input has invalid value
     x = copy.deepcopy(submission)
     x['5'] = ''
+    invalid_submissions.append(x)
+    # text field input is missing
+    x = copy.deepcopy(submission)
+    x.pop('5')
+    invalid_submissions.append(x)
+    # too many field inputs
+    x = copy.deepcopy(submission)
+    x['6'] = x['3']
     invalid_submissions.append(x)
 
     return invalid_submissions
@@ -102,27 +210,170 @@ def _build_invalid_complex_submissions(submission):
 
 def _build_invalid_option_submissions(submission):
     """Build some invalid submissions for the option test survey."""
-    pass
+    invalid_submissions = []
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = 42
+    invalid_submissions.append(x)
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = None
+    invalid_submissions.append(x)
+    # input has invalid value
+    x = copy.deepcopy(submission)
+    x['1'] = ''
+    invalid_submissions.append(x)
+    # input has invalid value
+    x = copy.deepcopy(submission)
+    x['1'] = False
+    invalid_submissions.append(x)
+    # input has wrong identifier
+    x = copy.deepcopy(submission)
+    x['email'] = x['1']
+    x.pop('1')
+    invalid_submissions.append(x)
+
+    return invalid_submissions
 
 
 def _build_invalid_radio_submissions(submission):
     """Build some invalid submissions for the radio test survey."""
-    pass
+    invalid_submissions = []
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1']['2'] = 'carrot'
+    invalid_submissions.append(x)
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1']['3'] = 1
+    invalid_submissions.append(x)
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = 42
+    invalid_submissions.append(x)
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = None
+    invalid_submissions.append(x)
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = []
+    invalid_submissions.append(x)
+    # input has invalid value
+    x = copy.deepcopy(submission)
+    x['1']['4'] = False
+    invalid_submissions.append(x)
+    # input has invalid value
+    x = copy.deepcopy(submission)
+    x['1'] = {'1': True, '2': True, '3': True, '4': False}
+    invalid_submissions.append(x)
+    # input has invalid value
+    x = copy.deepcopy(submission)
+    x['1'] = dict()
+    invalid_submissions.append(x)
+    # input has wrong identifier
+    x = copy.deepcopy(submission)
+    x['1']['5'] = x['1']['3']
+    x['1'].pop('3')
+    invalid_submissions.append(x)
+    # input has missing identifier
+    x = copy.deepcopy(submission)
+    x['1'].pop('2')
+    invalid_submissions.append(x)
+
+    return invalid_submissions
 
 
 def _build_invalid_selection_submissions(submission):
     """Build some invalid submissions for the selection test survey."""
-    pass
+    invalid_submissions = []
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1']['1'] = None
+    invalid_submissions.append(x)
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1']['1'] = []
+    invalid_submissions.append(x)
+    # input has missing identifier
+    x = copy.deepcopy(submission)
+    x['1'].pop('2')
+    invalid_submissions.append(x)
+    # input has too many selections
+    x = copy.deepcopy(submission)
+    x['1']['2'] = True
+    invalid_submissions.append(x)
+    # input has not enough selections
+    x = copy.deepcopy(submission)
+    x['1'] = {'1': False, '2': False, '3': False}
+    invalid_submissions.append(x)
+    # input has not selected required
+    x = copy.deepcopy(submission)
+    x['1'] = {'1': True, '2': False, '3': False}
+    invalid_submissions.append(x)
+
+    return invalid_submissions
 
 
 def _build_invalid_text_submissions(submission):
     """Build some invalid submissions for the text test survey."""
-    pass
+    invalid_submissions = []
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = 42
+    invalid_submissions.append(x)
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = None
+    invalid_submissions.append(x)
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = ['Hello', 'World']
+    invalid_submissions.append(x)
+    # input has invalid value
+    x = copy.deepcopy(submission)
+    x['1'] = 'tomato'
+    invalid_submissions.append(x)
+    # input has invalid value
+    x = copy.deepcopy(submission)
+    x['1'] = '+' * 1001
+    invalid_submissions.append(x)
+    # input has missing identifier
+    invalid_submissions.append({})
+
+    return invalid_submissions
 
 
 def _build_invalid_email_submissions(submission):
     """Build some invalid submissions for the email test survey."""
-    pass
+    invalid_submissions = []
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = 42
+    invalid_submissions.append(x)
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = None
+    invalid_submissions.append(x)
+    # input has invalid type
+    x = copy.deepcopy(submission)
+    x['1'] = 3.14
+    invalid_submissions.append(x)
+    # input has invalid value
+    x = copy.deepcopy(submission)
+    x['1'] = ''
+    invalid_submissions.append(x)
+    # input has invalid value
+    x = copy.deepcopy(submission)
+    x['1'] = ':' * 1025
+    invalid_submissions.append(x)
+    # input has wrong identifier
+    x = copy.deepcopy(submission)
+    x['email'] = x['1']
+    x.pop('1')
+    invalid_submissions.append(x)
+
+    return invalid_submissions
 
 
 ################################################################################
@@ -142,10 +393,6 @@ def _load_test_survey_datas():
         'resultss': dict(),
     }
     for survey_name in survey_names:
-
-        if survey_name != 'complex':
-            continue
-
         subfolder = f'{folder}/{survey_name}'
         for parameter_name, parameter_dict in test_survey_datas.items():
             with open(f'{subfolder}/{parameter_name[:-1]}.json', 'r') as e:

@@ -1,14 +1,12 @@
 import pytest
 import asyncio
 import json
-import os
 
 import app.main as main
 import app.cryptography.access as access
 import app.cryptography.verification as verification
 import app.resources.database as database
 import app.email as email
-
 import tests.data as data
 
 
@@ -38,26 +36,6 @@ def event_loop(request):
 ################################################################################
 # Test Data Loading (Surveys)
 ################################################################################
-
-
-# @pytest.fixture(scope='session')
-def test_survey_data():
-    """Provide test survey example data (configurations, submissions, ...)."""
-    folder = 'tests/data/surveys'
-    survey_names = [s for s in os.listdir(folder) if s[0] != '.']
-    survey_parameters = {
-        'configurationss': dict(),
-        'submissionss': dict(),
-        'schemas': dict(),
-        'aggregation_pipelines': dict(),
-        'resultss': dict(),
-    }
-    for survey_name in survey_names:
-        subfolder = f'{folder}/{survey_name}'
-        for parameter_name, parameter_dict in survey_parameters.items():
-            with open(f'{subfolder}/{parameter_name[:-1]}.json', 'r') as e:
-                parameter_dict[survey_name] = json.load(e)
-    return survey_parameters
 
 
 @pytest.fixture(scope='session')

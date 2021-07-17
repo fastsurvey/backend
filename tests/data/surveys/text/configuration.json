@@ -1,0 +1,18 @@
+{
+    "survey_name": "text",
+    "title": "Text Test Survey",
+    "description": "",
+    "start": 0,
+    "end": 4102444800,
+    "draft": false,
+    "limit": 0,
+    "fields": [
+        {
+            "type": "text",
+            "title": "Why do you like ice cream?",
+            "description": "",
+            "min_chars": 10,
+            "max_chars": 1000
+        }
+    ]
+}
