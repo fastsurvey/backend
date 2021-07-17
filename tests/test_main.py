@@ -651,7 +651,7 @@ async def test_duplicate_verification_token_resolution(
 
 
 @pytest.mark.asyncio
-async def test_fetching_results_a(
+async def test_fetching_results(
         mock_email_sending,
         mock_verification_token_generation,
         client,
@@ -671,10 +671,11 @@ async def test_fetching_results_a(
             headers=headers,
             json=configurations['valid'],
         )
+        survey = await main.survey_manager.fetch(username, survey_name)
         # push test submissions and validate them
         for submission in submissionss[survey_name]['valid']:
             await client.post(url=f'{path}/submissions', json=submission)
-            if configurations['valid']['authentication'] != 'open':
+            if survey.index is not None:
                 await client.get(
                     url=f'{path}/verification/{counter}',
                     allow_redirects=False,

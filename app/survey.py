@@ -195,8 +195,7 @@ class Survey:
         self.survey_name = self.configuration['survey_name']
         self.start = self.configuration['start']
         self.end = self.configuration['end']
-        self.authentication = self.configuration['authentication']
-        self.ei = Survey._get_email_field_index(self.configuration)
+        self.index = Survey._find_email_field_to_verify(self.configuration)
         self.validator = validation.SubmissionValidator.create(configuration)
         self.submissions = database.database[
             f'surveys'
@@ -210,10 +209,10 @@ class Survey:
         ]
 
     @staticmethod
-    def _get_email_field_index(configuration):
-        """Find the index of the email field in a survey configuration."""
+    def _find_email_field_to_verify(configuration):
+        """Find index of potential email field to verify in configuration."""
         for index, field in enumerate(configuration['fields']):
-            if field['type'] == 'email':
+            if field['type'] == 'email' and field['verify']:
                 return index
         return None
 
@@ -228,9 +227,9 @@ class Survey:
             'submission_time': submission_time,
             'data': submission,
         }
-        if self.authentication == 'open':
+        if self.index is None:
             await self.submissions.insert_one(submission)
-        if self.authentication == 'email':
+        else:
             submission['_id'] = verification.token()
             while True:
                 try:
@@ -239,7 +238,7 @@ class Survey:
                 except pymongo.errors.DuplicateKeyError:
                     submission['_id'] = verification.token()
             status = await email.send_submission_verification(
-                submission['data'][str(self.ei + 1)],
+                submission['data'][str(self.index + 1)],
                 self.username,
                 self.survey_name,
                 self.configuration['title'],
@@ -251,7 +250,7 @@ class Survey:
     async def verify(self, verification_token):
         """Verify the user's email address and save submission as verified."""
         verification_time = utils.now()
-        if self.authentication != 'email':
+        if self.index is None:
             raise errors.InvalidVerificationTokenError()
         if verification_time < self.start or verification_time >= self.end:
             raise errors.InvalidTimingError()
@@ -261,7 +260,7 @@ class Survey:
         if submission is None:
             raise errors.InvalidVerificationTokenError()
         submission['verification_time'] = verification_time
-        submission['_id'] = submission['data'][str(self.ei + 1)]
+        submission['_id'] = submission['data'][str(self.index + 1)]
         await self.submissions.find_one_and_replace(
             filter={'_id': submission['_id']},
             replacement=submission,

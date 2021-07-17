@@ -70,11 +70,10 @@ class ConfigurationValidator():
             'start',
             'end',
             'draft',
-            'authentication',
             'limit',
             'fields',
         },
-        'email': {'type', 'title', 'description', 'regex', 'hint'},
+        'email': {'type', 'title', 'description', 'hint', 'verify', 'regex'},
         'option': {'type', 'title', 'description', 'required'},
         'radio': {'type', 'title', 'description', 'fields'},
         'selection': {
@@ -102,7 +101,6 @@ class ConfigurationValidator():
             and type(value['start']) is type(value['end']) is int
             and 0 <= value['start'] <= value['end'] <= 4102444800
             and type(value['draft']) is bool
-            and value['authentication'] in ['open', 'email']
             and type(value['limit']) is int
             and 0 <= value['limit'] <= 100
             and type(value['fields']) is list
@@ -119,10 +117,10 @@ class ConfigurationValidator():
                 in value['fields']
             ])
             and sum([
-                self._validate_email(field)
+                self._validate_email(field) and field['verify']
                 for field
                 in value['fields']
-            ]) == int(value['authentication'] == 'email')
+            ]) <= 1
         )
 
     def _base_validate(func):
@@ -146,11 +144,12 @@ class ConfigurationValidator():
         """Validate that the argument is a valid email field."""
         return (
             value['type'] == 'email'
+            and type(value['hint']) is str
+            and len(value['hint']) <= _LENGTHS['S']
+            and type(value['verify']) is bool
             and type(value['regex']) is str
             and len(value['regex']) <= _LENGTHS['M']
             and utils.isregex(value['regex'])
-            and type(value['hint']) is str
-            and len(value['hint']) <= _LENGTHS['S']
         )
 
     @_base_validate
