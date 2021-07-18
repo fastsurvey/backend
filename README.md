@@ -2,14 +2,14 @@
 
 [![Maintainability](https://api.codeclimate.com/v1/badges/0886890b76260c1eb047/maintainability)](https://codeclimate.com/github/fastsurvey/backend/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/0886890b76260c1eb047/test_coverage)](https://codeclimate.com/github/fastsurvey/backend/test_coverage)
 
-**Project Documentation:** [docs.fastsurvey.io](https://docs.fastsurvey.io/)</br>
-**API Documentation:** [backend.dev.fastsurvey.io/documentation/redoc](https://backend.dev.fastsurvey.io/documentation/redoc)
+**Project Documentation:** [docs.fastsurvey.de](https://docs.fastsurvey.de/)</br>
+**API Documentation:** [api.dev.fastsurvey.de/documentation/redoc](https://api.dev.fastsurvey.de/documentation/redoc)
 
 ---
 
 ## Security
 
-We take security very seriously. If you believe you have discovered a vulnerability, privacy issue, exposed data, or other security issues in any of our assets, we want to hear from you. Please send an email to the maintainer at felix@felixboehm.dev.
+We take security very seriously. If you believe you have discovered a vulnerability, privacy issue, exposed data, or other security issues in any of our code, we want to hear from you. Please send an email to security@fastsurvey.de.
 
 ## Running
 

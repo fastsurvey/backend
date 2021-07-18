@@ -5,6 +5,6 @@ import app.settings as settings
 
 # email sending client
 client = httpx.AsyncClient(
-    base_url=f'https://api.eu.mailgun.net/v3/email.fastsurvey.io',
+    base_url=settings.MAILGUN_ENDPOINT,
     auth=('api', settings.MAILGUN_API_KEY),
 )
