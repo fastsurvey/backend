@@ -41,43 +41,43 @@ def event_loop(request):
 @pytest.fixture(scope='session')
 def configurations():
     """Convenience method to access test survey configurations."""
-    return data.TEST_SURVEY_DATAS['configurations']
+    return data.TEST_SURVEY_DOCUMENTSS['configurations']
 
 
 @pytest.fixture(scope='session')
 def invalid_configurationss():
-    """Convenience method to access test survey configurations."""
-    return data.TEST_SURVEY_DATAS['invalid_configurationss']
+    """Convenience method to access invalid survey configurations."""
+    return data.TEST_SURVEY_DOCUMENTSS['invalid_configurationss']
 
 
 @pytest.fixture(scope='session')
 def submissionss():
     """Convenience method to access test survey submissions."""
-    return data.TEST_SURVEY_DATAS['submissionss']
+    return data.TEST_SURVEY_DOCUMENTSS['submissionss']
 
 
 @pytest.fixture(scope='session')
 def invalid_submissionss():
-    """Convenience method to access test survey submissions."""
-    return data.TEST_SURVEY_DATAS['invalid_submissionss']
+    """Convenience method to access invalid survey submissions."""
+    return data.TEST_SURVEY_DOCUMENTSS['invalid_submissionss']
 
 
 @pytest.fixture(scope='session')
 def schemas():
-    """Convenience method to access test survey cerberus validation schema."""
-    return data.TEST_SURVEY_DATAS['schemas']
+    """Convenience method to access test survey cerberus validation schemas."""
+    return data.TEST_SURVEY_DOCUMENTSS['schemas']
 
 
 @pytest.fixture(scope='session')
 def aggregation_pipelines():
     """Convenience method to access test survey aggregation pipelines."""
-    return data.TEST_SURVEY_DATAS['aggregation_pipelines']
+    return data.TEST_SURVEY_DOCUMENTSS['aggregation_pipelines']
 
 
 @pytest.fixture(scope='session')
 def resultss():
     """Convenience method to access test survey results."""
-    return data.TEST_SURVEY_DATAS['resultss']
+    return data.TEST_SURVEY_DOCUMENTSS['resultss']
 
 
 ################################################################################
@@ -103,18 +103,6 @@ def submissions(survey_name, submissionss):
     return submissionss[survey_name]
 
 
-@pytest.fixture(scope='session')
-def schema(survey_name, schemas):
-    """Convenience method to access the schema of a generic survey."""
-    return schemas[survey_name]
-
-
-@pytest.fixture(scope='session')
-def results(survey_name, resultss):
-    """Convenience method to access the results of a generic survey."""
-    return resultss[survey_name]
-
-
 ################################################################################
 # Test Data Loading (Accounts)
 ################################################################################
@@ -122,15 +110,25 @@ def results(survey_name, resultss):
 
 @pytest.fixture(scope='session')
 def account_datas():
-    """Provide some valid and invalid examples of account data."""
-    with open('tests/data/account_datas.json', 'r') as e:
-        return json.load(e)
+    """Convenience method to access test account datas."""
+    return data.TEST_ACCOUNT_DOCUMENTSS['account_datas']
+
+
+@pytest.fixture(scope='session')
+def invalid_account_datas():
+    """Convenience method to access invalid account datas."""
+    return data.TEST_ACCOUNT_DOCUMENTSS['invalid_account_datas']
+
+
+################################################################################
+# Convenience Methods To Access Account Data Of A Generic Account
+################################################################################
 
 
 @pytest.fixture(scope='session')
 def account_data(account_datas):
     """Convenience method to access the account data of the test account."""
-    return account_datas['valid'][0]
+    return account_datas[0]
 
 
 @pytest.fixture(scope='session')

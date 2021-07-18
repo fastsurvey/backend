@@ -1,58 +1,17 @@
-{
-    "valid": [
-        {
-            "username": "blueberry",
-            "email_address": "test+blueberry@fastsurvey.de",
-            "password": "12345678"
-        },
-        {
-            "username": "raspberry",
-            "email_address": "test+raspberry@fastsurvey.de",
-            "password": "best-password-on-earth"
-        },
-        {
-            "username": "strawberry",
-            "email_address": "test+strawberry@fastsurvey.de",
-            "password": "password"
-        }
-    ],
-    "invalid": [
-        {
-            "username": "mango",
-            "email_address": "mangolicious!",
-            "password": "MMMMMMMM"
-        },
-        {
-            "username": "blueberry",
-            "email_address": "test+blueberry@fastsurvey.de",
-            "password": "1234"
-        },
-        {
-            "username": "blueberry",
-            "password": "12345678"
-        },
-        {
-            "email_address": "test+blueberry@fastsurvey.de",
-            "password": "12345678"
-        },
-        {
-            "username": "blueberry",
-            "email_address": "test+blueberry@fastsurvey.de"
-        },
-        {
-            "1": "blueberry",
-            "email_address": "test+blueberry@fastsurvey.de",
-            "password": "12345678"
-        },
-        {
-            "username": "x",
-            "email_address": "test+blueberry@fastsurvey.de",
-            "password": "12345678"
-        },
-        {
-            "username": "blueberry",
-            "email_address": "test+blueberry@fastsurvey.de",
-            "password": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
-        }
-    ]
-}
+[
+    {
+        "username": "blueberry",
+        "email_address": "test+blueberry@fastsurvey.de",
+        "password": "12345678"
+    },
+    {
+        "username": "raspberry",
+        "email_address": "test+raspberry@fastsurvey.de",
+        "password": "best-password-on-earth"
+    },
+    {
+        "username": "strawberry",
+        "email_address": "test+strawberry@fastsurvey.de",
+        "password": "password"
+    }
+]

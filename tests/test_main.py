@@ -94,9 +94,12 @@ async def test_creating_user_with_valid_account_data(
 
 
 @pytest.mark.asyncio
-async def test_creating_user_with_invalid_account_data(client, account_datas):
+async def test_creating_user_with_invalid_account_data(
+        client,
+        invalid_account_datas,
+    ):
     """Test that account creation fails when given invalid account data."""
-    account_data = account_datas['invalid'][0]
+    account_data = invalid_account_datas[0]
     username = account_data['username']
     response = await client.post(url=f'/users/{username}', json=account_data)
     assert check_error(response, errors.InvalidAccountDataError)
@@ -116,7 +119,7 @@ async def test_creating_user_username_already_taken(
     ):
     """Test that account creation fails when the username is already taken."""
     await client.post(url=f'/users/{username}', json=account_data)
-    account_data_duplicate = copy.deepcopy(account_datas['valid'][1])
+    account_data_duplicate = copy.deepcopy(account_datas[1])
     account_data_duplicate['username'] = username
     response = await client.post(
         url=f'/users/{account_data_duplicate["username"]}',
@@ -139,7 +142,7 @@ async def test_creating_user_email_address_already_taken(
     ):
     """Test that account creation fails when the email address is in use."""
     await client.post(url=f'/users/{username}', json=account_data)
-    account_data_duplicate = copy.deepcopy(account_datas['valid'][1])
+    account_data_duplicate = copy.deepcopy(account_datas[1])
     account_data_duplicate['email_address'] = email_address
     response = await client.post(
         url=f'/users/{account_data_duplicate["username"]}',
@@ -198,7 +201,7 @@ async def test_updating_existing_user_with_valid_password(
     """Test that account is correctly updated given valid account data."""
     await client.post(url=f'/users/{username}', json=account_data)
     account_data = copy.deepcopy(account_data)
-    account_data['password'] = account_datas['valid'][1]['password']
+    account_data['password'] = account_datas[1]['password']
     response = await client.put(
         url=f'/users/{username}',
         headers=headers,
@@ -207,7 +210,7 @@ async def test_updating_existing_user_with_valid_password(
     assert response.status_code == 200
     entry = await database.database['accounts'].find_one({})
     assert pw.verify(
-        password=account_datas['valid'][1]['password'],
+        password=account_datas[1]['password'],
         password_hash=entry['password_hash'],
     )
 

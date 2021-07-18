@@ -4,14 +4,63 @@ import copy
 
 
 ################################################################################
-# Invalid Configurations
+# Build Invalid Account Datas
 ################################################################################
 
 
-def _build_invalid_configurationss(test_survey_datas):
+def _build_invalid_account_datas(test_account_documentss):
     """Build invalid configurations from valid test survey configurations."""
-    test_survey_datas['invalid_configurationss'] = dict()
-    configurations = test_survey_datas['configurations']
+    invalid_account_datas = []
+    account_data = test_account_documentss['account_datas'][0]
+    # username parameter has invalid type
+    x = copy.deepcopy(account_data)
+    x['username'] = None
+    invalid_account_datas.append(x)
+    # email_address parameter has invalid type
+    x = copy.deepcopy(account_data)
+    x['email_address'] = 42
+    invalid_account_datas.append(x)
+    # password parameter has invalid type
+    x = copy.deepcopy(account_data)
+    x['password'] = None
+    invalid_account_datas.append(x)
+    # email_address parameter has invalid value
+    x = copy.deepcopy(account_data)
+    x['email_address'] = 'email'
+    invalid_account_datas.append(x)
+    # username parameter has invalid value
+    x = copy.deepcopy(account_data)
+    x['username'] = 'x'
+    invalid_account_datas.append(x)
+    # password parameter has invalid value
+    x = copy.deepcopy(account_data)
+    x['password'] = '1234'
+    invalid_account_datas.append(x)
+    # password parameter has invalid value
+    x = copy.deepcopy(account_data)
+    x['password'] = '#' * 65
+    invalid_account_datas.append(x)
+    # email_address parameter is missing
+    x = copy.deepcopy(account_data)
+    x.pop('email_address')
+    invalid_account_datas.append(x)
+    # unsolicited parameter
+    x = copy.deepcopy(account_data)
+    x['admin'] = True
+    invalid_account_datas.append(x)
+
+    test_account_documentss['invalid_account_datas'] = invalid_account_datas
+
+
+################################################################################
+# Build Invalid Configurations
+################################################################################
+
+
+def _build_invalid_configurationss(test_survey_documentss):
+    """Build invalid configurations from valid test survey configurations."""
+    test_survey_documentss['invalid_configurationss'] = dict()
+    configurations = test_survey_documentss['configurations']
     FMAP = {
         'complex': _build_invalid_complex_configurations,
         'option': _build_invalid_option_configurations,
@@ -21,7 +70,7 @@ def _build_invalid_configurationss(test_survey_datas):
         'email': _build_invalid_email_configurations,
     }
     for survey_name, configuration in configurations.items():
-        test_survey_datas['invalid_configurationss'][survey_name] = (
+        test_survey_documentss['invalid_configurationss'][survey_name] = (
             FMAP[survey_name](configuration)
         )
 
@@ -163,7 +212,7 @@ def _build_invalid_email_configurations(configuration):
 
 
 ################################################################################
-# Invalid Submissions
+# Build Invalid Submissions
 ################################################################################
 
 
@@ -381,11 +430,21 @@ def _build_invalid_email_submissions(submission):
 ################################################################################
 
 
-def _load_test_survey_datas():
+def _load_test_account_documentss():
+    """Load some valid and invalid test examples of account data."""
+    documentss = {}
+    with open('tests/data/account_datas.json', 'r') as e:
+        documentss['account_datas'] = json.load(e)
+
+    _build_invalid_account_datas(documentss)
+    return documentss
+
+
+def _load_test_survey_documentss():
     """Load test survey data (configurations, submissions, ...)."""
     folder = 'tests/data/surveys'
     survey_names = [s for s in os.listdir(folder) if s[0] != '.']
-    test_survey_datas = {
+    documentss = {
         'configurations': dict(),
         'submissionss': dict(),
         'schemas': dict(),
@@ -394,14 +453,14 @@ def _load_test_survey_datas():
     }
     for survey_name in survey_names:
         subfolder = f'{folder}/{survey_name}'
-        for parameter_name, parameter_dict in test_survey_datas.items():
+        for parameter_name, parameter_dict in documentss.items():
             with open(f'{subfolder}/{parameter_name[:-1]}.json', 'r') as e:
                 parameter_dict[survey_name] = json.load(e)
 
-    _build_invalid_configurationss(test_survey_datas)
-    _build_invalid_submissionss(test_survey_datas)
-    return test_survey_datas
+    _build_invalid_configurationss(documentss)
+    _build_invalid_submissionss(documentss)
+    return documentss
 
 
-TEST_SURVEY_DATAS = _load_test_survey_datas()
-TEST_ACCOUNT_DATAS = None
+TEST_ACCOUNT_DOCUMENTSS = _load_test_account_documentss()
+TEST_SURVEY_DOCUMENTSS = _load_test_survey_documentss()
