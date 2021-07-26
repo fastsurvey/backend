@@ -3,17 +3,16 @@ FROM python:3.8
 LABEL maintainer="Felix Böhm <felix@felixboehm.dev>"
 LABEL source="https://github.com/fastsurvey/backend"
 
-RUN pip install --upgrade pip
-RUN pip install poetry==1.1.6
+RUN pip install --upgrade pip && pip install poetry==1.1.6
 
 COPY pyproject.toml pyproject.toml
 COPY poetry.lock poetry.lock
 
 # install dependencies and remove poetry afterwards
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-dev --no-ansi --no-interaction
-RUN pip uninstall --yes poetry
-RUN rm pyproject.toml poetry.lock
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-dev --no-ansi --no-interaction && \
+    pip uninstall --yes poetry && \
+    rm pyproject.toml poetry.lock
 
 EXPOSE 8000
 
