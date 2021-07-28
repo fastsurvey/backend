@@ -229,6 +229,7 @@ SPECIFICATIONS = {
             errors.InvalidConfigurationError,
             errors.SurveyNameAlreadyTakenError,
             errors.SurveyNotFoundError,
+            errors.SubmissionsExistError,
         ],
     ),
     'delete_survey': _generate_responses_documentation(
@@ -244,6 +245,7 @@ SPECIFICATIONS = {
             errors.InvalidTimingError,
             errors.InvalidSubmissionError,
             errors.SurveyNotFoundError,
+            errors.SubmissionLimitReachedError,
         ],
     ),
     'reset_survey': _generate_responses_documentation(

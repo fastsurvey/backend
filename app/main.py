@@ -134,7 +134,11 @@ async def fetch_survey(
     draft mode **are not** returned.
 
     """
-    return await survey_manager.fetch_configuration(username, survey_name)
+    return await survey_manager.fetch_configuration(
+        username,
+        survey_name,
+        return_drafts=False,
+    )
 
 
 @app.post(**docs.SPECIFICATIONS['create_survey'])
@@ -190,7 +194,11 @@ async def create_submission(
         submission: dict = docs.ARGUMENTS['submission'],
     ):
     """Validate submission and store it under pending submissions."""
-    survey = await survey_manager.fetch(username, survey_name)
+    survey = await survey_manager.fetch(
+        username,
+        survey_name,
+        return_drafts=False,
+    )
     return await survey.submit(submission)
 
 
@@ -201,7 +209,11 @@ async def verify_submission(
         verification_token: str = docs.ARGUMENTS['verification_token'],
     ):
     """Verify user token and either fail or redirect to success page."""
-    survey = await survey_manager.fetch(username, survey_name)
+    survey = await survey_manager.fetch(
+        username,
+        survey_name,
+        return_drafts=False,
+    )
     return await survey.verify(verification_token)
 
 

@@ -31,12 +31,8 @@ class SurveyManager:
         self.cache = SurveyCache()
         self.validator = validation.ConfigurationValidator()
 
-    async def fetch(self, username, survey_name):
-        """Return the survey object corresponding to user and survey name.
-
-        Surveys drafts are not returned.
-
-        """
+    async def fetch(self, username, survey_name, return_drafts=True):
+        """Return the survey object corresponding to user and survey name."""
         try:
             return self.cache.fetch(username, survey_name)
         except KeyError:
@@ -44,22 +40,24 @@ class SurveyManager:
                 filter={
                     'username': username,
                     'survey_name': survey_name,
-                    'draft': False,
                 },
                 projection={'_id': False},
             )
             if configuration is None:
                 raise errors.SurveyNotFoundError()
-            self.cache.update(configuration)
+            if configuration['draft'] and not return_drafts:
+                raise errors.SurveyNotFoundError()
+            await self.cache.update(configuration)
             return self.cache.fetch(username, survey_name)
 
-    async def fetch_configuration(self, username, survey_name):
-        """Return survey configuration corresponding to user/survey name.
-
-        Draft configurations are not returned.
-
-        """
-        survey = await self.fetch(username, survey_name)
+    async def fetch_configuration(
+            self,
+            username,
+            survey_name,
+            return_drafts=True,
+        ):
+        """Return survey configuration corresponding to user/survey name."""
+        survey = await self.fetch(username, survey_name, return_drafts)
         return {
             key: survey.configuration[key]
             for key
@@ -88,28 +86,27 @@ class SurveyManager:
             # like this the configuration in the survey is the same as
             # the one that is sent around in the routes
 
-            self.cache.update(configuration)
+            await self.cache.update(configuration)
         except pymongo.errors.DuplicateKeyError:
             raise errors.SurveyNameAlreadyTakenError()
 
     async def update(self, username, survey_name, configuration):
         """Update a survey configuration in the database and cache.
 
-        Survey updates are only possible if the survey has not yet started.
-        This means that the only thing to update in the database is the
-        configuration, as there are no existing submissions or results.
+        Survey updates are only possible if the survey has no submissions yet.
+        This is to ensure that submissions cannot be invalidated and means
+        that the only thing to update in the database is the configuration.
 
         The configuration includes the survey_name despite it already being
         specified in the route. We do this in order to enable changing the
         survey_name.
 
         """
-
-        # TODO make update only possible if survey has not yet started
-        # -> no, if there are no submissions yet!
-
         if not self.validator.validate(configuration):
             raise errors.InvalidConfigurationError()
+        survey = await self.fetch(username, survey_name)
+        if survey.counter > 0:
+            raise errors.SubmissionsExistError()
         configuration['username'] = username
         try:
             response = await database.database['configurations'].replace_one(
@@ -120,10 +117,11 @@ class SurveyManager:
             raise errors.SurveyNameAlreadyTakenError()
         if response.matched_count == 0:
             raise errors.SurveyNotFoundError()
-        self.cache.update(configuration)
+        await self.cache.update(configuration)
 
     async def reset(self, username, survey_name):
         """Delete all submission data but keep the configuration."""
+        self.cache.delete(username, survey_name)
         x = f'surveys.{utils.combine(username, survey_name)}'
         await database.database[f'{x}.submissions'].drop()
         await database.database[f'{x}.unverified-submissions'].drop()
@@ -164,7 +162,7 @@ class SurveyCache:
         survey_id = utils.combine(username, survey_name)
         return self._cache[survey_id]
 
-    def update(self, configuration):
+    async def update(self, configuration):
         """Update or create survey object in the local cache.
 
         Draft surveys are not cached. When the given configuration is a draft,
@@ -177,7 +175,7 @@ class SurveyCache:
         if configuration['draft']:
             self.delete(username, survey_name)
         else:
-            self._cache[survey_id] = Survey(configuration)
+            self._cache[survey_id] = await Survey.create(configuration)
 
     def delete(self, username, survey_name):
         """Remove survey object from the local cache."""
@@ -188,7 +186,7 @@ class SurveyCache:
 class Survey:
     """The survey class that all surveys instantiate."""
 
-    def __init__(self, configuration):
+    def __init__(self, configuration, counter):
         """Create a survey from the given json configuration file."""
         self.configuration = configuration
         self.username = self.configuration['username']
@@ -198,15 +196,25 @@ class Survey:
         self.index = Survey._find_email_field_to_verify(self.configuration)
         self.validator = validation.SubmissionValidator.create(configuration)
         self.submissions = database.database[
-            f'surveys'
-            f'.{utils.combine(self.username, self.survey_name)}'
+            f'surveys.{utils.identify(self.configuration)}'
             f'.submissions'
         ]
         self.unverified_submissions = database.database[
-            f'surveys'
-            f'.{utils.combine(self.username, self.survey_name)}'
+            f'surveys.{utils.identify(self.configuration)}'
             f'.unverified-submissions'
         ]
+        self.limit = self.configuration['limit']
+        self.counter = counter
+
+    @classmethod
+    async def create(cls, configuration):
+        """Create a survey from the given json configuration file."""
+        submissions = database.database[
+            f'surveys.{utils.identify(configuration)}'
+            f'.submissions'
+        ]
+        counter = await submissions.count_documents({})
+        return cls(configuration, counter)
 
     @staticmethod
     def _find_email_field_to_verify(configuration):
@@ -221,6 +229,8 @@ class Survey:
         submission_time = utils.now()
         if submission_time < self.start or submission_time >= self.end:
             raise errors.InvalidTimingError()
+        if self.counter >= self.limit != 0:
+            raise errors.SubmissionLimitReachedError()
         if not self.validator.validate(submission):
             raise errors.InvalidSubmissionError()
         submission = {
@@ -229,6 +239,7 @@ class Survey:
         }
         if self.index is None:
             await self.submissions.insert_one(submission)
+            self.counter += 1
         else:
             submission['_id'] = verification.token()
             while True:
@@ -261,11 +272,13 @@ class Survey:
             raise errors.InvalidVerificationTokenError()
         submission['verification_time'] = verification_time
         submission['_id'] = submission['data'][str(self.index + 1)]
-        await self.submissions.find_one_and_replace(
+        document = await self.submissions.find_one_and_replace(
             filter={'_id': submission['_id']},
             replacement=submission,
             upsert=True,
         )
+        if document is None:
+            self.counter += 1
         return fastapi.responses.RedirectResponse(
             f'{settings.FRONTEND_URL}/{self.username}/{self.survey_name}'
             f'/success'
