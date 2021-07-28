@@ -470,6 +470,36 @@ async def test_updating_survey_name_to_survey_name_in_use(
     assert entry is not None
 
 
+@pytest.mark.asyncio
+async def test_updating_survey_with_existing_submissions(
+        mock_email_sending,
+        mock_verification_token_generation,
+        client,
+        headers,
+        username,
+        survey_name,
+        configuration,
+        submissions,
+        cleanup,
+    ):
+    """Test that survey name update fails if it has existing submissions."""
+    path = f'/users/{username}/surveys/{survey_name}'
+    await client.post(url=path, headers=headers, json=configuration)
+    # push and validate a submission
+    await client.post(url=f'{path}/submissions', json=submissions[0])
+    await client.get(url=f'{path}/verification/0', allow_redirects=False)
+    # push changed configuration
+    configuration = copy.deepcopy(configuration)
+    configuration['description'] = 'chameleon'
+    response = await client.put(url=path, headers=headers, json=configuration)
+    # check validity
+    assert check_error(response, errors.SubmissionsExistError)
+    survey = main.survey_manager.cache.fetch(username, survey_name)
+    assert survey.configuration['description'] != configuration['description']
+    entry = await database.database['configurations'].find_one({})
+    assert entry['description'] != configuration['description']
+
+
 # TODO reset survey
 # TODO delete survey
 
