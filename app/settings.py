@@ -5,11 +5,8 @@ import app.utils as utils
 
 
 # check that required environment variables are set
-_ENVS = [
+_VARS = [
     'ENVIRONMENT',
-    'FRONTEND_URL',
-    'CONSOLE_URL',
-    'BACKEND_URL',
     'PUBLIC_RSA_KEY',
     'PRIVATE_RSA_KEY',
     'MONGODB_CONNECTION_STRING',
@@ -17,18 +14,24 @@ _ENVS = [
     'COMMIT_SHA',
     'BRANCH_NAME',
 ]
-for env in _ENVS:
-    assert os.getenv(env), f'environment variable {env} not set'
+for var in _VARS:
+    assert os.getenv(var), f'environment variable {var} not set'
 
 
-# development / production / test environment
+# test / development / production environment
 ENVIRONMENT = os.getenv('ENVIRONMENT')
+assert ENVIRONMENT in ['test', 'development', 'production']
 # frontend url
-FRONTEND_URL = os.getenv('FRONTEND_URL')
+_URLS = {
+    'production': 'fastsurvey.de',
+    'development': 'dev.fastsurvey.de',
+    'test': 'test.fastsurvey.de',
+}
+FRONTEND_URL = _URLS[ENVIRONMENT]
 # console url
-CONSOLE_URL = os.getenv('CONSOLE_URL')
+CONSOLE_URL = f'console.{FRONTEND_URL}'
 # backend url
-BACKEND_URL = os.getenv('BACKEND_URL')
+BACKEND_URL = f'api.{FRONTEND_URL}'
 # public JSON Web Token signature key
 PUBLIC_RSA_KEY = base64.b64decode(os.getenv('PUBLIC_RSA_KEY'))
 # private JSON Web Token signature key
