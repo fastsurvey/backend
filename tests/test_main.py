@@ -513,7 +513,7 @@ async def test_updating_survey_with_existing_submissions(
 
 
 @pytest.mark.asyncio
-async def test_creating_valid_submission(
+async def test_creating_submission(
         mock_email_sending,
         client,
         headers,
@@ -524,16 +524,10 @@ async def test_creating_valid_submission(
         cleanup,
     ):
     """Test that submission works given a valid submission."""
-    await client.post(
-        url=f'/users/{username}/surveys/{survey_name}',
-        headers=headers,
-        json=configuration,
-    )
+    path = f'/users/{username}/surveys/{survey_name}'
+    await client.post(url=path, headers=headers, json=configuration)
     survey = await main.survey_manager.fetch(username, survey_name)
-    response = await client.post(
-        url=f'/users/{username}/surveys/{survey_name}/submissions',
-        json=submissions[0],
-    )
+    response = await client.post(url=f'{path}/submissions', json=submissions[0])
     assert response.status_code == 200
     entry = await survey.unverified_submissions.find_one({})
     assert entry['data'] == submissions[0]
@@ -550,19 +544,45 @@ async def test_creating_invalid_submission(
         cleanup,
     ):
     """Test that submit correctly fails given an invalid submissions."""
-    await client.post(
-        url=f'/users/{username}/surveys/{survey_name}',
-        headers=headers,
-        json=configuration,
-    )
+    path = f'/users/{username}/surveys/{survey_name}'
+    await client.post(url=path, headers=headers, json=configuration)
     survey = await main.survey_manager.fetch(username, survey_name)
     response = await client.post(
-        url=f'/users/{username}/surveys/{survey_name}/submissions',
+        url=f'{path}/submissions',
         json=invalid_submissionss[survey_name][0],
     )
     assert check_error(response, errors.InvalidSubmissionError)
     entry = await survey.unverified_submissions.find_one({})
     assert entry is None
+
+
+@pytest.mark.asyncio
+async def test_creating_submission_with_submission_limit_reached(
+        mock_email_sending,
+        mock_verification_token_generation,
+        client,
+        headers,
+        username,
+        survey_name,
+        configuration,
+        submissions,
+        cleanup,
+    ):
+    """Test that submission is rejected when submission limit is reached."""
+    path = f'/users/{username}/surveys/{survey_name}'
+    # push survey that has a limit of a single submission
+    configuration = copy.deepcopy(configuration)
+    configuration['limit'] = 1
+    await client.post(url=path, headers=headers, json=configuration)
+    # push and validate a submission
+    await client.post(url=f'{path}/submissions', json=submissions[0])
+    await client.get(url=f'{path}/verification/0', allow_redirects=False)
+    # push a second submission and verify
+    response = await client.post(url=f'{path}/submissions', json=submissions[0])
+    assert check_error(response, errors.SubmissionLimitReachedError)
+    survey = main.survey_manager.cache.fetch(username, survey_name)
+    x = await survey.submissions.find_one({})
+    assert x['data'] == submissions[0]
 
 
 ################################################################################
