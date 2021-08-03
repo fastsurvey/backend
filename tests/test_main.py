@@ -12,16 +12,15 @@ import app.errors as errors
 @pytest.fixture(scope='module')
 async def client():
     """Provide a HTTPX AsyncClient that is properly closed after testing."""
-    client = httpx.AsyncClient(
-        app=main.app,
-        base_url='http://example.com',
-    )
+    client = httpx.AsyncClient(app=main.app, base_url='http://example.com')
     yield client
     await client.aclose()
 
 
 def check_error(response, error):
     """Check that a HTTPX request returned with a specific error."""
+    if error is None:
+        return response.status_code == 422
     return (
         response.status_code == error.STATUS_CODE
         and response.json()['detail'] == error.DETAIL
@@ -43,7 +42,7 @@ async def test_fetching_existing_user_with_valid_access_token(
         cleanup,
     ):
     """Test that correct account data is returned on valid request."""
-    await main.account_manager.create(username, account_data)
+    await client.post(f'/users/{username}', json=account_data)
     response = await client.get(f'/users/{username}', headers=headers)
     assert response.status_code == 200
     keys = set(response.json().keys())
@@ -59,7 +58,7 @@ async def test_fetching_existing_user_with_invalid_access_token(
         cleanup,
     ):
     """Test that correct account data is returned on valid request."""
-    await main.account_manager.create(username, account_data)
+    await client.post(f'/users/{username}', json=account_data)
     access_token = access.generate('tomato')['access_token']
     headers = {'Authorization': f'Bearer {access_token}'}
     response = await client.get(f'/users/{username}', headers=headers)
@@ -102,7 +101,7 @@ async def test_creating_user_with_invalid_account_data(
     account_data = invalid_account_datas[0]
     username = account_data['username']
     response = await client.post(url=f'/users/{username}', json=account_data)
-    assert check_error(response, errors.InvalidAccountDataError)
+    assert check_error(response, None)
     entry = await database.database['accounts'].find_one({})
     assert entry is None
 

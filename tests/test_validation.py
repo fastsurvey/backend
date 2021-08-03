@@ -1,12 +1,7 @@
 import pytest
+import pydantic
 
 import app.validation as validation
-
-
-@pytest.fixture(scope='module')
-def account_validator():
-    """Provide an instance of the account validator."""
-    return validation.AccountValidator()
 
 
 @pytest.fixture(scope='module')
@@ -26,21 +21,23 @@ def submission_validators(configurations):
         in configurations.items()
     }
 
+
 ################################################################################
 # Account Validation
 ################################################################################
 
 
-def test_account_data_passing(account_validator, account_datas):
-    """Test that account validator passes some valid account data."""
+def test_account_data_passing(account_datas):
+    """Test that account validation passes some valid accounts."""
     for account_data in account_datas:
-        assert account_validator.validate(account_data)
+        validation.AccountData(**account_data)
 
 
-def test_account_data_failing(account_validator, invalid_account_datas):
-    """Test that account validator fails some invalid account data."""
+def test_account_data_failing(invalid_account_datas):
+    """Test that account validation fails some invalid accounts."""
     for account_data in invalid_account_datas:
-        assert not account_validator.validate(account_data)
+        with pytest.raises(pydantic.ValidationError):
+            validation.AccountData(**account_data)
 
 
 ################################################################################

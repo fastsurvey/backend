@@ -1,6 +1,7 @@
 import re
 import cerberus
 import functools
+import pydantic
 
 import app.utils as utils
 
@@ -53,6 +54,25 @@ class AccountValidator(cerberus.Validator):
             require_all=True,
             **kwargs,
         )
+
+
+class BaseModel(pydantic.BaseModel):
+    """Custom BaseModel that pydantic models inherit from."""
+
+    class Config:
+        max_anystr_length = 2**16
+        extra = pydantic.Extra['forbid']
+
+
+class AccountData(BaseModel):
+    """Pydantic model used to validate account data."""
+    username: pydantic.constr(strict=True, regex=r'^[a-z0-9-]{2,20}$')
+    password: pydantic.constr(strict=True, min_length=8, max_length=64)
+    email_address: pydantic.constr(
+        strict=True,
+        max_length=256,
+        regex=r'^.+@.+$',
+    )
 
 
 ################################################################################

@@ -13,11 +13,6 @@ class _CustomError(fastapi.HTTPException):
 ################################################################################
 
 
-class InvalidAccountDataError(_CustomError):
-    STATUS_CODE = 400
-    DETAIL = 'invalid account data'
-
-
 class InvalidConfigurationError(_CustomError):
     STATUS_CODE = 400
     DETAIL = 'invalid configuration'
