@@ -13,7 +13,7 @@
             "description": "",
             "min_select": 1,
             "max_select": 2,
-            "fields": [
+            "options": [
                 {
                     "type": "option",
                     "title": "Strawberry",

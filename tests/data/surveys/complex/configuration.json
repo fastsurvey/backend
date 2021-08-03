@@ -25,7 +25,7 @@
             "type": "radio",
             "title": "What is your favorite fruit?",
             "description": "",
-            "fields": [
+            "options": [
                 {
                     "type": "option",
                     "title": "Asparagus",
@@ -58,7 +58,7 @@
             "description": "",
             "min_select": 1,
             "max_select": 2,
-            "fields": [
+            "options": [
                 {
                     "type": "option",
                     "title": "Strawberry",

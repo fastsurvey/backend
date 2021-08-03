@@ -5,12 +5,6 @@ import app.validation as validation
 
 
 @pytest.fixture(scope='module')
-def configuration_validator():
-    """Provide an instance of the configuration validator."""
-    return validation.ConfigurationValidator()
-
-
-@pytest.fixture(scope='module')
 def submission_validators(configurations):
     """Provide submission validator for every test survey."""
     return {
@@ -45,20 +39,18 @@ def test_account_data_failing(invalid_account_datas):
 ################################################################################
 
 
-def test_configurations_passing(configuration_validator, configurations):
-    """Test that configuration validator passes some valid configurations."""
+def test_configurations_passing(configurations):
+    """Test that configuration validation passes some valid configurations."""
     for configuration in configurations.values():
-        assert configuration_validator.validate(configuration)
+        validation.Configuration(**configuration)
 
 
-def test_configurations_failing(
-        configuration_validator,
-        invalid_configurationss,
-    ):
-    """Test that configuration validator fails some invalid configurations."""
+def test_configurations_failing(invalid_configurationss):
+    """Test that configuration validation fails some invalid configurations."""
     for invalid_configurations in invalid_configurationss.values():
         for configuration in invalid_configurations:
-            assert not configuration_validator.validate(configuration)
+            with pytest.raises(pydantic.ValidationError):
+                validation.Configuration(**configuration)
 
 
 ################################################################################

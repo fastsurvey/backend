@@ -2,6 +2,8 @@ import re
 import cerberus
 import functools
 import pydantic
+import typing
+import enum
 
 import app.utils as utils
 
@@ -20,26 +22,32 @@ _LENGTHS = {
 }
 
 
-################################################################################
-# Account Validation
-################################################################################
+class Length(int, enum.Enum):
+    A = 32
+    B = 256
+    C = 4096
 
 
 class BaseModel(pydantic.BaseModel):
     """Custom BaseModel that pydantic models inherit from."""
 
     class Config:
-        max_anystr_length = 2**16
+        max_anystr_length = Length.C
         extra = pydantic.Extra['forbid']
+
+
+################################################################################
+# Account Validation
+################################################################################
 
 
 class AccountData(BaseModel):
     """Pydantic model used to validate account data."""
-    username: pydantic.constr(strict=True, regex=r'^[a-z0-9-]{2,20}$')
-    password: pydantic.constr(strict=True, min_length=8, max_length=64)
+    username: pydantic.constr(strict=True, regex=r'^[a-z0-9-]{1,32}$')
+    password: pydantic.constr(strict=True, min_length=8, max_length=Length.B)
     email_address: pydantic.constr(
         strict=True,
-        max_length=256,
+        max_length=Length.B,
         regex=r'^.+@.+$',
     )
 
@@ -47,6 +55,106 @@ class AccountData(BaseModel):
 ################################################################################
 # Configuration Validation
 ################################################################################
+
+
+class Field(BaseModel):
+    title: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
+    description: pydantic.StrictStr
+
+
+class EmailField(Field):
+    type: typing.Literal['email']
+    hint: pydantic.constr(strict=True, max_length=Length.B)
+    regex: pydantic.constr(strict=True, max_length=Length.B)
+    verify: pydantic.StrictBool
+
+    @pydantic.validator('regex')
+    def validate_regex(cls, v):
+        try:
+            re.compile(v)
+            return v
+        except:
+            raise ValueError('invalid regular expression')
+
+
+class OptionField(Field):
+    type: typing.Literal['option']
+    required: pydantic.StrictBool
+
+
+class RadioField(Field):
+    type: typing.Literal['radio']
+    options: pydantic.conlist(
+        item_type=OptionField,
+        min_items=1,
+        max_items=Length.A,
+    )
+
+
+class SelectionField(Field):
+    type: typing.Literal['selection']
+    options: pydantic.conlist(
+        item_type=OptionField,
+        min_items=1,
+        max_items=Length.A,
+    )
+    min_select: pydantic.conint(strict=True, ge=0)
+    max_select: pydantic.conint(strict=True, ge=0)
+
+    @pydantic.validator('max_select')
+    def validate_max_select(cls, v, values):
+        if 'min_select' in values and v < values['min_select']:
+            raise ValueError('max_select must be >= min_select')
+        if 'options' in values and v > len(values['options']):
+            raise ValueError('max must be <= number of options')
+        return v
+
+
+class TextField(Field):
+    type: typing.Literal['text']
+    min_chars: pydantic.conint(strict=True, ge=0)
+    max_chars: pydantic.conint(strict=True, ge=0)
+
+    @pydantic.validator('max_chars')
+    def validate_max_chars(cls, v, values):
+        if 'min_chars' in values and v < values['min_chars']:
+            raise ValueError('max_chars must be >= min_chars')
+        return v
+
+
+class Configuration(Field):
+    survey_name: pydantic.constr(strict=True, regex=r'^[a-z0-9-]{1,32}$')
+    start: pydantic.conint(strict=True, ge=0, le=4102444800)
+    end: pydantic.conint(strict=True, ge=0, le=4102444800)
+    draft: pydantic.StrictBool
+    limit: pydantic.conint(strict=True, ge=0)
+    fields_: pydantic.conlist(
+        item_type=typing.Union[
+            EmailField,
+            OptionField,
+            RadioField,
+            SelectionField,
+            TextField,
+        ],
+        min_items=1,
+        max_items=Length.A,
+     ) = pydantic.Field(alias='fields')
+
+    @pydantic.validator('end')
+    def validate_end(cls, v, values):
+        if 'start' in values and v < values['start']:
+            raise ValueError('end must be >= start')
+        return v
+
+    @pydantic.validator('fields_')
+    def validate_fields(cls, v):
+        count = 0
+        for field in v:
+            if field.type == 'email' and field.verify:
+                count += 1
+        if count > 1:
+            raise ValueError('only one email field with verification allowed')
+        return v
 
 
 class ConfigurationValidator():
