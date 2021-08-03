@@ -7,6 +7,7 @@ import app.survey as sv
 import app.documentation as docs
 import app.cryptography.access as access
 import app.settings as settings
+import app.validation as validation
 
 
 # create fastapi app
@@ -79,7 +80,7 @@ async def fetch_user(
 @app.post(**docs.SPECIFICATIONS['create_user'])
 async def create_user(
         username: str = docs.ARGUMENTS['username'],
-        account_data: dict = docs.ARGUMENTS['account_data'],
+        account_data: validation.AccountData = docs.ARGUMENTS['account_data'],
     ):
     """Create a new user based on the given account data."""
     await account_manager.create(username, account_data)
@@ -90,7 +91,7 @@ async def create_user(
 async def update_user(
         access_token: str = docs.ARGUMENTS['access_token'],
         username: str = docs.ARGUMENTS['username'],
-        account_data: dict = docs.ARGUMENTS['account_data'],
+        account_data: validation.AccountData = docs.ARGUMENTS['account_data'],
     ):
     """Update the given user's account data."""
     await account_manager.update(username, account_data)

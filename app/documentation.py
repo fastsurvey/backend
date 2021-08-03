@@ -174,7 +174,6 @@ SPECIFICATIONS = {
     'create_user': _generate_responses_documentation(
         path='/users/{username}',
         error_classes=[
-            errors.InvalidAccountDataError,
             errors.UsernameAlreadyTakenError,
             errors.EmailAddressAlreadyTakenError,
         ],
@@ -184,7 +183,6 @@ SPECIFICATIONS = {
         error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
-            errors.InvalidAccountDataError,
             errors.UserNotFoundError,
         ],
     ),

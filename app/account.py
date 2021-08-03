@@ -1,7 +1,7 @@
 import pymongo.errors
 import pymongo
+import fastapi
 
-import app.validation as validation
 import app.email as email
 import app.cryptography.access as access
 import app.cryptography.password as pw
@@ -17,7 +17,6 @@ class AccountManager:
     def __init__(self, survey_manager):
         """Initialize an account manager instance."""
         self.survey_manager = survey_manager
-        self.validator = validation.AccountValidator()
 
     async def fetch(self, username):
         """Return the account data corresponding to given user name."""
@@ -36,16 +35,21 @@ class AccountManager:
 
     async def create(self, username, account_data):
         """Create new user account with some default account data."""
-        if username != account_data['username']:
-            raise errors.InvalidAccountDataError()
-        if not self.validator.validate(account_data):
-            raise errors.InvalidAccountDataError()
+        if account_data.username != username:
+            # not very pretty, but cannot raise ValidationError otherwise
+            raise fastapi.HTTPException(
+                422,
+                [{
+                    'loc': ['body', 'username'],
+                    'msg': 'username does not match username specified in route',
+                    'type': 'value_error',
+                }]
+            )
         timestamp = utils.now()
-        account_data = {
+        account = {
             '_id': username,
-            'email_address': account_data['email_address'],
-            'password_hash': pw.hash(account_data['password']),
-            'superuser': False,
+            'email_address': account_data.email_address,
+            'password_hash': pw.hash(account_data.password),
             'creation_time': timestamp,
             'modification_time': timestamp,
             'verified': False,
@@ -53,7 +57,7 @@ class AccountManager:
         }
         while True:
             try:
-                await database.database['accounts'].insert_one(account_data)
+                await database.database['accounts'].insert_one(account)
                 break
             except pymongo.errors.DuplicateKeyError as error:
                 index = str(error).split()[7]
@@ -67,15 +71,22 @@ class AccountManager:
                     raise errors.InternalServerError()
 
         status = await email.send_account_verification(
-            account_data['email_address'],
+            account['email_address'],
             username,
-            account_data['verification_token'],
+            account['verification_token'],
         )
         if status != 200:
             # we do not delete the unverified account here, as the user could
             # request a new verification email, and the account gets deleted
             # anyways after a few minutes
-            raise errors.InternalServerError()
+            raise fastapi.HTTPException(
+                422,
+                [{
+                    'loc': ['body', 'email_address'],
+                    'msg': 'invalid email_address',
+                    'type': 'value_error',
+                }]
+            )
 
     async def verify(self, verification_token, password):
         """Verify an existing account via its unique verification token."""
@@ -101,8 +112,6 @@ class AccountManager:
         # TODO handle username change with transactions
         # TODO handle email change specially, as it needs to be reverified
 
-        if not self.validator.validate(account_data):
-            raise errors.InvalidAccountDataError()
         entry = await database.database['accounts'].find_one(
             filter={'_id': username},
             projection={
@@ -114,12 +123,12 @@ class AccountManager:
         if entry is None:
             raise errors.UserNotFoundError()
         update = {}
-        if account_data['username'] != username:
+        if account_data.username != username:
             raise errors.NotImplementedError()
-        if account_data['email_address'] != entry['email_address']:
+        if account_data.email_address != entry['email_address']:
             raise errors.NotImplementedError()
-        if not pw.verify(account_data['password'], entry['password_hash']):
-            update['password_hash'] = pw.hash(account_data['password'])
+        if not pw.verify(account_data.password, entry['password_hash']):
+            update['password_hash'] = pw.hash(account_data.password)
         if update:
             update['modification_time'] = utils.now()
             result = await database.database['accounts'].update_one(
