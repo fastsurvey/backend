@@ -8,7 +8,6 @@ import app.utils as utils
 
 # string validation regexes
 _REGEXES = {
-    'username': r'^[a-z0-9-]{2,20}$',
     'email_address': r'^.+@.+$',
     'survey_name': r'^[a-z0-9-]{2,20}$',
 }
@@ -24,36 +23,6 @@ _LENGTHS = {
 ################################################################################
 # Account Validation
 ################################################################################
-
-
-class AccountValidator(cerberus.Validator):
-    """The custom cerberus validator for validating user account data.
-
-    We could use pydantic to validate the account data instead, as the data
-    model is static and relatively easy. We do it with cerberus though in
-    order to validate everything similarly and because we can test better
-    using cerberus.
-
-    """
-
-    _SCHEMA = {
-        'username': {'type': 'string', 'regex': _REGEXES['username']},
-        'password': {'type': 'string', 'minlength': 8, 'maxlength': 64},
-        'email_address': {
-            'type': 'string',
-            'maxlength': _LENGTHS['M'],
-            'regex': _REGEXES['email_address'],
-        },
-    }
-
-    def __init__(self, *args, **kwargs):
-        """Initialize with predefined account validation schema."""
-        super(AccountValidator, self).__init__(
-            self._SCHEMA,
-            *args,
-            require_all=True,
-            **kwargs,
-        )
 
 
 class BaseModel(pydantic.BaseModel):
