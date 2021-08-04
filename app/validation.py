@@ -112,8 +112,8 @@ class SelectionField(Field):
 
 class TextField(Field):
     type: typing.Literal['text']
-    min_chars: pydantic.conint(strict=True, ge=0)
-    max_chars: pydantic.conint(strict=True, ge=0)
+    min_chars: pydantic.conint(strict=True, ge=0, le=Length.C)
+    max_chars: pydantic.conint(strict=True, ge=0, le=Length.C)
 
     @pydantic.validator('max_chars')
     def validate_max_chars(cls, v, values):
@@ -302,6 +302,48 @@ class ConfigurationValidator():
 ################################################################################
 # Submission Validation
 ################################################################################
+
+
+def create_model(identifier, field_type, value_type, validators):
+    return pydantic.create_model(
+        f'{field_type.capitalize()}FieldSubmission',
+        **{identifier: (value_type, ...)},
+        __base__=BaseModel,
+        __validators__=validators,
+    )
+
+
+def validate_required(cls, v):
+    if not v:
+        raise ValueError('option is required')
+    return v
+
+
+def build_email_field_model(identifier, field):
+    return create_model(
+        identifier,
+        'email',
+        pydantic.constr(strict=True, max_length=Length.B, regex=field.regex),
+        dict(),
+    )
+
+
+def build_option_field_model(identifier, field):
+    validators = dict()
+    if field.required:
+        validators['validate_required'] = pydantic.validator(identifier)(validate_required)
+    return create_model(
+        identifier,
+        'option',
+        pydantic.StrictBool,
+        validators,
+    )
+
+
+def build_submission_model(configuration):
+    pass
+
+
 
 
 class SubmissionValidator(cerberus.Validator):
