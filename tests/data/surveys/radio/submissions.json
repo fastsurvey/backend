@@ -1,18 +1,8 @@
 [
     {
-        "1": {
-            "1": false,
-            "2": false,
-            "3": false,
-            "4": true
-        }
+        "1": "None of these is a fruit"
     },
     {
-        "1": {
-            "1": false,
-            "3": false,
-            "4": false,
-            "2": true
-        }
+        "1": "None of these is a fruit"
     }
 ]
