@@ -85,7 +85,11 @@ class OptionField(Field):
 class RadioField(Field):
     type: typing.Literal['radio']
     options: pydantic.conlist(
-        item_type=OptionField,
+        item_type=pydantic.constr(
+            strict=True,
+            min_length=1,
+            max_length=Length.B,
+        ),
         min_items=1,
         max_items=Length.A,
     )
@@ -94,7 +98,11 @@ class RadioField(Field):
 class SelectionField(Field):
     type: typing.Literal['selection']
     options: pydantic.conlist(
-        item_type=OptionField,
+        item_type=pydantic.constr(
+            strict=True,
+            min_length=1,
+            max_length=Length.B,
+        ),
         min_items=1,
         max_items=Length.A,
     )
