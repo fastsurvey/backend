@@ -25,32 +25,7 @@
             "type": "radio",
             "title": "What is your favorite fruit?",
             "description": "",
-            "options": [
-                {
-                    "type": "option",
-                    "title": "Asparagus",
-                    "description": "",
-                    "required": false
-                },
-                {
-                    "type": "option",
-                    "title": "Spinach",
-                    "description": "",
-                    "required": false
-                },
-                {
-                    "type": "option",
-                    "title": "Artichoke",
-                    "description": "",
-                    "required": false
-                },
-                {
-                    "type": "option",
-                    "title": "None of these is a fruit",
-                    "description": "",
-                    "required": false
-                }
-            ]
+            "options": ["Asparagus", "Spinach", "Artichoke", "None of these is a fruit"]
         },
         {
             "type": "selection",
@@ -58,26 +33,7 @@
             "description": "",
             "min_select": 1,
             "max_select": 2,
-            "options": [
-                {
-                    "type": "option",
-                    "title": "Strawberry",
-                    "description": "",
-                    "required": false
-                },
-                {
-                    "type": "option",
-                    "title": "Vanilla",
-                    "description": "",
-                    "required": false
-                },
-                {
-                    "type": "option",
-                    "title": "Chocolate",
-                    "description": "",
-                    "required": true
-                }
-            ]
+            "options": ["Strawberry", "Vanilla", "Chocolate"]
         },
         {
             "type": "text",

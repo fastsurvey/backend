@@ -13,26 +13,7 @@
             "description": "",
             "min_select": 1,
             "max_select": 2,
-            "options": [
-                {
-                    "type": "option",
-                    "title": "Strawberry",
-                    "description": "",
-                    "required": false
-                },
-                {
-                    "type": "option",
-                    "title": "Vanilla",
-                    "description": "",
-                    "required": false
-                },
-                {
-                    "type": "option",
-                    "title": "Chocolate",
-                    "description": "",
-                    "required": true
-                }
-            ]
+            "options": ["Strawberry", "Vanilla", "Chocolate"]
         }
     ]
 }

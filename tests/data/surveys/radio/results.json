@@ -1,11 +1,11 @@
 {
     "count": 2,
     "data": [
-        [
-            0,
-            1,
-            0,
-            1
-        ]
+        {
+            "Asparagus": 0,
+            "Spinach": 0,
+            "Artichoke": 0,
+            "None of these is a fruit": 2
+        }
     ]
 }
