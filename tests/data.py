@@ -262,7 +262,7 @@ def _build_invalid_option_submissions(submission):
     invalid_submissions = []
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = 42
+    x['1'] = 1
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
