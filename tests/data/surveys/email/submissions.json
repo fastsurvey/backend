@@ -1,17 +1,17 @@
 [
     {
-        "1": "test@fastsurvey.de"
+        "0": "test@fastsurvey.de"
     },
     {
-        "1": "contact@fastsurvey.de"
+        "0": "contact@fastsurvey.de"
     },
     {
-        "1": "a@b.c"
+        "0": "a@b.c"
     },
     {
-        "1": "a.b.$$$$&*+==???//]{}!123~``@b.c"
+        "0": "a.b.$$$$&*+==???//]{}!123~``@b.c"
     },
     {
-        "1": "a@b.c.d.e.f"
+        "0": "a@b.c.d.e.f"
     }
 ]

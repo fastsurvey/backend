@@ -4,18 +4,6 @@ import pydantic
 import app.validation as validation
 
 
-@pytest.fixture(scope='module')
-def submission_validators(configurations):
-    """Provide submission validator for every test survey."""
-    return {
-        survey_name: validation.SubmissionValidator.create(
-            configurations
-        )
-        for survey_name, configurations
-        in configurations.items()
-    }
-
-
 ################################################################################
 # Account Validation
 ################################################################################
@@ -58,24 +46,22 @@ def test_configurations_failing(invalid_configurationss):
 ################################################################################
 
 
-def test_generating_submission_validation_schema(configurations, schemas):
-    """Test that the schema generation function returns the correct result."""
-    for survey_name, configuration in configurations.items():
-        schema = validation.SubmissionValidator._generate_validation_schema(
-            configuration
-        )
-        assert schema == schemas[survey_name]
-
-
-def test_submissions_passing(submission_validators, submissionss):
-    """Test that submission validator passes some valid submissions."""
+def test_submissions_passing(configurations, submissionss):
+    """Test that submission validation passes some valid submissions."""
     for survey_name, submissions in submissionss.items():
+        Submission = validation.build_submission_model(
+            validation.Configuration(**configurations[survey_name])
+        )
         for submission in submissions:
-            assert submission_validators[survey_name].validate(submission)
+            Submission(**submission)
 
 
-def test_submissions_failing(submission_validators, invalid_submissionss):
-    """Test that submission validator fails some invalid submissions."""
+def test_submissions_failing(configurations, invalid_submissionss):
+    """Test that submission validation fails some invalid submissions."""
     for survey_name, invalid_submissions in invalid_submissionss.items():
+        Submission = validation.build_submission_model(
+            validation.Configuration(**configurations[survey_name])
+        )
         for submission in invalid_submissions:
-            assert not submission_validators[survey_name].validate(submission)
+            with pytest.raises(pydantic.ValidationError):
+                Submission(**submission)

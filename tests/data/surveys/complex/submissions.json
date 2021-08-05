@@ -1,37 +1,37 @@
 [
     {
-        "1": "test+0@fastsurvey.de",
-        "2": true,
-        "3": "None of these is a fruit",
-        "4": ["Strawberry"],
-        "5": "It keeps my head cool while I answer tricky surveys."
+        "0": "test+0@fastsurvey.de",
+        "1": true,
+        "2": "None of these is a fruit",
+        "3": ["Strawberry"],
+        "4": "It keeps my head cool while I answer tricky surveys."
     },
     {
-        "1": "test+1@fastsurvey.de",
-        "2": true,
-        "3": "Artichoke",
-        "4": ["Chocolate", "Strawberry"],
-        "5": "Why do I like anything?"
+        "0": "test+1@fastsurvey.de",
+        "1": true,
+        "2": "Artichoke",
+        "3": ["Chocolate", "Strawberry"],
+        "4": "Why do I like anything?"
     },
     {
-        "1": "test+2@fastsurvey.de",
-        "2": true,
-        "3": "Asparagus",
-        "4": ["Chocolate"],
-        "5": "Frankly, I don't know."
+        "0": "test+2@fastsurvey.de",
+        "1": true,
+        "2": "Asparagus",
+        "3": ["Chocolate"],
+        "4": "Frankly, I don't know."
     },
     {
-        "1": "test+3@fastsurvey.de",
-        "2": true,
-        "3": "Artichoke",
-        "4": ["Strawberry", "Chocolate"],
-        "5": "I also like carrots."
+        "0": "test+3@fastsurvey.de",
+        "1": true,
+        "2": "Artichoke",
+        "3": ["Strawberry", "Chocolate"],
+        "4": "I also like carrots."
     },
     {
-        "1": "test+4@fastsurvey.de",
-        "2": true,
-        "3": "Artichoke",
-        "4": ["Vanilla", "Chocolate"],
-        "5": "Why do you like chocolate?"
+        "0": "test+4@fastsurvey.de",
+        "1": true,
+        "2": "Artichoke",
+        "3": ["Vanilla", "Chocolate"],
+        "4": "Why do you like chocolate?"
     }
 ]
