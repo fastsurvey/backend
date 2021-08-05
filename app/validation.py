@@ -22,10 +22,17 @@ _LENGTHS = {
 }
 
 
+
 class Length(int, enum.Enum):
     A = 32
     B = 256
     C = 4096
+
+
+class Pattern(str, enum.Enum):
+    USERNAME = r'^[a-z0-9-]{1,32}$'
+    SURVEY_NAME = r'^[a-z0-9-]{1,32}$'
+    EMAIL_ADDRESS = r'^.+@.+$'
 
 
 class BaseModel(pydantic.BaseModel):
@@ -43,12 +50,12 @@ class BaseModel(pydantic.BaseModel):
 
 class AccountData(BaseModel):
     """Pydantic model used to validate account data."""
-    username: pydantic.constr(strict=True, regex=r'^[a-z0-9-]{1,32}$')
+    username: pydantic.constr(strict=True, regex=Pattern.USERNAME.value)
     password: pydantic.constr(strict=True, min_length=8, max_length=Length.B)
     email_address: pydantic.constr(
         strict=True,
         max_length=Length.B,
-        regex=r'^.+@.+$',
+        regex=Pattern.EMAIL_ADDRESS.value,
     )
 
 
@@ -131,7 +138,7 @@ class TextField(Field):
 
 
 class Configuration(Field):
-    survey_name: pydantic.constr(strict=True, regex=r'^[a-z0-9-]{1,32}$')
+    survey_name: pydantic.constr(strict=True, regex=Pattern.SURVEY_NAME.value)
     start: pydantic.conint(strict=True, ge=0, le=4102444800)
     end: pydantic.conint(strict=True, ge=0, le=4102444800)
     draft: pydantic.StrictBool
@@ -312,44 +319,96 @@ class ConfigurationValidator():
 ################################################################################
 
 
-def create_model(identifier, field_type, value_type, validators):
-    return pydantic.create_model(
-        f'{field_type.capitalize()}FieldSubmission',
-        **{identifier: (value_type, ...)},
-        __base__=BaseModel,
-        __validators__=validators,
-    )
-
-
-def validate_required(cls, v):
+def validate_option_field_submission(cls, v):
     if not v:
         raise ValueError('option is required')
     return v
 
 
-def build_email_field_model(identifier, field):
-    return create_model(
-        identifier,
-        'email',
-        pydantic.constr(strict=True, max_length=Length.B, regex=field.regex),
-        dict(),
+def validate_selection_field_submission(cls, v):
+    if len(set(v)) != len(v):
+        raise ValueError('no duplicates allowed')
+    return v
+
+
+def build_email_field_validation(identifier, field, schema, validators):
+    schema[identifier] = (
+        pydantic.constr(
+            strict=True,
+            max_length=Length.B,
+            # this regex checks if the string matches the regex defined in the
+            # configurations, but also our (very loose) email regex
+            regex=f'(?={Pattern.EMAIL_ADDRESS.value})(?={field.regex})',
+        ),
+        ...,
     )
 
 
-def build_option_field_model(identifier, field):
-    validators = dict()
+def build_option_field_validation(identifier, field, schema, validators):
+    schema[identifier] = (pydantic.StrictBool, ...)
     if field.required:
-        validators['validate_required'] = pydantic.validator(identifier)(validate_required)
-    return create_model(
-        identifier,
-        'option',
-        pydantic.StrictBool,
-        validators,
+        validators[f'validate-{identifier}'] = (
+            pydantic.validator(identifier, allow_reuse=True)(
+                validate_option_field_submission,
+            )
+        )
+
+
+def build_radio_field_validation(identifier, field, schema, validators):
+    schema[identifier] = (
+        typing.Literal[tuple(field.options)],
+        ...,
+    )
+
+
+def build_selection_field_validation(identifier, field, schema, validators):
+    schema[identifier] = (
+        pydantic.conlist(
+            item_type=typing.Literal[tuple(field.options)],
+            min_items=field.min_select,
+            max_items=field.max_select,
+        ),
+        ...,
+    )
+    validators[f'validate-{identifier}'] = (
+        pydantic.validator(identifier, allow_reuse=True)(
+            validate_selection_field_submission,
+        )
+    )
+
+
+def build_text_field_validation(identifier, field, schema, validators):
+    schema[identifier] = (
+        pydantic.constr(
+            strict=True,
+            min_length=field.min_chars,
+            max_length=field.max_chars,
+        ),
+        ...,
     )
 
 
 def build_submission_model(configuration):
-    pass
+    """Build pydantic submission model based on the survey configuration."""
+    schema = dict()
+    validators = dict()
+    mapping = dict(
+        email=build_email_field_validation,
+        option=build_option_field_validation,
+        radio=build_radio_field_validation,
+        selection=build_selection_field_validation,
+        text=build_text_field_validation,
+    )
+    for identifier, field in enumerate(configuration.fields_):
+        mapping[field.type](str(identifier), field, schema, validators)
+    return pydantic.create_model(
+        'Submission',
+        **schema,
+        __base__=BaseModel,
+        __validators__=validators,
+    )
+
+
 
 
 

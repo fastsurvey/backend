@@ -239,19 +239,19 @@ def _build_invalid_complex_submissions(submission):
     invalid_submissions = []
     # radio field input has invalid type
     x = copy.deepcopy(submission)
-    x['3'] = None
+    x['2'] = None
     invalid_submissions.append(x)
     # text field input has invalid value
     x = copy.deepcopy(submission)
-    x['5'] = ''
+    x['4'] = ''
     invalid_submissions.append(x)
     # text field input is missing
     x = copy.deepcopy(submission)
-    x.pop('5')
+    x.pop('4')
     invalid_submissions.append(x)
     # too many field inputs
     x = copy.deepcopy(submission)
-    x['6'] = x['3']
+    x['5'] = x['2']
     invalid_submissions.append(x)
 
     return invalid_submissions
@@ -262,24 +262,24 @@ def _build_invalid_option_submissions(submission):
     invalid_submissions = []
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = 1
+    x['0'] = 1
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = None
+    x['0'] = None
     invalid_submissions.append(x)
     # input has invalid value
     x = copy.deepcopy(submission)
-    x['1'] = ''
+    x['0'] = ''
     invalid_submissions.append(x)
     # input has invalid value
     x = copy.deepcopy(submission)
-    x['1'] = False
+    x['0'] = False
     invalid_submissions.append(x)
     # input has wrong identifier
     x = copy.deepcopy(submission)
-    x['email'] = x['1']
-    x.pop('1')
+    x['email'] = x['0']
+    x.pop('0')
     invalid_submissions.append(x)
 
     return invalid_submissions
@@ -290,36 +290,36 @@ def _build_invalid_radio_submissions(submission):
     invalid_submissions = []
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = True
+    x['0'] = True
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = 1
+    x['0'] = 1
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = dict()
+    x['0'] = dict()
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = None
+    x['0'] = None
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = []
+    x['0'] = []
     invalid_submissions.append(x)
     # input has invalid value
     x = copy.deepcopy(submission)
-    x['1'] = ''
+    x['0'] = ''
     invalid_submissions.append(x)
     # input has invalid value
     x = copy.deepcopy(submission)
-    x['1'] = 'Hello World!'
+    x['0'] = 'Hello World!'
     invalid_submissions.append(x)
     # input has wrong identifier
     x = copy.deepcopy(submission)
-    x['42'] = x['1']
-    x.pop('1')
+    x['42'] = x['0']
+    x.pop('0')
     invalid_submissions.append(x)
 
     return invalid_submissions
@@ -330,23 +330,27 @@ def _build_invalid_selection_submissions(submission):
     invalid_submissions = []
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = None
+    x['0'] = None
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = True
+    x['0'] = True
     invalid_submissions.append(x)
     # input has missing identifier
     x = copy.deepcopy(submission)
-    x.pop('1')
+    x.pop('0')
     invalid_submissions.append(x)
-    # input has too many selections
+    # input has too many selected options
     x = copy.deepcopy(submission)
-    x['1'] = ["Strawberry", "Vanilla", "Chocolate"]
+    x['0'] = ["Strawberry", "Vanilla", "Chocolate"]
     invalid_submissions.append(x)
-    # input has not enough selections
+    # input has not enough selected options
     x = copy.deepcopy(submission)
-    x['1'] = []
+    x['0'] = []
+    invalid_submissions.append(x)
+    # input has duplicate selected options
+    x = copy.deepcopy(submission)
+    x['0'] = ["Strawberry", "Strawberry"]
     invalid_submissions.append(x)
 
     return invalid_submissions
@@ -357,23 +361,23 @@ def _build_invalid_text_submissions(submission):
     invalid_submissions = []
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = 42
+    x['0'] = 42
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = None
+    x['0'] = None
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = ['Hello', 'World']
+    x['0'] = ['Hello', 'World']
     invalid_submissions.append(x)
     # input has invalid value
     x = copy.deepcopy(submission)
-    x['1'] = 'tomato'
+    x['0'] = 'tomato'
     invalid_submissions.append(x)
-    # input has invalid value
+    # input has invalid value (more chars than allowed by max_chars)
     x = copy.deepcopy(submission)
-    x['1'] = '+' * 1001
+    x['0'] = '+' * 1001
     invalid_submissions.append(x)
     # input has missing identifier
     invalid_submissions.append({})
@@ -386,28 +390,28 @@ def _build_invalid_email_submissions(submission):
     invalid_submissions = []
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = 42
+    x['0'] = 42
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = None
+    x['0'] = None
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x['1'] = 3.14
+    x['0'] = 3.14
     invalid_submissions.append(x)
     # input has invalid value
     x = copy.deepcopy(submission)
-    x['1'] = ''
+    x['0'] = ''
     invalid_submissions.append(x)
     # input has invalid value
     x = copy.deepcopy(submission)
-    x['1'] = ':' * 1025
+    x['0'] = ':' * (validation.Length.B + 1)
     invalid_submissions.append(x)
     # input has wrong identifier
     x = copy.deepcopy(submission)
-    x['email'] = x['1']
-    x.pop('1')
+    x['email'] = x['0']
+    x.pop('0')
     invalid_submissions.append(x)
 
     return invalid_submissions
