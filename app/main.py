@@ -13,7 +13,7 @@ import app.models as models
 # create fastapi app
 app = fastapi.FastAPI(
     title='FastSurvey',
-    version='0.3.0',
+    version='0.2.0',
     docs_url='/documentation/swagger',
     redoc_url='/documentation/redoc',
 )

@@ -63,12 +63,6 @@ def invalid_submissionss():
 
 
 @pytest.fixture(scope='session')
-def schemas():
-    """Convenience method to access test survey cerberus validation schemas."""
-    return data.TEST_SURVEY_DOCUMENTSS['schemas']
-
-
-@pytest.fixture(scope='session')
 def aggregation_pipelines():
     """Convenience method to access test survey aggregation pipelines."""
     return data.TEST_SURVEY_DOCUMENTSS['aggregation_pipelines']
