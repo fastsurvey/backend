@@ -439,7 +439,6 @@ def _load_test_survey_documentss():
     documentss = {
         'configurations': dict(),
         'submissionss': dict(),
-        'schemas': dict(),
         'aggregation_pipelines': dict(),
         'resultss': dict(),
     }
