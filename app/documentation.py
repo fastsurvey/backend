@@ -215,7 +215,6 @@ SPECIFICATIONS = {
         error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
-            errors.InvalidConfigurationError,
             errors.SurveyNameAlreadyTakenError,
         ],
     ),
@@ -224,7 +223,6 @@ SPECIFICATIONS = {
         error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
-            errors.InvalidConfigurationError,
             errors.SurveyNameAlreadyTakenError,
             errors.SurveyNotFoundError,
             errors.SubmissionsExistError,
@@ -241,7 +239,6 @@ SPECIFICATIONS = {
         path='/users/{username}/surveys/{survey_name}/submissions',
         error_classes=[
             errors.InvalidTimingError,
-            errors.InvalidSubmissionError,
             errors.SurveyNotFoundError,
             errors.SubmissionLimitReachedError,
         ],

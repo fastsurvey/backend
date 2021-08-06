@@ -2,7 +2,6 @@ import pymongo.errors
 import cachetools
 import fastapi.responses
 
-import app.validation as validation
 import app.aggregation as aggregation
 import app.utils as utils
 import app.cryptography.verification as verification
@@ -10,6 +9,7 @@ import app.email as email
 import app.settings as settings
 import app.resources.database as database
 import app.errors as errors
+import app.models as models
 
 
 class SurveyManager:
@@ -29,7 +29,6 @@ class SurveyManager:
     def __init__(self):
         """Initialize a survey manager instance."""
         self.cache = SurveyCache()
-        self.validator = validation.ConfigurationValidator()
 
     async def fetch(self, username, survey_name, return_drafts=True):
         """Return the survey object corresponding to user and survey name."""
@@ -74,9 +73,14 @@ class SurveyManager:
 
         """
         if survey_name != configuration['survey_name']:
-            raise errors.InvalidConfigurationError()
-        if not self.validator.validate(configuration):
-            raise errors.InvalidConfigurationError()
+            raise fastapi.HTTPException(
+                422,
+                [{
+                    'loc': ['body', 'survey_name'],
+                    'msg': 'survey_name does not match survey_name specified in route',
+                    'type': 'value_error',
+                }]
+            )
         configuration['username'] = username
         try:
             await database.database['configurations'].insert_one(configuration)
@@ -102,8 +106,6 @@ class SurveyManager:
         survey_name.
 
         """
-        if not self.validator.validate(configuration):
-            raise errors.InvalidConfigurationError()
         survey = await self.fetch(username, survey_name)
         if survey.counter > 0:
             raise errors.SubmissionsExistError()
@@ -194,7 +196,6 @@ class Survey:
         self.start = self.configuration['start']
         self.end = self.configuration['end']
         self.index = Survey._find_email_field_to_verify(self.configuration)
-        self.validator = validation.SubmissionValidator.create(configuration)
         self.submissions = database.database[
             f'surveys.{utils.identify(self.configuration)}'
             f'.submissions'
@@ -205,6 +206,7 @@ class Survey:
         ]
         self.limit = self.configuration['limit']
         self.counter = counter
+        self.Submission = models.build_submission_model(configuration)
 
     @classmethod
     async def create(cls, configuration):
@@ -231,11 +233,9 @@ class Survey:
             raise errors.InvalidTimingError()
         if self.counter >= self.limit != 0:
             raise errors.SubmissionLimitReachedError()
-        if not self.validator.validate(submission):
-            raise errors.InvalidSubmissionError()
         submission = {
             'submission_time': submission_time,
-            'data': submission,
+            'data': self.Submission(**submission).dict(),
         }
         if self.index is None:
             await self.submissions.insert_one(submission)
@@ -249,7 +249,7 @@ class Survey:
                 except pymongo.errors.DuplicateKeyError:
                     submission['_id'] = verification.token()
             status = await email.send_submission_verification(
-                submission['data'][str(self.index + 1)],
+                submission['data'][str(self.index)],
                 self.username,
                 self.survey_name,
                 self.configuration['title'],
@@ -271,7 +271,7 @@ class Survey:
         if submission is None:
             raise errors.InvalidVerificationTokenError()
         submission['verification_time'] = verification_time
-        submission['_id'] = submission['data'][str(self.index + 1)]
+        submission['_id'] = submission['data'][str(self.index)]
         document = await self.submissions.find_one_and_replace(
             filter={'_id': submission['_id']},
             replacement=submission,

@@ -223,7 +223,7 @@ def mock_verification_token_generation(monkeypatch):
     def token():
         global counter
         counter += 1
-        return str(counter)
+        return str(counter).zfill(64)
     monkeypatch.setattr(verification, 'token', token)
 
 
@@ -233,7 +233,7 @@ def mock_verification_token_generation_with_duplication(monkeypatch):
 
     Duplicate tokens account for potential token collisions in the actual
     token creation function. The tokens that are used after duplication
-    resolution are: 0, 1, 2, ...
+    resolution are: 0, 1, 2, ... (padded with zeros to a length of 64)
 
     """
     global counter
@@ -241,5 +241,5 @@ def mock_verification_token_generation_with_duplication(monkeypatch):
     def token():
         global counter
         counter += 1
-        return str(counter//4)
+        return str(counter//4).zfill(64)
     monkeypatch.setattr(verification, 'token', token)

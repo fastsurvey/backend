@@ -2,7 +2,7 @@ import os
 import json
 import copy
 
-import app.validation as validation
+import app.models as models
 
 
 ################################################################################
@@ -40,7 +40,7 @@ def _build_invalid_account_datas(test_account_documentss):
     invalid_account_datas.append(x)
     # password parameter has invalid value
     x = copy.deepcopy(account_data)
-    x['password'] = '#' * (validation.Length.B + 1)
+    x['password'] = '#' * (models.Length.B + 1)
     invalid_account_datas.append(x)
     # email_address parameter is missing
     x = copy.deepcopy(account_data)
@@ -120,11 +120,11 @@ def _build_invalid_complex_configurations(configuration):
     invalid_configurations.append(x)
     # title parameter has invalid value
     x = copy.deepcopy(configuration)
-    x['title'] = '@' * (validation.Length.B + 1)
+    x['title'] = '@' * (models.Length.B + 1)
     invalid_configurations.append(x)
     # description parameter has invalid value
     x = copy.deepcopy(configuration)
-    x['description'] = '+' * (validation.Length.C + 1)
+    x['description'] = '+' * (models.Length.C + 1)
     invalid_configurations.append(x)
     # draft parameter is missing
     x = copy.deepcopy(configuration)
@@ -205,7 +205,7 @@ def _build_invalid_email_configurations(configuration):
     invalid_configurations.append(x)
     # hint parameter has invalid value
     x = copy.deepcopy(configuration)
-    x['fields'][0]['hint'] = '$' * (validation.Length.B + 1)
+    x['fields'][0]['hint'] = '$' * (models.Length.B + 1)
     invalid_configurations.append(x)
 
     return invalid_configurations
@@ -406,7 +406,7 @@ def _build_invalid_email_submissions(submission):
     invalid_submissions.append(x)
     # input has invalid value
     x = copy.deepcopy(submission)
-    x['0'] = ':' * (validation.Length.B + 1)
+    x['0'] = ':' * (models.Length.B + 1)
     invalid_submissions.append(x)
     # input has wrong identifier
     x = copy.deepcopy(submission)
