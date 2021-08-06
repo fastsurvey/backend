@@ -59,7 +59,7 @@ async def test_fetching_existing_user_with_invalid_access_token(
     ):
     """Test that correct account data is returned on valid request."""
     await client.post(f'/users/{username}', json=account_data)
-    access_token = access.generate('tomato')['access_token']
+    access_token = access.generate('kangaroo')['access_token']
     headers = {'Authorization': f'Bearer {access_token}'}
     response = await client.get(f'/users/{username}', headers=headers)
     assert check_error(response, errors.AccessForbiddenError)
@@ -229,8 +229,11 @@ async def test_updating_existing_user_with_valid_email_address_in_use(
     """Test that updating the email address to one in use fails correctly."""
     for i, acc in enumerate(account_datas['valid'][:2]):
         await client.post(url=f'/users/{acc["username"]}', json=acc)
-        credentials = dict(verification_token=str(i), password=acc['password'])
-        await client.post(url='/verification', json=credentials)
+        verification_credentials = dict(
+            verification_token=str(i).zfill(64),
+            password=acc['password'],
+        )
+        await client.post(url='/verification', json=verification_credentials)
     account_data = copy.deepcopy(account_data)
     account_data['email_address'] = account_datas['valid'][1]['email_address']
     response = await client.put(
@@ -344,7 +347,7 @@ async def test_creating_survey_with_invalid_configuration(
         headers=headers,
         json=configuration,
     )
-    assert check_error(response, errors.InvalidConfigurationError)
+    assert check_error(response, None)
     with pytest.raises(KeyError):
         main.survey_manager.cache.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one({})
@@ -422,16 +425,16 @@ async def test_updating_survey_name_to_survey_name_not_in_use(
         json=configuration,
     )
     configuration = copy.deepcopy(configuration)
-    configuration['survey_name'] = 'tomato'
+    configuration['survey_name'] = 'kangaroo'
     response = await client.put(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
         json=configuration,
     )
     assert response.status_code == 200
-    assert main.survey_manager.cache.fetch(username, 'tomato')
+    assert main.survey_manager.cache.fetch(username, 'kangaroo')
     entry = await database.database['configurations'].find_one({})
-    assert entry['survey_name'] == 'tomato'
+    assert entry['survey_name'] == 'kangaroo'
 
 
 @pytest.mark.asyncio
@@ -450,9 +453,9 @@ async def test_updating_survey_name_to_survey_name_in_use(
         json=configuration,
     )
     configuration = copy.deepcopy(configuration)
-    configuration['survey_name'] = 'tomato'
+    configuration['survey_name'] = 'kangaroo'
     await client.post(
-        url=f'/users/{username}/surveys/tomato',
+        url=f'/users/{username}/surveys/kangaroo',
         headers=headers,
         json=configuration,
     )
@@ -486,7 +489,10 @@ async def test_updating_survey_with_existing_submissions(
     await client.post(url=path, headers=headers, json=configuration)
     # push and validate a submission
     await client.post(url=f'{path}/submissions', json=submissions[0])
-    await client.get(url=f'{path}/verification/0', allow_redirects=False)
+    await client.get(
+        url=f'{path}/verification/{str(0).zfill(64)}',
+        allow_redirects=False,
+    )
     # push changed configuration
     configuration = copy.deepcopy(configuration)
     configuration['description'] = 'chameleon'
@@ -550,7 +556,7 @@ async def test_creating_invalid_submission(
         url=f'{path}/submissions',
         json=invalid_submissionss[survey_name][0],
     )
-    assert check_error(response, errors.InvalidSubmissionError)
+    assert check_error(response, None)
     entry = await survey.unverified_submissions.find_one({})
     assert entry is None
 
@@ -575,7 +581,10 @@ async def test_creating_submission_with_submission_limit_reached(
     await client.post(url=path, headers=headers, json=configuration)
     # push and validate a submission
     await client.post(url=f'{path}/submissions', json=submissions[0])
-    await client.get(url=f'{path}/verification/0', allow_redirects=False)
+    await client.get(
+        url=f'{path}/verification/{str(0).zfill(64)}',
+        allow_redirects=False,
+    )
     # push a second submission and verify
     response = await client.post(url=f'{path}/submissions', json=submissions[0])
     assert check_error(response, errors.SubmissionLimitReachedError)
@@ -605,17 +614,19 @@ async def test_verifying_valid_verification_token(
     path = f'/users/{username}/surveys/{survey_name}'
     await client.post(url=path, headers=headers, json=configuration)
     await client.post(url=f'{path}/submissions', json=submissions[0])
-    token = str(0)
+    verification_token = str(0).zfill(64)
     response = await client.get(
-        url=f'{path}/verification/{token}',
+        url=f'{path}/verification/{verification_token}',
         allow_redirects=False,
     )
     assert response.status_code == 307
     survey = await main.survey_manager.fetch(username, survey_name)
-    e = await survey.unverified_submissions.find_one({'_id': token})
+    e = await survey.unverified_submissions.find_one(
+        filter={'_id': verification_token},
+    )
     assert e is not None  # still unchanged in unverified submissions
     e = await survey.submissions.find_one(
-        filter={'_id': submissions[0][str(1)]},
+        filter={'_id': submissions[0][str(0)]},
     )
     assert e is not None  # now also in valid submissions
 
@@ -637,14 +648,20 @@ async def test_verifying_valid_verification_token_submission_replacement(
     await client.post(url=path, headers=headers, json=configuration)
     # push first submission
     submission = submissions[0]
-    email_address = submission[str(1)]
+    email_address = submission[str(0)]
     await client.post(url=f'{path}/submissions', json=submission)
-    await client.get(url=f'{path}/verification/0', allow_redirects=False)
+    await client.get(
+        url=f'{path}/verification/{str(0).zfill(64)}',
+        allow_redirects=False,
+    )
     # push second submission with the same email address
     submission = copy.deepcopy(submissions[1])
-    submission[str(1)] = email_address
+    submission[str(0)] = email_address
     await client.post(url=f'{path}/submissions', json=submission)
-    await client.get(url=f'{path}/verification/1', allow_redirects=False)
+    await client.get(
+        url=f'{path}/verification/{str(1).zfill(64)}',
+        allow_redirects=False,
+    )
     survey = await main.survey_manager.fetch(username, survey_name)
     x = await survey.submissions.find_one({'_id': email_address})
     assert x['data'] == submission
@@ -665,7 +682,7 @@ async def test_verifying_invalid_verification_token(
     path = f'/users/{username}/surveys/{survey_name}'
     await client.post(url=path, headers=headers, json=configuration)
     response = await client.get(
-        url=f'{path}/verification/token',
+        url=f'{path}/verification/{str(1).zfill(64)}',
         allow_redirects=False,
     )
     assert response.status_code == 401
@@ -692,8 +709,10 @@ async def test_duplicate_verification_token_resolution(
     for submission in submissions[:2]:
         await client.post(url=f'{path}/submissions', json=submission)
     survey = await main.survey_manager.fetch(username, survey_name)
-    for token in '01':
-        e = await survey.unverified_submissions.find_one({'_id': token})
+    for i in range(2):
+        e = await survey.unverified_submissions.find_one(
+            filter={'_id': str(i).zfill(64)},
+        )
         assert e is not None
 
 
@@ -729,7 +748,7 @@ async def test_fetching_results(
             await client.post(url=f'{path}/submissions', json=submission)
             if survey.index is not None:
                 await client.get(
-                    url=f'{path}/verification/{counter}',
+                    url=f'{path}/verification/{str(counter).zfill(64)}',
                     allow_redirects=False,
                 )
                 counter += 1
@@ -797,8 +816,10 @@ async def test_generating_access_token_with_non_verified_account(
     ):
     """Test that authentication fails when the account is not verified."""
     await client.post(url=f'/users/{username}', json=account_data)
-    credentials = dict(identifier=username, password=password)
-    response = await client.post(f'/authentication', json=credentials)
+    response = await client.post(
+        f'/authentication',
+        json={'identifier': username, 'password': password},
+    )
     assert check_error(response, errors.AccountNotVerifiedError)
 
 
@@ -817,7 +838,7 @@ async def test_generating_access_token_with_valid_credentials(
     await client.post(url=f'/users/{username}', json=account_data)
     await client.post(
         url=f'/verification',
-        json={'verification_token': '0', 'password': password},
+        json={'verification_token': str(0).zfill(64), 'password': password},
     )
     # test with username as well as email address as identifier
     for identifier in [username, email_address]:
@@ -843,10 +864,12 @@ async def test_generating_access_token_invalid_username(
     await client.post(url=f'/users/{username}', json=account_data)
     await client.post(
         url=f'/verification',
-        json={'verification_token': '0', 'password': password},
+        json={'verification_token': str(0).zfill(64), 'password': password},
     )
-    credentials = dict(identifier='tomato', password=password)
-    response = await client.post(url='/authentication', json=credentials)
+    response = await client.post(
+        url='/authentication',
+        json={'identifier': 'kangaroo', 'password': password},
+    )
     assert check_error(response, errors.UserNotFoundError)
 
 
@@ -864,10 +887,12 @@ async def test_generating_access_token_with_invalid_password(
     await client.post(url=f'/users/{username}', json=account_data)
     await client.post(
         url=f'/verification',
-        json={'verification_token': '0', 'password': password},
+        json={'verification_token': str(0).zfill(64), 'password': password},
     )
-    credentials = dict(identifier=username, password='tomato')
-    response = await client.post(url='/authentication', json=credentials)
+    response = await client.post(
+        url='/authentication',
+        json={'identifier': username, 'password': 'kangaroo'},
+    )
     assert check_error(response, errors.InvalidPasswordError)
 
 
@@ -908,7 +933,7 @@ async def test_verifying_email_address_with_valid_credentials(
     await client.post(url=f'/users/{username}', json=account_data)
     response = await client.post(
         url=f'/verification',
-        json={'verification_token': '0', 'password': password},
+        json={'verification_token': str(0).zfill(64), 'password': password},
     )
     assert response.status_code == 200
     assert access.decode(response.json()['access_token']) == username
@@ -930,7 +955,7 @@ async def test_verifying_email_address_with_invalid_verification_token(
     await client.post(url=f'/users/{username}', json=account_data)
     response = await client.post(
         url=f'/verification',
-        json={'verification_token': 'tomato', 'password': password},
+        json={'verification_token': str(1).zfill(64), 'password': password},
     )
     assert check_error(response, errors.InvalidVerificationTokenError)
     response = await client.get(f'/users/{username}', headers=headers)
@@ -951,7 +976,7 @@ async def test_verifying_email_address_with_invalid_password(
     await client.post(url=f'/users/{username}', json=account_data)
     response = await client.post(
         url=f'/verification',
-        json={'verification_token': '0', 'password': 'tomato'},
+        json={'verification_token': str(0).zfill(64), 'password': 'kangaroo'},
     )
     assert check_error(response, errors.InvalidPasswordError)
     response = await client.get(f'/users/{username}', headers=headers)
@@ -971,9 +996,15 @@ async def test_verifying_previously_verified_email_address(
     ):
     """Test that email verification works given valid credentials."""
     await client.post(url=f'/users/{username}', json=account_data)
-    credentials = {'verification_token': '0', 'password': password}
-    await client.post(url='/verification', json=credentials)
-    response = await client.post(url='/verification', json=credentials)
+    verification_credentials = {
+        'verification_token': str(0).zfill(64),
+        'password': password,
+    }
+    await client.post(url='/verification', json=verification_credentials)
+    response = await client.post(
+        url='/verification',
+        json=verification_credentials,
+    )
     assert check_error(response, errors.InvalidVerificationTokenError)
     response = await client.get(f'/users/{username}', headers=headers)
     assert response.json()['verified']

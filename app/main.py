@@ -7,7 +7,7 @@ import app.survey as sv
 import app.documentation as docs
 import app.cryptography.access as access
 import app.settings as settings
-import app.validation as validation
+import app.models as models
 
 
 # create fastapi app
@@ -31,25 +31,13 @@ survey_manager = sv.SurveyManager()
 account_manager = ac.AccountManager(survey_manager)
 
 
-################################################################################
-# Pydantic Type Definitions
-################################################################################
-
-
-class AccountData(pydantic.BaseModel):
-    username: str
-    email_address: str
-    password: str
-
-
-class AuthenticationCredentials(pydantic.BaseModel):
-    identifier: str
-    password: str
-
-
-class VerificationCredentials(pydantic.BaseModel):
-    verification_token: str
-    password: str
+# add pydantic ValidationError exception handler
+@app.exception_handler(pydantic.ValidationError)
+async def validtion_error_exception_handler(request, exc):
+    return fastapi.responses.JSONResponse(
+        status_code=422,
+        content={'detail': fastapi.encoders.jsonable_encoder(exc.errors())}
+    )
 
 
 ################################################################################
@@ -80,10 +68,10 @@ async def fetch_user(
 @app.post(**docs.SPECIFICATIONS['create_user'])
 async def create_user(
         username: str = docs.ARGUMENTS['username'],
-        account_data: validation.AccountData = docs.ARGUMENTS['account_data'],
+        account_data: models.AccountData = docs.ARGUMENTS['account_data'],
     ):
     """Create a new user based on the given account data."""
-    await account_manager.create(username, account_data)
+    await account_manager.create(username, account_data.dict())
 
 
 @app.put(**docs.SPECIFICATIONS['update_user'])
@@ -91,10 +79,10 @@ async def create_user(
 async def update_user(
         access_token: str = docs.ARGUMENTS['access_token'],
         username: str = docs.ARGUMENTS['username'],
-        account_data: validation.AccountData = docs.ARGUMENTS['account_data'],
+        account_data: models.AccountData = docs.ARGUMENTS['account_data'],
     ):
     """Update the given user's account data."""
-    await account_manager.update(username, account_data)
+    await account_manager.update(username, account_data.dict())
 
 
 @app.delete(**docs.SPECIFICATIONS['delete_user'])
@@ -148,10 +136,14 @@ async def create_survey(
         access_token: str = docs.ARGUMENTS['access_token'],
         username: str = docs.ARGUMENTS['username'],
         survey_name: str = docs.ARGUMENTS['survey_name'],
-        configuration: dict = docs.ARGUMENTS['configuration'],
+        configuration: models.Configuration = docs.ARGUMENTS['configuration'],
     ):
     """Create new survey with given configuration."""
-    await survey_manager.create(username, survey_name, configuration)
+    await survey_manager.create(
+        username,
+        survey_name,
+        configuration.dict(by_alias=True),
+    )
 
 
 @app.put(**docs.SPECIFICATIONS['update_survey'])
@@ -160,10 +152,14 @@ async def update_survey(
         access_token: str = docs.ARGUMENTS['access_token'],
         username: str = docs.ARGUMENTS['username'],
         survey_name: str = docs.ARGUMENTS['survey_name'],
-        configuration: dict = docs.ARGUMENTS['configuration'],
+        configuration: models.Configuration = docs.ARGUMENTS['configuration'],
     ):
     """Update survey with given configuration."""
-    await survey_manager.update(username, survey_name, configuration)
+    await survey_manager.update(
+        username,
+        survey_name,
+        configuration.dict(by_alias=True),
+    )
 
 
 @app.delete(**docs.SPECIFICATIONS['reset_survey'])
@@ -240,7 +236,7 @@ async def decode_access_token(
 
 @app.post(**docs.SPECIFICATIONS['generate_access_token'])
 async def generate_access_token(
-        authentication_credentials: AuthenticationCredentials = (
+        authentication_credentials: models.AuthenticationCredentials = (
             docs.ARGUMENTS['authentication_credentials']
         ),
     ):
@@ -261,7 +257,7 @@ async def refresh_access_token(
 
 @app.post(**docs.SPECIFICATIONS['verify_email_address'])
 async def verify_email_address(
-        verification_credentials: VerificationCredentials = (
+        verification_credentials: models.VerificationCredentials = (
             docs.ARGUMENTS['verification_credentials']
         ),
     ):

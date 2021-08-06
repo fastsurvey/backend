@@ -13,16 +13,6 @@ class _CustomError(fastapi.HTTPException):
 ################################################################################
 
 
-class InvalidConfigurationError(_CustomError):
-    STATUS_CODE = 400
-    DETAIL = 'invalid configuration'
-
-
-class InvalidSubmissionError(_CustomError):
-    STATUS_CODE = 400
-    DETAIL = 'invalid submission'
-
-
 class UsernameAlreadyTakenError(_CustomError):
     STATUS_CODE = 400
     DETAIL = 'username already taken'

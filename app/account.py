@@ -35,7 +35,7 @@ class AccountManager:
 
     async def create(self, username, account_data):
         """Create new user account with some default account data."""
-        if account_data.username != username:
+        if account_data['username'] != username:
             # not very pretty, but cannot raise ValidationError otherwise
             raise fastapi.HTTPException(
                 422,
@@ -48,8 +48,8 @@ class AccountManager:
         timestamp = utils.now()
         account = {
             '_id': username,
-            'email_address': account_data.email_address,
-            'password_hash': pw.hash(account_data.password),
+            'email_address': account_data['email_address'],
+            'password_hash': pw.hash(account_data['password']),
             'creation_time': timestamp,
             'modification_time': timestamp,
             'verified': False,
@@ -123,12 +123,12 @@ class AccountManager:
         if entry is None:
             raise errors.UserNotFoundError()
         update = {}
-        if account_data.username != username:
+        if account_data['username'] != username:
             raise errors.NotImplementedError()
-        if account_data.email_address != entry['email_address']:
+        if account_data['email_address'] != entry['email_address']:
             raise errors.NotImplementedError()
-        if not pw.verify(account_data.password, entry['password_hash']):
-            update['password_hash'] = pw.hash(account_data.password)
+        if not pw.verify(account_data['password'], entry['password_hash']):
+            update['password_hash'] = pw.hash(account_data['password'])
         if update:
             update['modification_time'] = utils.now()
             result = await database.database['accounts'].update_one(

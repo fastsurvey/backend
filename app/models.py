@@ -1,8 +1,8 @@
-import re
 import cerberus
 import functools
 import pydantic
 import typing
+import re
 import enum
 
 import app.utils as utils
@@ -22,6 +22,10 @@ _LENGTHS = {
 }
 
 
+################################################################################
+# Constants
+################################################################################
+
 
 class Length(int, enum.Enum):
     A = 32
@@ -35,6 +39,11 @@ class Pattern(str, enum.Enum):
     EMAIL_ADDRESS = r'^.+@.+$'
 
 
+################################################################################
+# Base Model
+################################################################################
+
+
 class BaseModel(pydantic.BaseModel):
     """Custom BaseModel that pydantic models inherit from."""
 
@@ -44,7 +53,7 @@ class BaseModel(pydantic.BaseModel):
 
 
 ################################################################################
-# Account Validation
+# Account Data
 ################################################################################
 
 
@@ -60,7 +69,7 @@ class AccountData(BaseModel):
 
 
 ################################################################################
-# Configuration Validation
+# Survey Configuration
 ################################################################################
 
 
@@ -315,7 +324,7 @@ class ConfigurationValidator():
 
 
 ################################################################################
-# Submission Validation
+# Survey Submission
 ################################################################################
 
 
@@ -338,7 +347,7 @@ def build_email_field_validation(identifier, field, schema, validators):
             max_length=Length.B,
             # this regex checks if the string matches the regex defined in the
             # configurations, but also our (very loose) email regex
-            regex=f'(?={Pattern.EMAIL_ADDRESS.value})(?={field.regex})',
+            regex=f'(?={Pattern.EMAIL_ADDRESS.value})(?={field["regex"]})',
         ),
         ...,
     )
@@ -346,7 +355,7 @@ def build_email_field_validation(identifier, field, schema, validators):
 
 def build_option_field_validation(identifier, field, schema, validators):
     schema[identifier] = (pydantic.StrictBool, ...)
-    if field.required:
+    if field['required']:
         validators[f'validate-{identifier}'] = (
             pydantic.validator(identifier, allow_reuse=True)(
                 validate_option_field_submission,
@@ -356,7 +365,7 @@ def build_option_field_validation(identifier, field, schema, validators):
 
 def build_radio_field_validation(identifier, field, schema, validators):
     schema[identifier] = (
-        typing.Literal[tuple(field.options)],
+        typing.Literal[tuple(field['options'])],
         ...,
     )
 
@@ -364,9 +373,9 @@ def build_radio_field_validation(identifier, field, schema, validators):
 def build_selection_field_validation(identifier, field, schema, validators):
     schema[identifier] = (
         pydantic.conlist(
-            item_type=typing.Literal[tuple(field.options)],
-            min_items=field.min_select,
-            max_items=field.max_select,
+            item_type=typing.Literal[tuple(field['options'])],
+            min_items=field['min_select'],
+            max_items=field['max_select'],
         ),
         ...,
     )
@@ -381,8 +390,8 @@ def build_text_field_validation(identifier, field, schema, validators):
     schema[identifier] = (
         pydantic.constr(
             strict=True,
-            min_length=field.min_chars,
-            max_length=field.max_chars,
+            min_length=field['min_chars'],
+            max_length=field['max_chars'],
         ),
         ...,
     )
@@ -399,8 +408,8 @@ def build_submission_model(configuration):
         selection=build_selection_field_validation,
         text=build_text_field_validation,
     )
-    for identifier, field in enumerate(configuration.fields_):
-        mapping[field.type](str(identifier), field, schema, validators)
+    for identifier, field in enumerate(configuration['fields']):
+        mapping[field['type']](str(identifier), field, schema, validators)
     return pydantic.create_model(
         'Submission',
         **schema,
@@ -547,3 +556,22 @@ class SubmissionValidator(cerberus.Validator):
             and not (type(value) is str and value != '')
         ):
             self._error(field, f'this field is required')
+
+
+################################################################################
+# Other Models
+################################################################################
+
+
+class AuthenticationCredentials(pydantic.BaseModel):
+    identifier: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
+    password: pydantic.constr(strict=True, min_length=8, max_length=Length.B)
+
+
+class VerificationCredentials(pydantic.BaseModel):
+    verification_token: pydantic.constr(
+        strict=True,
+        min_length=64,
+        max_length=64,
+    )
+    password: pydantic.constr(strict=True, min_length=8, max_length=Length.B)
