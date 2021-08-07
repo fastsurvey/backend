@@ -1,19 +1,18 @@
 {
     "count": 5,
-    "data": [
-        null,
-        5,
-        {
+    "data": {
+        "0": null,
+        "1": 5,
+        "2": {
             "Asparagus": 1,
-            "Spinach": 0,
-            "Artichoke": 3,
-            "None of these is a fruit": 1
+            "None of these is a fruit": 1,
+            "Artichoke": 3
         },
-        {
-            "Strawberry": 3,
+        "3": {
             "Vanilla": 1,
+            "Strawberry": 3,
             "Chocolate": 4
         },
-        null
-    ]
+        "4": null
+    }
 }
