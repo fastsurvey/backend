@@ -1,69 +1,6 @@
 [
     {
         "$facet": {
-            "2": [
-                {
-                    "$group": {
-                        "_id": "$2",
-                        "count": {
-                            "$sum": 1
-                        }
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": null,
-                        "2": {
-                            "$push": {
-                                "k": "$_id",
-                                "v": "$count"
-                            }
-                        }
-                    }
-                },
-                {
-                    "$project": {
-                        "_id": false,
-                        "2": {
-                            "$arrayToObject": "$2"
-                        }
-                    }
-                }
-            ],
-            "3": [
-                {
-                    "$unwind": {
-                        "path": "$3"
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": "$3",
-                        "count": {
-                            "$sum": 1
-                        }
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": null,
-                        "3": {
-                            "$push": {
-                                "k": "$_id",
-                                "v": "$count"
-                            }
-                        }
-                    }
-                },
-                {
-                    "$project": {
-                        "_id": false,
-                        "3": {
-                            "$arrayToObject": "$3"
-                        }
-                    }
-                }
-            ],
             "main": [
                 {
                     "$group": {
@@ -73,8 +10,69 @@
                         },
                         "1": {
                             "$sum": {
-                                "$toInt": "$1"
+                                "$toInt": "$data.1"
                             }
+                        }
+                    }
+                }
+            ],
+            "2": [
+                {
+                    "$group": {
+                        "_id": "$data.2",
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": null,
+                        "2": {
+                            "$push": {
+                                "k": "$_id",
+                                "v": "$count"
+                            }
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "2": {
+                            "$arrayToObject": "$2"
+                        }
+                    }
+                }
+            ],
+            "3": [
+                {
+                    "$unwind": {
+                        "path": "$data.3"
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$data.3",
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": null,
+                        "3": {
+                            "$push": {
+                                "k": "$_id",
+                                "v": "$count"
+                            }
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "3": {
+                            "$arrayToObject": "$3"
                         }
                     }
                 }
