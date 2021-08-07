@@ -74,6 +74,12 @@ def resultss():
     return data.TEST_SURVEY_DOCUMENTSS['resultss']
 
 
+@pytest.fixture(scope='session')
+def default_resultss():
+    """Convenience method to access test survey default results."""
+    return data.TEST_SURVEY_DOCUMENTSS['default_resultss']
+
+
 ################################################################################
 # Convenience Methods To Access Test Data Of A Generic Survey
 ################################################################################

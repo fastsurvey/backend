@@ -765,6 +765,7 @@ async def test_fetching_results_without_submissions(
         username,
         survey_name,
         configuration,
+        default_resultss,
         cleanup,
     ):
     """Test that aggregation works when no submissions have yet been made."""
@@ -772,16 +773,7 @@ async def test_fetching_results_without_submissions(
     await client.post(url=path, headers=headers, json=configuration)
     response = await client.get(url=f'{path}/results', headers=headers)
     assert response.status_code == 200
-    assert response.json() == {
-        'count': 0,
-        'data': [
-            None,
-            0,
-            [0, 0, 0, 0],
-            [0, 0, 0],
-            None,
-        ]
-    }
+    assert response.json() == default_resultss[survey_name]
 
 
 ################################################################################

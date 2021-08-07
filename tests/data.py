@@ -441,6 +441,7 @@ def _load_test_survey_documentss():
         'submissionss': dict(),
         'aggregation_pipelines': dict(),
         'resultss': dict(),
+        'default_resultss': dict(),
     }
     for survey_name in survey_names:
         subfolder = f'{folder}/{survey_name}'
