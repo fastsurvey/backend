@@ -1,50 +1,57 @@
 [
     {
-        "$group": {
-            "_id": null,
+        "$facet": {
+            "0": [
+                {
+                    "$group": {
+                        "_id": "$0",
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": null,
+                        "0": {
+                            "$push": {
+                                "k": "$_id",
+                                "v": "$count"
+                            }
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": false,
+                        "0": {
+                            "$arrayToObject": "$0"
+                        }
+                    }
+                }
+            ],
+            "main": [
+                {
+                    "$group": {
+                        "_id": null,
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "$project": {
             "count": {
-                "$sum": 1
+                "$first": "$main.count"
             },
-            "0+0": {
-                "$sum": {
-                    "$toInt": "$data.1.1"
-                }
-            },
-            "0+1": {
-                "$sum": {
-                    "$toInt": "$data.1.2"
-                }
-            },
-            "0+2": {
-                "$sum": {
-                    "$toInt": "$data.1.3"
-                }
-            },
-            "0+3": {
-                "$sum": {
-                    "$toInt": "$data.1.4"
+            "data": {
+                "0": {
+                    "$first": "$0.0"
                 }
             }
-        }
-    },
-    {
-        "$project": {
-            "_id": false,
-            "count": true,
-            "0": [
-                "$0+0",
-                "$0+1",
-                "$0+2",
-                "$0+3"
-            ]
-        }
-    },
-    {
-        "$project": {
-            "count": true,
-            "data": [
-                "$0"
-            ]
         }
     }
 ]

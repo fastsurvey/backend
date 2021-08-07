@@ -1,24 +1,26 @@
 [
     {
-        "$group": {
-            "_id": null,
-            "count": {
-                "$sum": 1
-            }
-        }
-    },
-    {
-        "$project": {
-            "_id": false,
-            "count": true
-        }
-    },
-    {
-        "$project": {
-            "count": true,
-            "data": [
-                "$0"
+        "$facet": {
+            "main": [
+                {
+                    "$group": {
+                        "_id": null,
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                }
             ]
+        }
+    },
+    {
+        "$project": {
+            "count": {
+                "$first": "$main.count"
+            },
+            "data": {
+                "0": null
+            }
         }
     }
 ]

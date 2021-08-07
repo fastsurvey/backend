@@ -1,30 +1,33 @@
 [
     {
-        "$group": {
-            "_id": null,
+        "$facet": {
+            "main": [
+                {
+                    "$group": {
+                        "_id": null,
+                        "count": {
+                            "$sum": 1
+                        },
+                        "0": {
+                            "$sum": {
+                                "$toInt": "$0"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "$project": {
             "count": {
-                "$sum": 1
+                "$first": "$main.count"
             },
-            "0": {
-                "$sum": {
-                    "$toInt": "$data.1"
+            "data": {
+                "0": {
+                    "$first": "$main.0"
                 }
             }
-        }
-    },
-    {
-        "$project": {
-            "_id": false,
-            "count": true,
-            "0": true
-        }
-    },
-    {
-        "$project": {
-            "count": true,
-            "data": [
-                "$0"
-            ]
         }
     }
 ]
