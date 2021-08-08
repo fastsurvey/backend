@@ -240,7 +240,6 @@ SPECIFICATIONS = {
         error_classes=[
             errors.InvalidTimingError,
             errors.SurveyNotFoundError,
-            errors.SubmissionLimitReachedError,
         ],
     ),
     'reset_survey': _generate_responses_documentation(

@@ -38,11 +38,6 @@ class SubmissionsExistError(_CustomError):
     DETAIL = 'submissions exist'
 
 
-class SubmissionLimitReachedError(_CustomError):
-    STATUS_CODE = 400
-    DETAIL = 'submission limit reached'
-
-
 ################################################################################
 # 401 Unauthorized
 ################################################################################

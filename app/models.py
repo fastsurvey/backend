@@ -133,7 +133,6 @@ class Configuration(Field):
     start: pydantic.conint(strict=True, ge=0, le=4102444800)
     end: pydantic.conint(strict=True, ge=0, le=4102444800)
     draft: pydantic.StrictBool
-    limit: pydantic.conint(strict=True, ge=0)
     fields_: pydantic.conlist(
         item_type=typing.Union[
             EmailField,
