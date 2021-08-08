@@ -46,7 +46,7 @@ class SurveyManager:
                 raise errors.SurveyNotFoundError()
             if configuration['draft'] and not return_drafts:
                 raise errors.SurveyNotFoundError()
-            await self.cache.update(configuration)
+            self.cache.update(configuration)
             return self.cache.fetch(username, survey_name)
 
     async def fetch_configuration(
@@ -90,7 +90,7 @@ class SurveyManager:
             # like this the configuration in the survey is the same as
             # the one that is sent around in the routes
 
-            await self.cache.update(configuration)
+            self.cache.update(configuration)
         except pymongo.errors.DuplicateKeyError:
             raise errors.SurveyNameAlreadyTakenError()
 
@@ -107,7 +107,9 @@ class SurveyManager:
 
         """
         survey = await self.fetch(username, survey_name)
-        if survey.counter > 0:
+        counter = await survey.submissions.count_documents({})
+        counter += await survey.unverified_submissions.count_documents({})
+        if counter > 0:
             raise errors.SubmissionsExistError()
         configuration['username'] = username
         try:
@@ -119,7 +121,7 @@ class SurveyManager:
             raise errors.SurveyNameAlreadyTakenError()
         if response.matched_count == 0:
             raise errors.SurveyNotFoundError()
-        await self.cache.update(configuration)
+        self.cache.update(configuration)
 
     async def reset(self, username, survey_name):
         """Delete all submission data but keep the configuration."""
@@ -164,7 +166,7 @@ class SurveyCache:
         survey_id = utils.combine(username, survey_name)
         return self._cache[survey_id]
 
-    async def update(self, configuration):
+    def update(self, configuration):
         """Update or create survey object in the local cache.
 
         Draft surveys are not cached. When the given configuration is a draft,
@@ -177,7 +179,7 @@ class SurveyCache:
         if configuration['draft']:
             self.delete(username, survey_name)
         else:
-            self._cache[survey_id] = await Survey.create(configuration)
+            self._cache[survey_id] = Survey(configuration)
 
     def delete(self, username, survey_name):
         """Remove survey object from the local cache."""
@@ -188,7 +190,7 @@ class SurveyCache:
 class Survey:
     """The survey class that all surveys instantiate."""
 
-    def __init__(self, configuration, counter):
+    def __init__(self, configuration):
         """Create a survey from the given json configuration file."""
         self.configuration = configuration
         self.username = self.configuration['username']
@@ -204,19 +206,7 @@ class Survey:
             f'surveys.{utils.identify(self.configuration)}'
             f'.unverified-submissions'
         ]
-        self.limit = self.configuration['limit']
-        self.counter = counter
         self.Submission = models.build_submission_model(configuration)
-
-    @classmethod
-    async def create(cls, configuration):
-        """Create a survey from the given json configuration file."""
-        submissions = database.database[
-            f'surveys.{utils.identify(configuration)}'
-            f'.submissions'
-        ]
-        counter = await submissions.count_documents({})
-        return cls(configuration, counter)
 
     @staticmethod
     def _find_email_field_to_verify(configuration):
@@ -231,15 +221,12 @@ class Survey:
         submission_time = utils.now()
         if submission_time < self.start or submission_time >= self.end:
             raise errors.InvalidTimingError()
-        if self.counter >= self.limit != 0:
-            raise errors.SubmissionLimitReachedError()
         submission = {
             'submission_time': submission_time,
             'data': self.Submission(**submission).dict(),
         }
         if self.index is None:
             await self.submissions.insert_one(submission)
-            self.counter += 1
         else:
             submission['_id'] = verification.token()
             while True:
@@ -272,13 +259,11 @@ class Survey:
             raise errors.InvalidVerificationTokenError()
         submission['verification_time'] = verification_time
         submission['_id'] = submission['data'][str(self.index)]
-        document = await self.submissions.find_one_and_replace(
+        await self.submissions.find_one_and_replace(
             filter={'_id': submission['_id']},
             replacement=submission,
             upsert=True,
         )
-        if document is None:
-            self.counter += 1
         return fastapi.responses.RedirectResponse(
             f'{settings.FRONTEND_URL}/{self.username}/{self.survey_name}'
             f'/success'

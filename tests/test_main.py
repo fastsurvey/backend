@@ -561,38 +561,6 @@ async def test_creating_invalid_submission(
     assert entry is None
 
 
-@pytest.mark.asyncio
-async def test_creating_submission_with_submission_limit_reached(
-        mock_email_sending,
-        mock_verification_token_generation,
-        client,
-        headers,
-        username,
-        survey_name,
-        configuration,
-        submissions,
-        cleanup,
-    ):
-    """Test that submission is rejected when submission limit is reached."""
-    path = f'/users/{username}/surveys/{survey_name}'
-    # push survey that has a limit of a single submission
-    configuration = copy.deepcopy(configuration)
-    configuration['limit'] = 1
-    await client.post(url=path, headers=headers, json=configuration)
-    # push and validate a submission
-    await client.post(url=f'{path}/submissions', json=submissions[0])
-    await client.get(
-        url=f'{path}/verification/{str(0).zfill(64)}',
-        allow_redirects=False,
-    )
-    # push a second submission and verify
-    response = await client.post(url=f'{path}/submissions', json=submissions[0])
-    assert check_error(response, errors.SubmissionLimitReachedError)
-    survey = main.survey_manager.cache.fetch(username, survey_name)
-    x = await survey.submissions.find_one({})
-    assert x['data'] == submissions[0]
-
-
 ################################################################################
 # Verify submission
 ################################################################################
