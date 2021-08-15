@@ -35,19 +35,9 @@ class AccountManager:
 
     async def create(self, username, account_data):
         """Create new user account with some default account data."""
-        if account_data['username'] != username:
-            # not very pretty, but cannot raise ValidationError otherwise
-            raise fastapi.HTTPException(
-                422,
-                [{
-                    'loc': ['body', 'username'],
-                    'msg': 'username does not match username specified in route',
-                    'type': 'value_error',
-                }]
-            )
         timestamp = utils.now()
         account = {
-            '_id': username,
+            '_id': account_data['username'],
             'email_address': account_data['email_address'],
             'password_hash': pw.hash(account_data['password']),
             'creation_time': timestamp,
@@ -72,7 +62,7 @@ class AccountManager:
 
         status = await email.send_account_verification(
             account['email_address'],
-            username,
+            account_data['username'],
             account['verification_token'],
         )
         if status != 200:

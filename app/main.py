@@ -7,7 +7,7 @@ import app.survey as sv
 import app.documentation as docs
 import app.cryptography.access as access
 import app.settings as settings
-import app.models as models
+import app.validation as validation
 
 
 # create fastapi app
@@ -57,58 +57,42 @@ async def server_status():
 @app.get(**docs.SPECIFICATIONS['fetch_user'])
 @access.authorize
 async def fetch_user(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
-        username: models.Username = docs.ARGUMENTS['username'],
+        data: validation.FetchUserRequestData = fastapi.Depends(),
     ):
     """Fetch the given user's account data."""
-    return await account_manager.fetch(username)
+    return await account_manager.fetch(data.username)
 
 
 @app.post(**docs.SPECIFICATIONS['create_user'])
 async def create_user(
-        username: models.Username = docs.ARGUMENTS['username'],
-        account_data: models.AccountData = docs.ARGUMENTS['account_data'],
+        data: validation.CreateUserRequestData = fastapi.Depends(),
     ):
     """Create a new user based on the given account data."""
-    await account_manager.create(username, account_data.dict())
+    await account_manager.create(data.username, data.account_data.dict())
 
 
 @app.put(**docs.SPECIFICATIONS['update_user'])
 @access.authorize
 async def update_user(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
-        username: models.Username = docs.ARGUMENTS['username'],
-        account_data: models.AccountData = docs.ARGUMENTS['account_data'],
+        data: validation.UpdateUserRequestData = fastapi.Depends(),
     ):
     """Update the given user's account data."""
-    await account_manager.update(username, account_data.dict())
+    await account_manager.update(data.username, data.account_data.dict())
 
 
 @app.delete(**docs.SPECIFICATIONS['delete_user'])
 @access.authorize
 async def delete_user(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
-        username: models.Username = docs.ARGUMENTS['username'],
+        data: validation.DeleteUserRequestData = fastapi.Depends(),
     ):
     """Delete the user and all their surveys from the database."""
-    await account_manager.delete(username)
+    await account_manager.delete(data.username)
 
 
 @app.get(**docs.SPECIFICATIONS['fetch_surveys'])
 @access.authorize
 async def fetch_surveys(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
-        username: models.Username = docs.ARGUMENTS['username'],
-        skip: pydantic.conint(strict=True, ge=0) = docs.ARGUMENTS['skip'],
-        limit: pydantic.conint(strict=True, ge=0) = docs.ARGUMENTS['limit'],
+        data: validation.FetchSurveysRequestData = fastapi.Depends(),
     ):
     """Fetch the user's survey configurations sorted by the start date.
 
@@ -116,13 +100,16 @@ async def fetch_surveys(
     draft mode **are** returned.
 
     """
-    return await account_manager.fetch_configurations(username, skip, limit)
+    return await account_manager.fetch_configurations(
+        data.username,
+        data.skip,
+        data.limit,
+    )
 
 
 @app.get(**docs.SPECIFICATIONS['fetch_survey'])
 async def fetch_survey(
-        username: models.Username = docs.ARGUMENTS['username'],
-        survey_name: models.Username = docs.ARGUMENTS['survey_name'],
+        data: validation.FetchSurveyRequestData = fastapi.Depends(),
     ):
     """Fetch a survey configuration.
 
@@ -131,8 +118,8 @@ async def fetch_survey(
 
     """
     return await survey_manager.fetch_configuration(
-        username,
-        survey_name,
+        data.username,
+        data.survey_name,
         return_drafts=False,
     )
 
@@ -140,152 +127,117 @@ async def fetch_survey(
 @app.post(**docs.SPECIFICATIONS['create_survey'])
 @access.authorize
 async def create_survey(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
-        username: models.Username = docs.ARGUMENTS['username'],
-        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
-        configuration: models.Configuration = docs.ARGUMENTS['configuration'],
+        data: validation.CreateSurveyRequestData = fastapi.Depends(),
     ):
     """Create new survey with given configuration."""
     await survey_manager.create(
-        username,
-        survey_name,
-        configuration.dict(by_alias=True),
+        data.username,
+        data.survey_name,
+        data.configuration.dict(by_alias=True),
     )
 
 
 @app.put(**docs.SPECIFICATIONS['update_survey'])
 @access.authorize
 async def update_survey(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
-        username: models.Username = docs.ARGUMENTS['username'],
-        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
-        configuration: models.Configuration = docs.ARGUMENTS['configuration'],
+        data: validation.UpdateSurveyRequestData = fastapi.Depends(),
     ):
     """Update survey with given configuration."""
     await survey_manager.update(
-        username,
-        survey_name,
-        configuration.dict(by_alias=True),
+        data.username,
+        data.survey_name,
+        data.configuration.dict(by_alias=True),
     )
 
 
 @app.delete(**docs.SPECIFICATIONS['reset_survey'])
 @access.authorize
 async def reset_survey(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
-        username: models.Username = docs.ARGUMENTS['username'],
-        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
+        data: validation.ResetSurveyRequestData = fastapi.Depends(),
     ):
     """Reset a survey by deleting all submission data including any results."""
-    await survey_manager.reset(username, survey_name)
+    await survey_manager.reset(data.username, data.survey_name)
 
 
 @app.delete(**docs.SPECIFICATIONS['delete_survey'])
 @access.authorize
 async def delete_survey(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
-        username: models.Username = docs.ARGUMENTS['username'],
-        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
+        data: validation.DeleteSurveyRequestData = fastapi.Depends(),
     ):
     """Delete given survey including all its submissions and other data."""
-    await survey_manager.delete(username, survey_name)
+    await survey_manager.delete(data.username, data.survey_name)
 
 
 @app.post(**docs.SPECIFICATIONS['create_submission'])
 async def create_submission(
-        username: models.Username = docs.ARGUMENTS['username'],
-        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
-        submission: dict = docs.ARGUMENTS['submission'],
+        data: validation.CreateSubmissionRequestData = fastapi.Depends(),
     ):
     """Validate submission and store it under pending submissions."""
     survey = await survey_manager.fetch(
-        username,
-        survey_name,
+        data.username,
+        data.survey_name,
         return_drafts=False,
     )
-    return await survey.submit(submission)
+    survey.Submission(**data.submission)
+    return await survey.submit(data.submission)
 
 
 @app.get(**docs.SPECIFICATIONS['verify_submission'])
 async def verify_submission(
-        username: models.Username = docs.ARGUMENTS['username'],
-        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
-        verification_token: models.VerificationToken = (
-            docs.ARGUMENTS['verification_token']
-        ),
+        data: validation.VerifySubmissionRequestData = fastapi.Depends(),
     ):
     """Verify user token and either fail or redirect to success page."""
     survey = await survey_manager.fetch(
-        username,
-        survey_name,
+        data.username,
+        data.survey_name,
         return_drafts=False,
     )
-    return await survey.verify(verification_token)
+    return await survey.verify(data.verification_token)
 
 
 @app.get(**docs.SPECIFICATIONS['fetch_results'])
 @access.authorize
 async def fetch_results(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
-        username: models.Username = docs.ARGUMENTS['username'],
-        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
+        data: validation.FetchResultsRequestData = fastapi.Depends(),
     ):
     """Fetch the results of the given survey."""
-    survey = await survey_manager.fetch(username, survey_name)
+    survey = await survey_manager.fetch(data.username, data.survey_name)
     return await survey.aggregate()
 
 
 @app.get(**docs.SPECIFICATIONS['decode_access_token'])
 async def decode_access_token(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
+        data: validation.DecodeAccessTokenRequestData = fastapi.Depends(),
     ):
     """Decode the given access token and return the contained username."""
-    return access.decode(access_token)
+    return access.decode(data.access_token)
 
 
 @app.post(**docs.SPECIFICATIONS['generate_access_token'])
 async def generate_access_token(
-        authentication_credentials: models.AuthenticationCredentials = (
-            docs.ARGUMENTS['authentication_credentials']
-        ),
+        data: validation.GenerateAccessTokenRequestData = fastapi.Depends(),
     ):
     """Generate a JWT access token containing the user's username."""
     return await account_manager.authenticate(
-        authentication_credentials.identifier,
-        authentication_credentials.password,
+        data.authentication_credentials.identifier,
+        data.authentication_credentials.password,
     )
 
 
 @app.put(**docs.SPECIFICATIONS['refresh_access_token'])
 async def refresh_access_token(
-        access_token: pydantic.constr(strict=True) = (
-            docs.ARGUMENTS['access_token']
-        ),
+        data: validation.RefreshAccessTokenRequestData = fastapi.Depends(),
     ):
     """Generate a new access token with a refreshed expiration time."""
-    return access.generate(access.decode(access_token))
+    return access.generate(access.decode(data.access_token))
 
 
 @app.post(**docs.SPECIFICATIONS['verify_email_address'])
 async def verify_email_address(
-        verification_credentials: models.VerificationCredentials = (
-            docs.ARGUMENTS['verification_credentials']
-        ),
+        data: validation.VerifyEmailAddressRequestData = fastapi.Depends(),
     ):
     """Verify an email address given the verification token sent via email."""
     return await account_manager.verify(
-        verification_credentials.verification_token,
-        verification_credentials.password,
+        data.verification_credentials.verification_token,
+        data.verification_credentials.password,
     )

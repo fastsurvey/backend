@@ -15,6 +15,7 @@ def route():
     return func
 
 
+@pytest.mark.skip('reimplement after switch from JWT to session tokens')
 @pytest.mark.asyncio
 async def test_valid_access_token_procedure(username, route):
     """Test JWT access token generation and decoding procedure."""
@@ -22,6 +23,7 @@ async def test_valid_access_token_procedure(username, route):
     await route(access_token=access_token, username=username)
 
 
+@pytest.mark.skip('reimplement after switch from JWT to session tokens')
 @pytest.mark.asyncio
 async def test_invalid_access_token_procedure(username, route, variables):
     """Test that JWT decoding fails for some example invalid tokens."""

@@ -72,15 +72,6 @@ class SurveyManager:
         the route differs from the one specified in the configuration.
 
         """
-        if survey_name != configuration['survey_name']:
-            raise fastapi.HTTPException(
-                422,
-                [{
-                    'loc': ['body', 'survey_name'],
-                    'msg': 'survey_name does not match survey_name specified in route',
-                    'type': 'value_error',
-                }]
-            )
         configuration['username'] = username
         try:
             await database.database['configurations'].insert_one(configuration)
@@ -223,7 +214,7 @@ class Survey:
             raise errors.InvalidTimingError()
         submission = {
             'submission_time': submission_time,
-            'data': self.Submission(**submission).dict(),
+            'data': submission,
         }
         if self.index is None:
             await self.submissions.insert_one(submission)

@@ -30,6 +30,7 @@ Username = pydantic.constr(strict=True, regex=Pattern.USERNAME.value)
 SurveyName = pydantic.constr(strict=True, regex=Pattern.SURVEY_NAME.value)
 Password = pydantic.constr(strict=True, min_length=8, max_length=Length.B)
 VerificationToken = pydantic.constr(strict=True, min_length=64, max_length=64)
+AccessToken = pydantic.constr(strict=True)
 EmailAddress = pydantic.constr(
     strict=True,
     max_length=Length.B,
@@ -58,8 +59,8 @@ class BaseModel(pydantic.BaseModel):
 class AccountData(BaseModel):
     """Pydantic model used to validate account data."""
     username: Username
-    password: Password
     email_address: EmailAddress
+    password: Password
 
 
 ################################################################################

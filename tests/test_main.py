@@ -107,6 +107,18 @@ async def test_creating_user_with_invalid_account_data(
 
 
 @pytest.mark.asyncio
+async def test_creating_user_with_username_mismatch_in_route_and_body(
+        client,
+        account_data,
+    ):
+    """Test that account creation fails when given invalid account data."""
+    response = await client.post(url=f'/users/kangaroo', json=account_data)
+    assert check_error(response, None)
+    entry = await database.database['accounts'].find_one({})
+    assert entry is None
+
+
+@pytest.mark.asyncio
 async def test_creating_user_username_already_taken(
         mock_email_sending,
         client,
