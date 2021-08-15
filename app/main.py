@@ -57,8 +57,10 @@ async def server_status():
 @app.get(**docs.SPECIFICATIONS['fetch_user'])
 @access.authorize
 async def fetch_user(
-        access_token: str = docs.ARGUMENTS['access_token'],
-        username: str = docs.ARGUMENTS['username'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
+        username: models.Username = docs.ARGUMENTS['username'],
     ):
     """Fetch the given user's account data."""
     return await account_manager.fetch(username)
@@ -66,7 +68,7 @@ async def fetch_user(
 
 @app.post(**docs.SPECIFICATIONS['create_user'])
 async def create_user(
-        username: str = docs.ARGUMENTS['username'],
+        username: models.Username = docs.ARGUMENTS['username'],
         account_data: models.AccountData = docs.ARGUMENTS['account_data'],
     ):
     """Create a new user based on the given account data."""
@@ -76,8 +78,10 @@ async def create_user(
 @app.put(**docs.SPECIFICATIONS['update_user'])
 @access.authorize
 async def update_user(
-        access_token: str = docs.ARGUMENTS['access_token'],
-        username: str = docs.ARGUMENTS['username'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
+        username: models.Username = docs.ARGUMENTS['username'],
         account_data: models.AccountData = docs.ARGUMENTS['account_data'],
     ):
     """Update the given user's account data."""
@@ -87,8 +91,10 @@ async def update_user(
 @app.delete(**docs.SPECIFICATIONS['delete_user'])
 @access.authorize
 async def delete_user(
-        access_token: str = docs.ARGUMENTS['access_token'],
-        username: str = docs.ARGUMENTS['username'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
+        username: models.Username = docs.ARGUMENTS['username'],
     ):
     """Delete the user and all their surveys from the database."""
     await account_manager.delete(username)
@@ -97,10 +103,12 @@ async def delete_user(
 @app.get(**docs.SPECIFICATIONS['fetch_surveys'])
 @access.authorize
 async def fetch_surveys(
-        access_token: str = docs.ARGUMENTS['access_token'],
-        username: str = docs.ARGUMENTS['username'],
-        skip: int = docs.ARGUMENTS['skip'],
-        limit: int = docs.ARGUMENTS['limit'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
+        username: models.Username = docs.ARGUMENTS['username'],
+        skip: pydantic.conint(strict=True, ge=0) = docs.ARGUMENTS['skip'],
+        limit: pydantic.conint(strict=True, ge=0) = docs.ARGUMENTS['limit'],
     ):
     """Fetch the user's survey configurations sorted by the start date.
 
@@ -113,8 +121,8 @@ async def fetch_surveys(
 
 @app.get(**docs.SPECIFICATIONS['fetch_survey'])
 async def fetch_survey(
-        username: str = docs.ARGUMENTS['username'],
-        survey_name: str = docs.ARGUMENTS['survey_name'],
+        username: models.Username = docs.ARGUMENTS['username'],
+        survey_name: models.Username = docs.ARGUMENTS['survey_name'],
     ):
     """Fetch a survey configuration.
 
@@ -132,9 +140,11 @@ async def fetch_survey(
 @app.post(**docs.SPECIFICATIONS['create_survey'])
 @access.authorize
 async def create_survey(
-        access_token: str = docs.ARGUMENTS['access_token'],
-        username: str = docs.ARGUMENTS['username'],
-        survey_name: str = docs.ARGUMENTS['survey_name'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
+        username: models.Username = docs.ARGUMENTS['username'],
+        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
         configuration: models.Configuration = docs.ARGUMENTS['configuration'],
     ):
     """Create new survey with given configuration."""
@@ -148,9 +158,11 @@ async def create_survey(
 @app.put(**docs.SPECIFICATIONS['update_survey'])
 @access.authorize
 async def update_survey(
-        access_token: str = docs.ARGUMENTS['access_token'],
-        username: str = docs.ARGUMENTS['username'],
-        survey_name: str = docs.ARGUMENTS['survey_name'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
+        username: models.Username = docs.ARGUMENTS['username'],
+        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
         configuration: models.Configuration = docs.ARGUMENTS['configuration'],
     ):
     """Update survey with given configuration."""
@@ -164,9 +176,11 @@ async def update_survey(
 @app.delete(**docs.SPECIFICATIONS['reset_survey'])
 @access.authorize
 async def reset_survey(
-        access_token: str = docs.ARGUMENTS['access_token'],
-        username: str = docs.ARGUMENTS['username'],
-        survey_name: str = docs.ARGUMENTS['survey_name'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
+        username: models.Username = docs.ARGUMENTS['username'],
+        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
     ):
     """Reset a survey by deleting all submission data including any results."""
     await survey_manager.reset(username, survey_name)
@@ -175,9 +189,11 @@ async def reset_survey(
 @app.delete(**docs.SPECIFICATIONS['delete_survey'])
 @access.authorize
 async def delete_survey(
-        access_token: str = docs.ARGUMENTS['access_token'],
-        username: str = docs.ARGUMENTS['username'],
-        survey_name: str = docs.ARGUMENTS['survey_name'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
+        username: models.Username = docs.ARGUMENTS['username'],
+        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
     ):
     """Delete given survey including all its submissions and other data."""
     await survey_manager.delete(username, survey_name)
@@ -185,8 +201,8 @@ async def delete_survey(
 
 @app.post(**docs.SPECIFICATIONS['create_submission'])
 async def create_submission(
-        username: str = docs.ARGUMENTS['username'],
-        survey_name: str = docs.ARGUMENTS['survey_name'],
+        username: models.Username = docs.ARGUMENTS['username'],
+        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
         submission: dict = docs.ARGUMENTS['submission'],
     ):
     """Validate submission and store it under pending submissions."""
@@ -200,9 +216,11 @@ async def create_submission(
 
 @app.get(**docs.SPECIFICATIONS['verify_submission'])
 async def verify_submission(
-        username: str = docs.ARGUMENTS['username'],
-        survey_name: str = docs.ARGUMENTS['survey_name'],
-        verification_token: str = docs.ARGUMENTS['verification_token'],
+        username: models.Username = docs.ARGUMENTS['username'],
+        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
+        verification_token: models.VerificationToken = (
+            docs.ARGUMENTS['verification_token']
+        ),
     ):
     """Verify user token and either fail or redirect to success page."""
     survey = await survey_manager.fetch(
@@ -216,9 +234,11 @@ async def verify_submission(
 @app.get(**docs.SPECIFICATIONS['fetch_results'])
 @access.authorize
 async def fetch_results(
-        access_token: str = docs.ARGUMENTS['access_token'],
-        username: str = docs.ARGUMENTS['username'],
-        survey_name: str = docs.ARGUMENTS['survey_name'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
+        username: models.Username = docs.ARGUMENTS['username'],
+        survey_name: models.SurveyName = docs.ARGUMENTS['survey_name'],
     ):
     """Fetch the results of the given survey."""
     survey = await survey_manager.fetch(username, survey_name)
@@ -227,7 +247,9 @@ async def fetch_results(
 
 @app.get(**docs.SPECIFICATIONS['decode_access_token'])
 async def decode_access_token(
-        access_token: str = docs.ARGUMENTS['access_token'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
     ):
     """Decode the given access token and return the contained username."""
     return access.decode(access_token)
@@ -248,7 +270,9 @@ async def generate_access_token(
 
 @app.put(**docs.SPECIFICATIONS['refresh_access_token'])
 async def refresh_access_token(
-        access_token: str = docs.ARGUMENTS['access_token'],
+        access_token: pydantic.constr(strict=True) = (
+            docs.ARGUMENTS['access_token']
+        ),
     ):
     """Generate a new access token with a refreshed expiration time."""
     return access.generate(access.decode(access_token))
