@@ -22,6 +22,22 @@ class Pattern(str, enum.Enum):
 
 
 ################################################################################
+# Custom Types
+################################################################################
+
+
+Username = pydantic.constr(strict=True, regex=Pattern.USERNAME.value)
+SurveyName = pydantic.constr(strict=True, regex=Pattern.SURVEY_NAME.value)
+Password = pydantic.constr(strict=True, min_length=8, max_length=Length.B)
+VerificationToken = pydantic.constr(strict=True, min_length=64, max_length=64)
+EmailAddress = pydantic.constr(
+    strict=True,
+    max_length=Length.B,
+    regex=Pattern.EMAIL_ADDRESS.value,
+)
+
+
+################################################################################
 # Base Model
 ################################################################################
 
@@ -41,13 +57,9 @@ class BaseModel(pydantic.BaseModel):
 
 class AccountData(BaseModel):
     """Pydantic model used to validate account data."""
-    username: pydantic.constr(strict=True, regex=Pattern.USERNAME.value)
-    password: pydantic.constr(strict=True, min_length=8, max_length=Length.B)
-    email_address: pydantic.constr(
-        strict=True,
-        max_length=Length.B,
-        regex=Pattern.EMAIL_ADDRESS.value,
-    )
+    username: Username
+    password: Password
+    email_address: EmailAddress
 
 
 ################################################################################
@@ -129,7 +141,7 @@ class TextField(Field):
 
 
 class Configuration(Field):
-    survey_name: pydantic.constr(strict=True, regex=Pattern.SURVEY_NAME.value)
+    survey_name: SurveyName
     start: pydantic.conint(strict=True, ge=0, le=4102444800)
     end: pydantic.conint(strict=True, ge=0, le=4102444800)
     draft: pydantic.StrictBool
@@ -262,15 +274,11 @@ def build_submission_model(configuration):
 ################################################################################
 
 
-class AuthenticationCredentials(pydantic.BaseModel):
-    identifier: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
-    password: pydantic.constr(strict=True, min_length=8, max_length=Length.B)
+class AuthenticationCredentials(BaseModel):
+    identifier: typing.Union[Username, EmailAddress]
+    password: Password
 
 
-class VerificationCredentials(pydantic.BaseModel):
-    verification_token: pydantic.constr(
-        strict=True,
-        min_length=64,
-        max_length=64,
-    )
-    password: pydantic.constr(strict=True, min_length=8, max_length=Length.B)
+class VerificationCredentials(BaseModel):
+    verification_token: VerificationToken
+    password: Password

@@ -21,7 +21,6 @@ app = fastapi.FastAPI(
 app.add_middleware(
     fastapi.middleware.cors.CORSMiddleware,
     allow_origins=['*'],
-    allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
 )
@@ -33,7 +32,7 @@ account_manager = ac.AccountManager(survey_manager)
 
 # add pydantic ValidationError exception handler
 @app.exception_handler(pydantic.ValidationError)
-async def validtion_error_exception_handler(request, exc):
+async def validation_error_exception_handler(request, exc):
     return fastapi.responses.JSONResponse(
         status_code=422,
         content={'detail': fastapi.encoders.jsonable_encoder(exc.errors())}

@@ -61,7 +61,7 @@ ARGUMENTS = {
         description='The account data',
         example={
             'username': 'fastsurvey',
-            'email_address': 'support@fastsurvey.de',
+            'email_address': 'contact@fastsurvey.de',
             'password': '12345678'
         },
     ),
