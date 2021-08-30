@@ -21,15 +21,28 @@ database['accounts'].create_indexes([
             unique=True,
         ),
         pymongo.IndexModel(
-            keys='verification_token',
-            name='verification_token_index',
+            keys='verification_token_hash',
+            name='verification_token_hash_index',
             unique=True,
         ),
         pymongo.IndexModel(
             keys='creation_time',
             name='creation_time_index',
-            expireAfterSeconds=24*60*60,  # delete draft accounts after 24 hours
+            expireAfterSeconds=24*60*60,  # 24 hours
             partialFilterExpression={'verified': {'$eq': False}},
+        ),
+    ]
+)
+database['access_tokens'].create_indexes([
+        pymongo.IndexModel(
+            keys='access_token_hash',
+            name='access_token_hash_index',
+            unique=True,
+        ),
+        pymongo.IndexModel(
+            keys='issuance_time',
+            name='issuance_time_index',
+            expireAfterSeconds=14*24*60*60,  # 14 days
         ),
     ]
 )

@@ -29,8 +29,7 @@ class Pattern(str, enum.Enum):
 Username = pydantic.constr(strict=True, regex=Pattern.USERNAME.value)
 SurveyName = pydantic.constr(strict=True, regex=Pattern.SURVEY_NAME.value)
 Password = pydantic.constr(strict=True, min_length=8, max_length=Length.B)
-VerificationToken = pydantic.constr(strict=True, min_length=64, max_length=64)
-AccessToken = pydantic.constr(strict=True)
+Token = pydantic.constr(strict=True, min_length=64, max_length=64)
 EmailAddress = pydantic.constr(
     strict=True,
     max_length=Length.B,
@@ -281,5 +280,4 @@ class AuthenticationCredentials(BaseModel):
 
 
 class VerificationCredentials(BaseModel):
-    verification_token: VerificationToken
-    password: Password
+    verification_token: Token

@@ -4,12 +4,12 @@ import fastapi.responses
 
 import app.aggregation as aggregation
 import app.utils as utils
-import app.cryptography.verification as verification
 import app.email as email
 import app.settings as settings
 import app.resources.database as database
 import app.errors as errors
 import app.models as models
+import app.authentication as auth
 
 
 class SurveyManager:
@@ -219,13 +219,13 @@ class Survey:
         if self.index is None:
             await self.submissions.insert_one(submission)
         else:
-            submission['_id'] = verification.token()
+            submission['_id'] = auth.generate_token()
             while True:
                 try:
                     await self.unverified_submissions.insert_one(submission)
                     break
                 except pymongo.errors.DuplicateKeyError:
-                    submission['_id'] = verification.token()
+                    submission['_id'] = auth.generate_token()
             status = await email.send_submission_verification(
                 submission['data'][str(self.index)],
                 self.username,

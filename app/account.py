@@ -3,9 +3,7 @@ import pymongo
 import fastapi
 
 import app.email as email
-import app.cryptography.access as access
-import app.cryptography.password as pw
-import app.cryptography.verification as verification
+import app.authentication as auth
 import app.utils as utils
 import app.resources.database as database
 import app.errors as errors
@@ -25,7 +23,6 @@ class AccountManager:
             projection={
                 '_id': False,
                 'email_address': True,
-                'creation_time': True,
                 'verified': True,
             },
         )
@@ -33,17 +30,18 @@ class AccountManager:
             raise errors.UserNotFoundError()
         return account_data
 
-    async def create(self, username, account_data):
+    async def create(self, account_data):
         """Create new user account with some default account data."""
         timestamp = utils.now()
+        verification_token = auth.generate_token()
         account = {
             '_id': account_data['username'],
             'email_address': account_data['email_address'],
-            'password_hash': pw.hash(account_data['password']),
+            'password_hash': auth.hash_password(account_data['password']),
             'creation_time': timestamp,
             'modification_time': timestamp,
             'verified': False,
-            'verification_token': verification.token(),
+            'verification_token_hash': auth.hash_token(verification_token),
         }
         while True:
             try:
@@ -55,15 +53,18 @@ class AccountManager:
                     raise errors.UsernameAlreadyTakenError()
                 if index == 'email_address_index':
                     raise errors.EmailAddressAlreadyTakenError()
-                if index == 'verification_token_index':
-                    account_data['verification_token'] = verification.token()
+                if index == 'verification_token_hash_index':
+                    verification_token = auth.generate_token()
+                    account_data['verification_token_hash'] = auth.hash_token(
+                        verification_token
+                    )
                 else:
                     raise errors.InternalServerError()
 
         status = await email.send_account_verification(
             account['email_address'],
             account_data['username'],
-            account['verification_token'],
+            verification_token,
         )
         if status != 200:
             # we do not delete the unverified account here, as the user could
@@ -78,23 +79,17 @@ class AccountManager:
                 }]
             )
 
-    async def verify(self, verification_token, password):
+    async def verify(self, verification_token):
         """Verify an existing account via its unique verification token."""
-        account_data = await database.database['accounts'].find_one(
-            filter={'verification_token': verification_token},
-            projection={'password_hash': True, 'verified': True},
-        )
-        if account_data is None or account_data['verified']:
-            raise errors.InvalidVerificationTokenError()
-        if not pw.verify(password, account_data['password_hash']):
-            raise errors.InvalidPasswordError()
-        result = await database.database['accounts'].update_one(
-            filter={'verification_token': verification_token},
+        res = await database.database['accounts'].update_one(
+            filter={
+                'verification_token_hash': auth.hash_token(verification_token),
+                'verified': False,
+            },
             update={'$set': {'verified': True}}
         )
-        if result.matched_count == 0:
+        if res.matched_count == 0:
             raise errors.InvalidVerificationTokenError()
-        return access.generate(account_data['_id'])
 
     async def update(self, username, account_data):
         """Update existing user account data in the database."""
@@ -117,23 +112,22 @@ class AccountManager:
             raise errors.NotImplementedError()
         if account_data['email_address'] != entry['email_address']:
             raise errors.NotImplementedError()
-        if not pw.verify(account_data['password'], entry['password_hash']):
-            update['password_hash'] = pw.hash(account_data['password'])
+        if not auth.verify_password(account_data['password'], entry['password_hash']):
+            update['password_hash'] = auth.hash_password(account_data['password'])
         if update:
             update['modification_time'] = utils.now()
-            result = await database.database['accounts'].update_one(
+            res = await database.database['accounts'].update_one(
                 filter={'_id': username},
                 update={'$set': update},
             )
-            if result.matched_count == 0:
+            if res.matched_count == 0:
                 raise errors.UserNotFoundError()
 
     async def delete(self, username):
         """Delete the user including all their surveys from the database."""
-
-        # TODO when the account is deleted the access token needs to be
-        # useless afterwards
-
+        await database.database['access_tokens'].delete_one(
+            filter={'username': username},
+        )
         await database.database['accounts'].delete_one({'_id': username})
         cursor = database.database['configurations'].find(
             filter={'username': username},
@@ -160,12 +154,24 @@ class AccountManager:
         )
         if account_data is None:
             raise errors.UserNotFoundError()
-        password_hash = account_data['password_hash']
-        if not pw.verify(password, password_hash):
-            raise errors.InvalidPasswordError()
         if account_data['verified'] is False:
             raise errors.AccountNotVerifiedError()
-        return access.generate(account_data['_id'])
+        if not auth.verify_password(password, account_data['password_hash']):
+            raise errors.InvalidPasswordError()
+        access_token = auth.generate_token()
+        await database.database['access_tokens'].find_one_and_replace(
+            filter={'username': account_data['_id']},
+            replacement={
+                '_id': account_data['_id'],
+                'access_token_hash': auth.hash_token(access_token),
+                'issuance_time': utils.now(),
+            },
+            upsert=True,
+        )
+        return {
+            'username': account_data['_id'],
+            'access_token': access_token,
+        }
 
     async def fetch_configurations(self, username, skip, limit):
         """Return a list of the user's survey configurations."""

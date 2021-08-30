@@ -5,9 +5,9 @@ import pydantic
 import app.account as ac
 import app.survey as sv
 import app.documentation as docs
-import app.cryptography.access as access
 import app.settings as settings
 import app.validation as validation
+import app.authentication as auth
 
 
 # create fastapi app
@@ -55,7 +55,7 @@ async def server_status():
 
 
 @app.get(**docs.SPECIFICATIONS['fetch_user'])
-@access.authorize
+@auth.authorize
 async def fetch_user(
         data: validation.FetchUserRequestData = fastapi.Depends(),
     ):
@@ -68,11 +68,11 @@ async def create_user(
         data: validation.CreateUserRequestData = fastapi.Depends(),
     ):
     """Create a new user based on the given account data."""
-    await account_manager.create(data.username, data.account_data.dict())
+    await account_manager.create(data.account_data.dict())
 
 
 @app.put(**docs.SPECIFICATIONS['update_user'])
-@access.authorize
+@auth.authorize
 async def update_user(
         data: validation.UpdateUserRequestData = fastapi.Depends(),
     ):
@@ -81,7 +81,7 @@ async def update_user(
 
 
 @app.delete(**docs.SPECIFICATIONS['delete_user'])
-@access.authorize
+@auth.authorize
 async def delete_user(
         data: validation.DeleteUserRequestData = fastapi.Depends(),
     ):
@@ -90,7 +90,7 @@ async def delete_user(
 
 
 @app.get(**docs.SPECIFICATIONS['fetch_surveys'])
-@access.authorize
+@auth.authorize
 async def fetch_surveys(
         data: validation.FetchSurveysRequestData = fastapi.Depends(),
     ):
@@ -125,7 +125,7 @@ async def fetch_survey(
 
 
 @app.post(**docs.SPECIFICATIONS['create_survey'])
-@access.authorize
+@auth.authorize
 async def create_survey(
         data: validation.CreateSurveyRequestData = fastapi.Depends(),
     ):
@@ -138,7 +138,7 @@ async def create_survey(
 
 
 @app.put(**docs.SPECIFICATIONS['update_survey'])
-@access.authorize
+@auth.authorize
 async def update_survey(
         data: validation.UpdateSurveyRequestData = fastapi.Depends(),
     ):
@@ -151,7 +151,7 @@ async def update_survey(
 
 
 @app.delete(**docs.SPECIFICATIONS['reset_survey'])
-@access.authorize
+@auth.authorize
 async def reset_survey(
         data: validation.ResetSurveyRequestData = fastapi.Depends(),
     ):
@@ -160,7 +160,7 @@ async def reset_survey(
 
 
 @app.delete(**docs.SPECIFICATIONS['delete_survey'])
-@access.authorize
+@auth.authorize
 async def delete_survey(
         data: validation.DeleteSurveyRequestData = fastapi.Depends(),
     ):
@@ -196,21 +196,13 @@ async def verify_submission(
 
 
 @app.get(**docs.SPECIFICATIONS['fetch_results'])
-@access.authorize
+@auth.authorize
 async def fetch_results(
         data: validation.FetchResultsRequestData = fastapi.Depends(),
     ):
     """Fetch the results of the given survey."""
     survey = await survey_manager.fetch(data.username, data.survey_name)
     return await survey.aggregate()
-
-
-@app.get(**docs.SPECIFICATIONS['decode_access_token'])
-async def decode_access_token(
-        data: validation.DecodeAccessTokenRequestData = fastapi.Depends(),
-    ):
-    """Decode the given access token and return the contained username."""
-    return access.decode(data.access_token)
 
 
 @app.post(**docs.SPECIFICATIONS['generate_access_token'])
@@ -224,14 +216,6 @@ async def generate_access_token(
     )
 
 
-@app.put(**docs.SPECIFICATIONS['refresh_access_token'])
-async def refresh_access_token(
-        data: validation.RefreshAccessTokenRequestData = fastapi.Depends(),
-    ):
-    """Generate a new access token with a refreshed expiration time."""
-    return access.generate(access.decode(data.access_token))
-
-
 @app.post(**docs.SPECIFICATIONS['verify_email_address'])
 async def verify_email_address(
         data: validation.VerifyEmailAddressRequestData = fastapi.Depends(),
@@ -239,5 +223,4 @@ async def verify_email_address(
     """Verify an email address given the verification token sent via email."""
     return await account_manager.verify(
         data.verification_credentials.verification_token,
-        data.verification_credentials.password,
     )

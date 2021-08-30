@@ -5,7 +5,7 @@ import app.models as models
 
 
 class FetchUserRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
+    access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
 
 
@@ -21,18 +21,18 @@ class CreateUserRequestData(models.BaseModel):
 
 
 class UpdateUserRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
+    access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     account_data: models.AccountData = docs.ARGUMENTS['account_data']
 
 
 class DeleteUserRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
+    access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
 
 
 class FetchSurveysRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
+    access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     skip: pydantic.conint(strict=True, ge=0) = docs.ARGUMENTS['skip']
     limit: pydantic.conint(strict=True, ge=0) = docs.ARGUMENTS['limit']
@@ -44,7 +44,7 @@ class FetchSurveyRequestData(models.BaseModel):
 
 
 class CreateSurveyRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
+    access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
     configuration: models.Configuration = docs.ARGUMENTS['configuration']
@@ -57,20 +57,20 @@ class CreateSurveyRequestData(models.BaseModel):
 
 
 class UpdateSurveyRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
+    access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
     configuration: models.Configuration = docs.ARGUMENTS['configuration']
 
 
 class ResetSurveyRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
+    access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
 
 
 class DeleteSurveyRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
+    access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
 
@@ -84,29 +84,19 @@ class CreateSubmissionRequestData(models.BaseModel):
 class VerifySubmissionRequestData(models.BaseModel):
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
-    verification_token: models.VerificationToken = (
-        docs.ARGUMENTS['verification_token']
-    )
+    verification_token: models.Token = docs.ARGUMENTS['verification_token']
 
 
 class FetchResultsRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
+    access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
-
-
-class DecodeAccessTokenRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
 
 
 class GenerateAccessTokenRequestData(models.BaseModel):
     authentication_credentials: models.AuthenticationCredentials = (
         docs.ARGUMENTS['authentication_credentials']
     )
-
-
-class RefreshAccessTokenRequestData(models.BaseModel):
-    access_token: models.AccessToken = docs.ARGUMENTS['access_token']
 
 
 class VerifyEmailAddressRequestData(models.BaseModel):

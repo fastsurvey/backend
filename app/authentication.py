@@ -1,6 +1,11 @@
 import secrets
 import passlib.context as context
 import hashlib
+import functools
+
+import app.resources.database as database
+import app.utils as utils
+import app.errors as errors
 
 
 _CONTEXT = context.CryptContext(schemes=['argon2'], deprecated='auto')
@@ -34,3 +39,17 @@ def generate_token():
 def hash_token(token):
     """Hash the given token and return the hash as string."""
     return hashlib.sha512(token.encode('utf-8')).hexdigest()
+
+
+def authorize(func):
+    """Enforce proper authorization for the given fastapi route."""
+    @functools.wraps(func)
+    async def wrapper(**kwargs):
+        res = await database.database['access_tokens'].update_one(
+            filter={'access_token': hash_token(kwargs['data'].access_token)},
+            update={'$set': {'issuance_time': utils.now()}}
+        )
+        if res.matched_count == 0:
+            raise errors.AccessForbiddenError()
+        return await func(**kwargs)
+    return wrapper

@@ -41,7 +41,7 @@ ARGUMENTS = {
     'username': fastapi.Path(
         ...,
         description='The name of the user',
-        example='fastsurvey',
+        example='blueberry',
     ),
     'access_token': fastapi.Depends(
         fastapi.security.OAuth2PasswordBearer('/authentication')
@@ -60,7 +60,7 @@ ARGUMENTS = {
         ...,
         description='The account data',
         example={
-            'username': 'fastsurvey',
+            'username': 'blueberry',
             'email_address': 'contact@fastsurvey.de',
             'password': '12345678'
         },
@@ -78,7 +78,7 @@ ARGUMENTS = {
     'verification_token': fastapi.Path(
         ...,
         description='The verification token',
-        example='cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
+        example='6Ca1j7b5P3D8fO6WpsUHsE_eN3Fqq8V_sp_sV4RB2ubw9mtwRUM2cQh26jS_r65v',
     ),
     'submission': fastapi.Body(
         ...,
@@ -87,18 +87,17 @@ ARGUMENTS = {
     ),
     'authentication_credentials': fastapi.Body(
         ...,
-        description='The username or email address with the password',
+        description='The username or email address together with the password',
         example={
-            'identifier': 'fastsurvey',
+            'identifier': 'blueberry',
             'password': '12345678'
         },
     ),
     'verification_credentials': fastapi.Body(
         ...,
-        description='The verification token together with the password',
+        description='The verification token',
         example={
-            'verification_token': 'cb1d934026e78f083023e6daed5c7751c246467f01f6258029359c459b5edce07d16b45af13e05639c963d6d0662e63298fa68a01f03b5206e0aeb43daddef26',
-            'password': '12345678'
+            'verification_token': '6Ca1j7b5P3D8fO6WpsUHsE_eN3Fqq8V_sp_sV4RB2ubw9mtwRUM2cQh26jS_r65v',
         },
     ),
 }
@@ -161,8 +160,7 @@ SPECIFICATIONS = {
     'fetch_user': _generate_responses_documentation(
         path='/users/{username}',
         response={
-            'email_address': 'support@fastsurvey.de',
-            'creation_time': 1618530873,
+            'email_address': 'contact@fastsurvey.de',
             'verified': True,
         },
         error_classes=[
@@ -266,18 +264,11 @@ SPECIFICATIONS = {
             errors.SurveyNotFoundError,
         ],
     ),
-    'decode_access_token': _generate_responses_documentation(
-        path='/authentication',
-        response='fastsurvey',
-        error_classes=[
-            errors.InvalidAccessTokenError,
-        ],
-    ),
     'generate_access_token': _generate_responses_documentation(
         path='/authentication',
         response={
-            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJGYXN0U3VydmV5Iiwic3ViIjoiYXBwbGUiLCJpYXQiOjE2MTYzNTA5NjAsImV4cCI6MTYxNjM1ODE2MH0.Vl8ndfMgE-LKcH5GOZZ_JEn2rL87Mg9wpihTvo-Cfukqr3vBI6I49EP109B2ZnEASnoXSzDRQSM438Pxxpm6aFMGSaxCJvVbPN3YhxKDKWel-3t7cslF5iwE8AlsYHQV6_6JZv-bZolUmScnGjXKEUBWn3x72AeFBm5I4O4VRWDt96umGfgtaPkBvXwW0eDIbGDIXR-MQF0vjiGnEd0GYwexgCj0uO80QTlN2oIH1kFtb612oqWJ3_Ipb2Ui6jwo0wVZW_I7zi5rKGrELsdGManwt7wUgp-V4779XXZ33IuojgS6kO45-aAkppBycv3cDqQdR_yjoRy6sZ4nryHEPzYKPtumtuY28Va2d9RpSxVHo1DkiyXmlrVWnmzyOuFVUxAMmblwaslc0es4igWtX_bZ141Vb6Vj96xk6pR6Wq9jjEhw9RsfyIVr2TwplzZZayVDl_9Pou3b8cZGRlotAYgWlYj9h0ZiI7hUvvXD24sFykx_HV3-hBPJJDmW3jwPRvRUtZEMic-1jAy-gMJs-irmeVOW6_Mh8LLncTRfutwJI4k6TqnPguX3LKEWu3uyGKT5zT2ZXanaTmBRVuFbON7-xb6ZvncdI5ttALixff2O67gXUjM7E9OrbauVWN6xqQ4-Wv70VJvtJa1MEvZOtC-JGwaF6C2WFNYKbnvB6hY',
-            'token_type': 'bearer',
+            'username': 'blueberry',
+            'access_token': '6Ca1j7b5P3D8fO6WpsUHsE_eN3Fqq8V_sp_sV4RB2ubw9mtwRUM2cQh26jS_r65v',
         },
         error_classes=[
             errors.InvalidPasswordError,
@@ -285,26 +276,10 @@ SPECIFICATIONS = {
             errors.UserNotFoundError,
         ],
     ),
-    'refresh_access_token': _generate_responses_documentation(
-        path='/authentication',
-        response={
-            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJGYXN0U3VydmV5Iiwic3ViIjoiYXBwbGUiLCJpYXQiOjE2MTYzNTA5NjAsImV4cCI6MTYxNjM1ODE2MH0.Vl8ndfMgE-LKcH5GOZZ_JEn2rL87Mg9wpihTvo-Cfukqr3vBI6I49EP109B2ZnEASnoXSzDRQSM438Pxxpm6aFMGSaxCJvVbPN3YhxKDKWel-3t7cslF5iwE8AlsYHQV6_6JZv-bZolUmScnGjXKEUBWn3x72AeFBm5I4O4VRWDt96umGfgtaPkBvXwW0eDIbGDIXR-MQF0vjiGnEd0GYwexgCj0uO80QTlN2oIH1kFtb612oqWJ3_Ipb2Ui6jwo0wVZW_I7zi5rKGrELsdGManwt7wUgp-V4779XXZ33IuojgS6kO45-aAkppBycv3cDqQdR_yjoRy6sZ4nryHEPzYKPtumtuY28Va2d9RpSxVHo1DkiyXmlrVWnmzyOuFVUxAMmblwaslc0es4igWtX_bZ141Vb6Vj96xk6pR6Wq9jjEhw9RsfyIVr2TwplzZZayVDl_9Pou3b8cZGRlotAYgWlYj9h0ZiI7hUvvXD24sFykx_HV3-hBPJJDmW3jwPRvRUtZEMic-1jAy-gMJs-irmeVOW6_Mh8LLncTRfutwJI4k6TqnPguX3LKEWu3uyGKT5zT2ZXanaTmBRVuFbON7-xb6ZvncdI5ttALixff2O67gXUjM7E9OrbauVWN6xqQ4-Wv70VJvtJa1MEvZOtC-JGwaF6C2WFNYKbnvB6hY',
-            'token_type': 'bearer',
-        },
-        error_classes=[
-            errors.InvalidAccessTokenError,
-            errors.AccessForbiddenError,
-        ],
-    ),
     'verify_email_address': _generate_responses_documentation(
         path='/verification',
-        response={
-            'access_token': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJGYXN0U3VydmV5Iiwic3ViIjoiYXBwbGUiLCJpYXQiOjE2MTYzNTA5NjAsImV4cCI6MTYxNjM1ODE2MH0.Vl8ndfMgE-LKcH5GOZZ_JEn2rL87Mg9wpihTvo-Cfukqr3vBI6I49EP109B2ZnEASnoXSzDRQSM438Pxxpm6aFMGSaxCJvVbPN3YhxKDKWel-3t7cslF5iwE8AlsYHQV6_6JZv-bZolUmScnGjXKEUBWn3x72AeFBm5I4O4VRWDt96umGfgtaPkBvXwW0eDIbGDIXR-MQF0vjiGnEd0GYwexgCj0uO80QTlN2oIH1kFtb612oqWJ3_Ipb2Ui6jwo0wVZW_I7zi5rKGrELsdGManwt7wUgp-V4779XXZ33IuojgS6kO45-aAkppBycv3cDqQdR_yjoRy6sZ4nryHEPzYKPtumtuY28Va2d9RpSxVHo1DkiyXmlrVWnmzyOuFVUxAMmblwaslc0es4igWtX_bZ141Vb6Vj96xk6pR6Wq9jjEhw9RsfyIVr2TwplzZZayVDl_9Pou3b8cZGRlotAYgWlYj9h0ZiI7hUvvXD24sFykx_HV3-hBPJJDmW3jwPRvRUtZEMic-1jAy-gMJs-irmeVOW6_Mh8LLncTRfutwJI4k6TqnPguX3LKEWu3uyGKT5zT2ZXanaTmBRVuFbON7-xb6ZvncdI5ttALixff2O67gXUjM7E9OrbauVWN6xqQ4-Wv70VJvtJa1MEvZOtC-JGwaF6C2WFNYKbnvB6hY',
-            'token_type': 'bearer',
-        },
         error_classes=[
             errors.InvalidVerificationTokenError,
-            errors.InvalidPasswordError,
         ],
     ),
 }
