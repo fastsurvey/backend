@@ -167,10 +167,7 @@ class SurveyCache:
         username = configuration['username']
         survey_name = configuration['survey_name']
         survey_id = utils.combine(username, survey_name)
-        if configuration['draft']:
-            self.delete(username, survey_name)
-        else:
-            self._cache[survey_id] = Survey(configuration)
+        self._cache[survey_id] = Survey(configuration)
 
     def delete(self, username, survey_name):
         """Remove survey object from the local cache."""
