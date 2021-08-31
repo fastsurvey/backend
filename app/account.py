@@ -159,15 +159,27 @@ class AccountManager:
         if not auth.verify_password(password, account_data['password_hash']):
             raise errors.InvalidPasswordError()
         access_token = auth.generate_token()
-        await database.database['access_tokens'].find_one_and_replace(
-            filter={'username': account_data['_id']},
-            replacement={
-                '_id': account_data['_id'],
-                'access_token_hash': auth.hash_token(access_token),
-                'issuance_time': utils.now(),
-            },
-            upsert=True,
-        )
+
+        # TODO introduce unique user_id and use access_token_hash as _id
+
+        while True:
+            try:
+                await database.database['access_tokens'].find_one_and_replace(
+                    filter={'username': account_data['_id']},
+                    replacement={
+                        '_id': account_data['_id'],
+                        'access_token_hash': auth.hash_token(access_token),
+                        'issuance_time': utils.now(),
+                    },
+                    upsert=True,
+                )
+                break
+            except pymongo.errors.DuplicateKeyError as error:
+                index = str(error).split()[7]
+                if index == 'access_token_hash_index':
+                    access_token = auth.generate_token()
+                else:
+                    raise errors.InternalServerError()
         return {
             'username': account_data['_id'],
             'access_token': access_token,
