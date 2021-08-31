@@ -3,4 +3,4 @@
 COMMIT_SHA="$(git rev-parse --verify HEAD)"
 BRANCH_NAME="$(git branch --show-current)"
 
-COMMIT_SHA="$COMMIT_SHA" BRANCH_NAME="$BRANCH_NAME" poetry run uvicorn app.main:app --host 0.0.0.0 --reload --log-level debug --env-file .env
+COMMIT_SHA="$COMMIT_SHA" BRANCH_NAME="${BRANCH_NAME:-none}" poetry run uvicorn app.main:app --host 0.0.0.0 --reload --log-level debug --env-file .env
