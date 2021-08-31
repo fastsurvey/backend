@@ -165,7 +165,7 @@ class AccountManager:
         while True:
             try:
                 await database.database['access_tokens'].find_one_and_replace(
-                    filter={'username': account_data['_id']},
+                    filter={'_id': account_data['_id']},
                     replacement={
                         '_id': account_data['_id'],
                         'access_token_hash': auth.hash_token(access_token),
