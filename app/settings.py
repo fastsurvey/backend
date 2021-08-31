@@ -1,5 +1,4 @@
 import os
-import base64
 
 import app.utils as utils
 
@@ -7,8 +6,6 @@ import app.utils as utils
 # check that required environment variables are set
 _VARS = [
     'ENVIRONMENT',
-    'PUBLIC_RSA_KEY',
-    'PRIVATE_RSA_KEY',
     'MONGODB_CONNECTION_STRING',
     'MAILGUN_API_KEY',
     'COMMIT_SHA',
@@ -32,10 +29,6 @@ FRONTEND_URL = _URLS[ENVIRONMENT]
 CONSOLE_URL = f'console.{FRONTEND_URL}'
 # backend url
 BACKEND_URL = f'api.{FRONTEND_URL}'
-# public JSON Web Token signature key
-PUBLIC_RSA_KEY = base64.b64decode(os.getenv('PUBLIC_RSA_KEY'))
-# private JSON Web Token signature key
-PRIVATE_RSA_KEY = base64.b64decode(os.getenv('PRIVATE_RSA_KEY'))
 # MongoDB connection string
 MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
 # Mailgun api key
