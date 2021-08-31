@@ -28,6 +28,9 @@ steps:
     - '$_DEPLOY_REGION'
     - '--platform'
     - '$_PLATFORM'
+    - '--tag'
+    - '$SHORT_SHA'
+    - '--no-traffic'
 images:
   - '$_IMAGE'
 substitutions:
