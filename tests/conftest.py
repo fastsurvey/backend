@@ -3,8 +3,7 @@ import asyncio
 import json
 
 import app.main as main
-import app.cryptography.access as access
-import app.cryptography.verification as verification
+import app.authentication as auth
 import app.resources.database as database
 import app.email as email
 import tests.data as data
@@ -149,13 +148,6 @@ def password(account_data):
     return account_data['password']
 
 
-@pytest.fixture(scope='session')
-def headers(username):
-    """Provide an authentication header to access protected routes."""
-    access_token = access.generate(username)['access_token']
-    return {'Authorization': f'Bearer {access_token}'}
-
-
 ################################################################################
 # Test Data Loading (Other)
 ################################################################################
@@ -216,19 +208,7 @@ def mock_email_sending(monkeypatch):
 
 
 @pytest.fixture(scope='function')
-def mock_verification_token_generation(monkeypatch):
-    """Mock token generation to have predictable tokens for testing."""
-    global counter
-    counter = -1
-    def token():
-        global counter
-        counter += 1
-        return str(counter).zfill(64)
-    monkeypatch.setattr(verification, 'token', token)
-
-
-@pytest.fixture(scope='function')
-def mock_verification_token_generation_with_duplication(monkeypatch):
+def mock_token_generation(monkeypatch):
     """Mock token generation for predictable tokens with duplicates.
 
     Duplicate tokens account for potential token collisions in the actual
@@ -238,8 +218,21 @@ def mock_verification_token_generation_with_duplication(monkeypatch):
     """
     global counter
     counter = -1
-    def token():
+    def generate_token():
         global counter
         counter += 1
         return str(counter//4).zfill(64)
-    monkeypatch.setattr(verification, 'token', token)
+    monkeypatch.setattr(auth, 'generate_token', generate_token)
+
+
+def valid_token():
+    """Get the most recent token issued by mock token generation function."""
+    global counter
+    return str(counter//4).zfill(64)
+
+
+def invalid_token():
+    """Get a token that is not the most recently issued mock token."""
+    global counter
+    return str(counter//4+1).zfill(64)
+
