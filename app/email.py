@@ -27,7 +27,7 @@ async def _send(email_address, subject, content):
         'to': email_address,
         'subject': subject,
         'html': content,
-        'o:testmode': settings.ENVIRONMENT == 'test',
+        'o:testmode': 'true' if settings.ENVIRONMENT == 'test' else 'false',
         'o:tag': [f'{settings.ENVIRONMENT} transactional'],
     }
     response = await http.client.post('/messages', data=data)
