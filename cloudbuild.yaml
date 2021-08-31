@@ -29,7 +29,7 @@ steps:
     - '--platform'
     - '$_PLATFORM'
     - '--tag'
-    - '$SHORT_SHA'
+    - 'commit-${SHORT_SHA}'
     - '--no-traffic'
 images:
   - '$_IMAGE'
