@@ -264,7 +264,7 @@ SPECIFICATIONS = {
             errors.SurveyNotFoundError,
         ],
     ),
-    'generate_access_token': _generate_responses_documentation(
+    'login': _generate_responses_documentation(
         path='/authentication',
         response={
             'username': 'blueberry',
@@ -276,7 +276,13 @@ SPECIFICATIONS = {
             errors.UserNotFoundError,
         ],
     ),
-    'verify_email_address': _generate_responses_documentation(
+    'logout': _generate_responses_documentation(
+        path='/authentication',
+        error_classes=[
+            errors.InvalidAccessTokenError,
+        ],
+    ),
+    'verify_account_email_address': _generate_responses_documentation(
         path='/verification',
         error_classes=[
             errors.InvalidVerificationTokenError,

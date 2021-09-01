@@ -57,7 +57,7 @@ async def server_status():
 @app.get(**docs.SPECIFICATIONS['fetch_user'])
 @auth.authorize
 async def fetch_user(
-        data: validation.FetchUserRequestData = fastapi.Depends(),
+        data: validation.FetchUserRequest = fastapi.Depends(),
     ):
     """Fetch the given user's account data."""
     return await account_manager.fetch(data.username)
@@ -65,7 +65,7 @@ async def fetch_user(
 
 @app.post(**docs.SPECIFICATIONS['create_user'])
 async def create_user(
-        data: validation.CreateUserRequestData = fastapi.Depends(),
+        data: validation.CreateUserRequest = fastapi.Depends(),
     ):
     """Create a new user based on the given account data."""
     await account_manager.create(data.account_data.dict())
@@ -74,7 +74,7 @@ async def create_user(
 @app.put(**docs.SPECIFICATIONS['update_user'])
 @auth.authorize
 async def update_user(
-        data: validation.UpdateUserRequestData = fastapi.Depends(),
+        data: validation.UpdateUserRequest = fastapi.Depends(),
     ):
     """Update the given user's account data."""
     await account_manager.update(data.username, data.account_data.dict())
@@ -83,7 +83,7 @@ async def update_user(
 @app.delete(**docs.SPECIFICATIONS['delete_user'])
 @auth.authorize
 async def delete_user(
-        data: validation.DeleteUserRequestData = fastapi.Depends(),
+        data: validation.DeleteUserRequest = fastapi.Depends(),
     ):
     """Delete the user and all their surveys from the database."""
     await account_manager.delete(data.username)
@@ -92,7 +92,7 @@ async def delete_user(
 @app.get(**docs.SPECIFICATIONS['fetch_surveys'])
 @auth.authorize
 async def fetch_surveys(
-        data: validation.FetchSurveysRequestData = fastapi.Depends(),
+        data: validation.FetchSurveysRequest = fastapi.Depends(),
     ):
     """Fetch the user's survey configurations sorted by the start date.
 
@@ -109,7 +109,7 @@ async def fetch_surveys(
 
 @app.get(**docs.SPECIFICATIONS['fetch_survey'])
 async def fetch_survey(
-        data: validation.FetchSurveyRequestData = fastapi.Depends(),
+        data: validation.FetchSurveyRequest = fastapi.Depends(),
     ):
     """Fetch a survey configuration.
 
@@ -127,7 +127,7 @@ async def fetch_survey(
 @app.post(**docs.SPECIFICATIONS['create_survey'])
 @auth.authorize
 async def create_survey(
-        data: validation.CreateSurveyRequestData = fastapi.Depends(),
+        data: validation.CreateSurveyRequest = fastapi.Depends(),
     ):
     """Create new survey with given configuration."""
     await survey_manager.create(
@@ -140,7 +140,7 @@ async def create_survey(
 @app.put(**docs.SPECIFICATIONS['update_survey'])
 @auth.authorize
 async def update_survey(
-        data: validation.UpdateSurveyRequestData = fastapi.Depends(),
+        data: validation.UpdateSurveyRequest = fastapi.Depends(),
     ):
     """Update survey with given configuration."""
     await survey_manager.update(
@@ -153,7 +153,7 @@ async def update_survey(
 @app.delete(**docs.SPECIFICATIONS['reset_survey'])
 @auth.authorize
 async def reset_survey(
-        data: validation.ResetSurveyRequestData = fastapi.Depends(),
+        data: validation.ResetSurveyRequest = fastapi.Depends(),
     ):
     """Reset a survey by deleting all submission data including any results."""
     await survey_manager.reset(data.username, data.survey_name)
@@ -162,7 +162,7 @@ async def reset_survey(
 @app.delete(**docs.SPECIFICATIONS['delete_survey'])
 @auth.authorize
 async def delete_survey(
-        data: validation.DeleteSurveyRequestData = fastapi.Depends(),
+        data: validation.DeleteSurveyRequest = fastapi.Depends(),
     ):
     """Delete given survey including all its submissions and other data."""
     await survey_manager.delete(data.username, data.survey_name)
@@ -170,7 +170,7 @@ async def delete_survey(
 
 @app.post(**docs.SPECIFICATIONS['create_submission'])
 async def create_submission(
-        data: validation.CreateSubmissionRequestData = fastapi.Depends(),
+        data: validation.CreateSubmissionRequest = fastapi.Depends(),
     ):
     """Validate submission and store it under pending submissions."""
     survey = await survey_manager.fetch(
@@ -184,7 +184,7 @@ async def create_submission(
 
 @app.get(**docs.SPECIFICATIONS['verify_submission'])
 async def verify_submission(
-        data: validation.VerifySubmissionRequestData = fastapi.Depends(),
+        data: validation.VerifySubmissionRequest = fastapi.Depends(),
     ):
     """Verify user token and either fail or redirect to success page."""
     survey = await survey_manager.fetch(
@@ -198,27 +198,35 @@ async def verify_submission(
 @app.get(**docs.SPECIFICATIONS['fetch_results'])
 @auth.authorize
 async def fetch_results(
-        data: validation.FetchResultsRequestData = fastapi.Depends(),
+        data: validation.FetchResultsRequest = fastapi.Depends(),
     ):
     """Fetch the results of the given survey."""
     survey = await survey_manager.fetch(data.username, data.survey_name)
     return await survey.aggregate()
 
 
-@app.post(**docs.SPECIFICATIONS['generate_access_token'])
-async def generate_access_token(
-        data: validation.GenerateAccessTokenRequestData = fastapi.Depends(),
+@app.post(**docs.SPECIFICATIONS['login'])
+async def login(
+        data: validation.LoginRequest = fastapi.Depends(),
     ):
-    """Generate a JWT access token containing the user's username."""
-    return await account_manager.authenticate(
+    """Generate an access token used to authenticate to protected routes."""
+    return await account_manager.login(
         data.authentication_credentials.identifier,
         data.authentication_credentials.password,
     )
 
 
-@app.post(**docs.SPECIFICATIONS['verify_email_address'])
-async def verify_email_address(
-        data: validation.VerifyEmailAddressRequestData = fastapi.Depends(),
+@app.delete(**docs.SPECIFICATIONS['logout'])
+async def logout(
+        data: validation.LogoutRequest = fastapi.Depends(),
+    ):
+    """Logout a user by rendering their access token useless."""
+    return await account_manager.logout(data.access_token)
+
+
+@app.post(**docs.SPECIFICATIONS['verify_account_email_address'])
+async def verify_account_email_address(
+        data: validation.VerifyAccountEmailAddressRequest = fastapi.Depends(),
     ):
     """Verify an email address given the verification token sent via email."""
     return await account_manager.verify(

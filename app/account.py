@@ -141,7 +141,7 @@ class AccountManager:
         for survey_name in survey_names:
             await self.survey_manager.delete(username, survey_name)
 
-    async def authenticate(self, identifier, password):
+    async def login(self, identifier, password):
         """Authenticate user by their username or email and their password."""
         expression = (
             {'email_address': identifier}
@@ -184,6 +184,14 @@ class AccountManager:
             'username': account_data['_id'],
             'access_token': access_token,
         }
+
+    async def logout(self, access_token):
+        """Logout a user by rendering their access token useless."""
+        res = await database.database['access_tokens'].delete_one(
+            filter={'access_token_hash': auth.hash_token(access_token)},
+        )
+        if res.deleted_count == 0:
+            raise errors.InvalidAccessTokenError()
 
     async def fetch_configurations(self, username, skip, limit):
         """Return a list of the user's survey configurations."""

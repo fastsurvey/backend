@@ -4,12 +4,12 @@ import app.documentation as docs
 import app.models as models
 
 
-class FetchUserRequestData(models.BaseModel):
+class FetchUserRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
 
 
-class CreateUserRequestData(models.BaseModel):
+class CreateUserRequest(models.BaseModel):
     username: models.Username = docs.ARGUMENTS['username']
     account_data: models.AccountData = docs.ARGUMENTS['account_data']
 
@@ -20,30 +20,30 @@ class CreateUserRequestData(models.BaseModel):
         return v
 
 
-class UpdateUserRequestData(models.BaseModel):
+class UpdateUserRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     account_data: models.AccountData = docs.ARGUMENTS['account_data']
 
 
-class DeleteUserRequestData(models.BaseModel):
+class DeleteUserRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
 
 
-class FetchSurveysRequestData(models.BaseModel):
+class FetchSurveysRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     skip: pydantic.conint(strict=True, ge=0) = docs.ARGUMENTS['skip']
     limit: pydantic.conint(strict=True, ge=0) = docs.ARGUMENTS['limit']
 
 
-class FetchSurveyRequestData(models.BaseModel):
+class FetchSurveyRequest(models.BaseModel):
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.Username = docs.ARGUMENTS['survey_name']
 
 
-class CreateSurveyRequestData(models.BaseModel):
+class CreateSurveyRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
@@ -56,50 +56,53 @@ class CreateSurveyRequestData(models.BaseModel):
         return v
 
 
-class UpdateSurveyRequestData(models.BaseModel):
+class UpdateSurveyRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
     configuration: models.Configuration = docs.ARGUMENTS['configuration']
 
 
-class ResetSurveyRequestData(models.BaseModel):
+class ResetSurveyRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
 
 
-class DeleteSurveyRequestData(models.BaseModel):
+class DeleteSurveyRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
 
 
-class CreateSubmissionRequestData(models.BaseModel):
+class CreateSubmissionRequest(models.BaseModel):
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
     submission: dict = docs.ARGUMENTS['submission']
 
 
-class VerifySubmissionRequestData(models.BaseModel):
+class VerifySubmissionRequest(models.BaseModel):
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
     verification_token: models.Token = docs.ARGUMENTS['verification_token']
 
 
-class FetchResultsRequestData(models.BaseModel):
+class FetchResultsRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
 
 
-class GenerateAccessTokenRequestData(models.BaseModel):
+class LoginRequest(models.BaseModel):
     authentication_credentials: models.AuthenticationCredentials = (
         docs.ARGUMENTS['authentication_credentials']
     )
 
+class LogoutRequest(models.BaseModel):
+    access_token: models.Token = docs.ARGUMENTS['access_token']
 
-class VerifyEmailAddressRequestData(models.BaseModel):
+
+class VerifyAccountEmailAddressRequest(models.BaseModel):
     verification_credentials: models.VerificationCredentials = (
         docs.ARGUMENTS['verification_credentials']
     )
