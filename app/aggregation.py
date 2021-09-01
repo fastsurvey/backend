@@ -139,9 +139,9 @@ def _format_results(results, configuration):
     return results
 
 
-async def aggregate(configuration):
+async def aggregate(username, configuration):
     """Aggregate and return the results of the survey."""
-    survey_id = utils.identify(configuration)
+    survey_id = utils.identify(username, configuration)
     submissions = database.database[f'surveys.{survey_id}.submissions']
     cursor = submissions.aggregate(
         pipeline=_build_aggregation_pipeline(configuration),

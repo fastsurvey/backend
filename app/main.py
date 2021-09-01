@@ -115,11 +115,12 @@ async def fetch_survey(
     draft mode **are not** returned.
 
     """
-    return await sve.fetch_configuration(
+    survey = await sve.fetch(
         data.username,
         data.survey_name,
         return_drafts=False,
     )
+    return survey.configuration
 
 
 @app.post(**docs.SPECIFICATIONS['create_survey'])

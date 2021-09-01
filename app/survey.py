@@ -20,20 +20,20 @@ import app.authentication as auth
 class Survey:
     """The survey class that all surveys instantiate."""
 
-    def __init__(self, configuration):
+    def __init__(self, username, configuration):
         """Create a survey from the given json configuration file."""
         self.configuration = configuration
-        self.username = self.configuration['username']
+        self.username = username
         self.survey_name = self.configuration['survey_name']
         self.start = self.configuration['start']
         self.end = self.configuration['end']
         self.index = Survey._find_email_field_to_verify(self.configuration)
         self.submissions = database.database[
-            f'surveys.{utils.identify(self.configuration)}'
+            f'surveys.{utils.identify(self.username, self.configuration)}'
             f'.submissions'
         ]
         self.unverified_submissions = database.database[
-            f'surveys.{utils.identify(self.configuration)}'
+            f'surveys.{utils.identify(self.username, self.configuration)}'
             f'.unverified-submissions'
         ]
         self.Submission = models.build_submission_model(configuration)
@@ -101,7 +101,7 @@ class Survey:
 
     async def aggregate(self):
         """Query the survey submissions and return aggregated results."""
-        return await aggregation.aggregate(self.configuration)
+        return await aggregation.aggregate(self.username, self.configuration)
 
 
 ################################################################################
@@ -134,12 +134,10 @@ class SurveyCache:
         survey_id = utils.combine(username, survey_name)
         return self._cache[survey_id]
 
-    def update(self, configuration):
+    def update(self, username, configuration):
         """Update or create survey object in the local cache."""
-        username = configuration['username']
-        survey_name = configuration['survey_name']
-        survey_id = utils.combine(username, survey_name)
-        self._cache[survey_id] = Survey(configuration)
+        survey_id = utils.identify(username, configuration)
+        self._cache[survey_id] = Survey(username, configuration)
 
     def delete(self, username, survey_name):
         """Remove survey object from the local cache."""
@@ -161,45 +159,26 @@ async def fetch(username, survey_name, return_drafts=True):
         return CACHE.fetch(username, survey_name)
     except KeyError:
         configuration = await database.database['configurations'].find_one(
-            filter={
-                'username': username,
-                'survey_name': survey_name,
-            },
-            projection={'_id': False},
+            filter={'username': username, 'survey_name': survey_name},
+            projection={'_id': False, 'username': False},
         )
         if configuration is None:
             raise errors.SurveyNotFoundError()
         if configuration['draft'] and not return_drafts:
             raise errors.SurveyNotFoundError()
-        CACHE.update(configuration)
+        CACHE.update(username, configuration)
         return CACHE.fetch(username, survey_name)
-
-
-async def fetch_configuration(username, survey_name, return_drafts=True):
-    """Return survey configuration corresponding to user/survey name."""
-    survey = await fetch(username, survey_name, return_drafts)
-    return {
-        key: survey.configuration[key]
-        for key
-        in survey.configuration.keys()
-        if key not in ['username']
-    }
 
 
 async def create(username, configuration):
     """Create a new survey configuration in the database and cache."""
-    configuration['username'] = username
     try:
-        await database.database['configurations'].insert_one(configuration)
-        del configuration['_id']
-
-        # TODO also delete the username from the configuration here?
-        # like this the configuration in the survey is the same as
-        # the one that is sent around in the routes
-
-        CACHE.update(configuration)
+        await database.database['configurations'].insert_one(
+            document={'username': username, **configuration},
+        )
     except pymongo.errors.DuplicateKeyError:
         raise errors.SurveyNameAlreadyTakenError()
+    CACHE.update(username, configuration)
 
 
 async def update(username, survey_name, configuration):
@@ -219,17 +198,16 @@ async def update(username, survey_name, configuration):
     counter += await survey.unverified_submissions.count_documents({})
     if counter > 0:
         raise errors.SubmissionsExistError()
-    configuration['username'] = username
     try:
         response = await database.database['configurations'].replace_one(
             filter={'username': username, 'survey_name': survey_name},
-            replacement=configuration,
+            replacement={'username': username, **configuration},
         )
     except pymongo.errors.DuplicateKeyError:
         raise errors.SurveyNameAlreadyTakenError()
     if response.matched_count == 0:
         raise errors.SurveyNotFoundError()
-    CACHE.update(configuration)
+    CACHE.update(username, configuration)
 
 
 async def reset(username, survey_name):
