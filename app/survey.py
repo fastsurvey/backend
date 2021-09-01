@@ -25,16 +25,15 @@ class Survey:
         self.username = username
         self.configuration = configuration
         self.survey_name = self.configuration['survey_name']
+        self.survey_id = utils.combine(self.username, self.survey_name)
         self.start = self.configuration['start']
         self.end = self.configuration['end']
         self.index = Survey._find_email_field_to_verify(self.configuration)
         self.submissions = database.database[
-            f'surveys.{utils.identify(self.username, self.configuration)}'
-            f'.submissions'
+            f'surveys.{self.survey_id}.submissions'
         ]
         self.unverified_submissions = database.database[
-            f'surveys.{utils.identify(self.username, self.configuration)}'
-            f'.unverified-submissions'
+            f'surveys.{self.survey_id}.unverified-submissions'
         ]
         self.Submission = models.build_submission_model(configuration)
 
@@ -89,36 +88,18 @@ class Survey:
             raise errors.InvalidVerificationTokenError()
         if verification_time < self.start or verification_time >= self.end:
             raise errors.InvalidTimingError()
-
-        """
         submission_doc = await self.unverified_submissions.find_one(
             filter={'_id': auth.hash_token(verification_token)},
             projection={'_id': False},
         )
         if submission_doc is None:
             raise errors.InvalidVerificationTokenError()
-        email_address = submission_doc['submission'][str(self.index)]
         await self.submissions.replace_one(
-            filter={'_id': email_address},
+            filter={'_id': submission_doc['submission'][str(self.index)]},
             replacement={
-                '_id': email_address,
                 'verification_time': verification_time,
                 **submission_doc,
             },
-            upsert=True,
-        )
-        """
-
-        submission = await self.unverified_submissions.find_one(
-            {'_id': auth.hash_token(verification_token)},
-        )
-        if submission is None:
-            raise errors.InvalidVerificationTokenError()
-        submission['verification_time'] = verification_time
-        submission['_id'] = submission['submission'][str(self.index)]
-        await self.submissions.find_one_and_replace(
-            filter={'_id': submission['_id']},
-            replacement=submission,
             upsert=True,
         )
         return fastapi.responses.RedirectResponse(
