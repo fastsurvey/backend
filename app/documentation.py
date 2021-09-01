@@ -31,7 +31,7 @@ _SAMPLE_SUBMISSION = {
 
 _SAMPLE_RESULTS = {
     'count': 1,
-    'data': [
+    'aggregation': [
         1,
     ],
 }

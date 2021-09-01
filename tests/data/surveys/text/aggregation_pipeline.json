@@ -18,7 +18,7 @@
             "count": {
                 "$first": "$main.count"
             },
-            "data": {
+            "aggregation": {
                 "0": null
             }
         }

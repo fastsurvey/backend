@@ -14,7 +14,7 @@
             "0": [
                 {
                     "$group": {
-                        "_id": "$data.0",
+                        "_id": "$submission.0",
                         "count": {
                             "$sum": 1
                         }
@@ -46,7 +46,7 @@
             "count": {
                 "$first": "$main.count"
             },
-            "data": {
+            "aggregation": {
                 "0": {
                     "$first": "$0.0"
                 }

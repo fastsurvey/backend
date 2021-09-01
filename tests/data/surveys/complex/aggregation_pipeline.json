@@ -10,7 +10,7 @@
                         },
                         "1": {
                             "$sum": {
-                                "$toInt": "$data.1"
+                                "$toInt": "$submission.1"
                             }
                         }
                     }
@@ -19,7 +19,7 @@
             "2": [
                 {
                     "$group": {
-                        "_id": "$data.2",
+                        "_id": "$submission.2",
                         "count": {
                             "$sum": 1
                         }
@@ -47,12 +47,12 @@
             "3": [
                 {
                     "$unwind": {
-                        "path": "$data.3"
+                        "path": "$submission.3"
                     }
                 },
                 {
                     "$group": {
-                        "_id": "$data.3",
+                        "_id": "$submission.3",
                         "count": {
                             "$sum": 1
                         }
@@ -84,7 +84,7 @@
             "count": {
                 "$first": "$main.count"
             },
-            "data": {
+            "aggregation": {
                 "0": null,
                 "1": {
                     "$first": "$main.1"

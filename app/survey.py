@@ -22,8 +22,8 @@ class Survey:
 
     def __init__(self, username, configuration):
         """Create a survey from the given json configuration file."""
-        self.configuration = configuration
         self.username = username
+        self.configuration = configuration
         self.survey_name = self.configuration['survey_name']
         self.start = self.configuration['start']
         self.end = self.configuration['end']
@@ -51,26 +51,33 @@ class Survey:
         submission_time = utils.now()
         if submission_time < self.start or submission_time >= self.end:
             raise errors.InvalidTimingError()
-        submission = {
-            'submission_time': submission_time,
-            'data': submission,
-        }
         if self.index is None:
-            await self.submissions.insert_one(submission)
+            await self.submissions.insert_one(
+                document={
+                    'submission_time': submission_time,
+                    'submission': submission,
+                }
+            )
         else:
-            submission['_id'] = auth.generate_token()
+            verification_token = auth.generate_token()
             while True:
                 try:
-                    await self.unverified_submissions.insert_one(submission)
+                    await self.unverified_submissions.insert_one(
+                        document={
+                            '_id': auth.hash_token(verification_token),
+                            'submission_time': submission_time,
+                            'submission': submission,
+                        }
+                    )
                     break
                 except pymongo.errors.DuplicateKeyError:
-                    submission['_id'] = auth.generate_token()
+                    verification_token = auth.generate_token()
             status = await email.send_submission_verification(
-                submission['data'][str(self.index)],
+                submission[str(self.index)],
                 self.username,
                 self.survey_name,
                 self.configuration['title'],
-                submission['_id'],
+                verification_token,
             )
             if status != 200:
                 raise errors.InternalServerError()
@@ -82,13 +89,33 @@ class Survey:
             raise errors.InvalidVerificationTokenError()
         if verification_time < self.start or verification_time >= self.end:
             raise errors.InvalidTimingError()
+
+        """
+        submission_doc = await self.unverified_submissions.find_one(
+            filter={'_id': auth.hash_token(verification_token)},
+            projection={'_id': False},
+        )
+        if submission_doc is None:
+            raise errors.InvalidVerificationTokenError()
+        email_address = submission_doc['submission'][str(self.index)]
+        await self.submissions.replace_one(
+            filter={'_id': email_address},
+            replacement={
+                '_id': email_address,
+                'verification_time': verification_time,
+                **submission_doc,
+            },
+            upsert=True,
+        )
+        """
+
         submission = await self.unverified_submissions.find_one(
-            {'_id': verification_token},
+            {'_id': auth.hash_token(verification_token)},
         )
         if submission is None:
             raise errors.InvalidVerificationTokenError()
         submission['verification_time'] = verification_time
-        submission['_id'] = submission['data'][str(self.index)]
+        submission['_id'] = submission['submission'][str(self.index)]
         await self.submissions.find_one_and_replace(
             filter={'_id': submission['_id']},
             replacement=submission,

@@ -10,7 +10,7 @@
                         },
                         "0": {
                             "$sum": {
-                                "$toInt": "$data.0"
+                                "$toInt": "$submission.0"
                             }
                         }
                     }
@@ -23,7 +23,7 @@
             "count": {
                 "$first": "$main.count"
             },
-            "data": {
+            "aggregation": {
                 "0": {
                     "$first": "$main.0"
                 }

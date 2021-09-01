@@ -81,7 +81,7 @@ async def test_fetching_existing_user_with_invalid_access_token(
         cleanup,
     ):
     """Test that request is correctly rejected for invalid access token."""
-    headers = {'Authorization': f'Bearer {str(42).zfill(64)}'}
+    headers = {'Authorization': f'Bearer {conftest.invalid_token()}'}
     res = await client.get(f'/users/{username}', headers=headers)
     assert check_error(res, errors.InvalidAccessTokenError)
 
@@ -548,7 +548,7 @@ async def test_creating_submission(
     res = await client.post(url=f'{path}/submissions', json=submissions[0])
     assert res.status_code == 200
     entry = await survey.unverified_submissions.find_one()
-    assert entry['data'] == submissions[0]
+    assert entry['submission'] == submissions[0]
 
 
 @pytest.mark.asyncio
@@ -601,7 +601,7 @@ async def test_verifying_valid_verification_token(
     assert res.status_code == 307
     survey = await sve.fetch(username, survey_name)
     e = await survey.unverified_submissions.find_one(
-        filter={'_id': verification_token},
+        filter={'_id': auth.hash_token(verification_token)},
     )
     assert e is not None  # still unchanged in unverified submissions
     e = await survey.submissions.find_one(
@@ -641,7 +641,7 @@ async def test_verifying_valid_verification_token_submission_replacement(
     )
     survey = await sve.fetch(username, survey_name)
     x = await survey.submissions.find_one({'_id': email_address})
-    assert x['data'] == submission
+    assert x['submission'] == submission
 
 
 @pytest.mark.asyncio
@@ -657,7 +657,7 @@ async def test_verifying_invalid_verification_token(
     path = f'/users/{username}/surveys/{survey_name}'
     await client.post(url=path, headers=headers, json=configuration)
     res = await client.get(
-        url=f'{path}/verification/{str(42).zfill(64)}',
+        url=f'{path}/verification/{conftest.invalid_token()}',
         allow_redirects=False,
     )
     assert res.status_code == 401

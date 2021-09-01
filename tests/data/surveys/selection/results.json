@@ -1,6 +1,6 @@
 {
     "count": 2,
-    "data": {
+    "aggregation": {
         "0": {
             "Strawberry": 1,
             "Vanilla": 0,

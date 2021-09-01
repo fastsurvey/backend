@@ -20,7 +20,7 @@ AGGREGATION_PIPELINE_BASE = [
     {
         '$project': {
             'count': {'$first': '$main.count'},
-            'data': {}
+            'aggregation': {}
         },
     },
 ]
@@ -28,15 +28,15 @@ AGGREGATION_PIPELINE_BASE = [
 
 def _add_email_aggregation_commands(pipeline, identifier):
     """Add pipeline commands to aggregate email submissions."""
-    pipeline[1]['$project']['data'][identifier] = None
+    pipeline[1]['$project']['aggregation'][identifier] = None
 
 
 def _add_option_aggregation_commands(pipeline, identifier):
     """Add pipeline commands to aggregate options submissions."""
     pipeline[0]['$facet']['main'][0]['$group'][identifier] = {
-        '$sum': {'$toInt': f'$data.{identifier}'}
+        '$sum': {'$toInt': f'$submission.{identifier}'}
     }
-    pipeline[1]['$project']['data'][identifier] = {
+    pipeline[1]['$project']['aggregation'][identifier] = {
         '$first': f'$main.{identifier}',
     }
 
@@ -46,7 +46,7 @@ def _add_radio_aggregation_commands(pipeline, identifier):
     pipeline[0]['$facet'][identifier] = [
         {
             '$group': {
-                '_id': f'$data.{identifier}',
+                '_id': f'$submission.{identifier}',
                 'count': {
                     '$sum': 1,
                 },
@@ -71,7 +71,7 @@ def _add_radio_aggregation_commands(pipeline, identifier):
             },
         },
     ]
-    pipeline[1]['$project']['data'][identifier] = {
+    pipeline[1]['$project']['aggregation'][identifier] = {
         '$first': f'${identifier}.{identifier}',
     }
 
@@ -83,7 +83,7 @@ def _add_selection_aggregation_commands(pipeline, identifier):
         0,
         {
             '$unwind': {
-                'path': f'$data.{identifier}',
+                'path': f'$submission.{identifier}',
             },
         },
     )
@@ -111,17 +111,17 @@ def _build_aggregation_pipeline(configuration):
 
 def _build_default_results(configuration):
     """Build default results to return when there are no submissions."""
-    results = {'count': 0, 'data': {}}
+    results = {'count': 0, 'aggregation': {}}
     for identifier, field in enumerate(configuration['fields']):
         identifier = str(identifier)
         if field['type'] == 'option':
-            results['data'][identifier] = 0
+            results['aggregation'][identifier] = 0
         elif field['type'] in ['radio', 'selection']:
-            results['data'][identifier] = {
+            results['aggregation'][identifier] = {
                 option: 0 for option in field['options']
             }
         else:
-            results['data'][identifier] = None
+            results['aggregation'][identifier] = None
     return results
 
 
@@ -134,8 +134,8 @@ def _format_results(results, configuration):
         if field['type'] in ['radio', 'selection']:
             out = dict()
             for option in field['options']:
-                out[option] = results['data'][identifier].get(option, 0)
-            results['data'][identifier] = out
+                out[option] = results['aggregation'][identifier].get(option, 0)
+            results['aggregation'][identifier] = out
     return results
 
 
