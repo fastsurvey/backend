@@ -7,14 +7,11 @@ import app.authentication as auth
 import app.utils as utils
 import app.resources.database as database
 import app.errors as errors
+import app.survey as sve
 
 
 class AccountManager:
     """The manager manages creating, updating and deleting user accounts."""
-
-    def __init__(self, survey_manager):
-        """Initialize an account manager instance."""
-        self.survey_manager = survey_manager
 
     async def fetch(self, username):
         """Return the account data corresponding to given user name."""
@@ -139,7 +136,7 @@ class AccountManager:
             in await cursor.to_list(None)
         ]
         for survey_name in survey_names:
-            await self.survey_manager.delete(username, survey_name)
+            await sve.delete(username, survey_name)
 
     async def login(self, identifier, password):
         """Authenticate user by their username or email and their password."""

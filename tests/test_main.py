@@ -3,6 +3,7 @@ import httpx
 import copy
 
 import app.main as main
+import app.survey as sve
 import app.resources.database as database
 import app.authentication as auth
 import app.errors as errors
@@ -165,11 +166,11 @@ async def test_creating_user_email_address_already_taken(
     await client.post(url=f'/users/{username}', json=account_data)
     duplicate = copy.deepcopy(account_datas[1])
     duplicate['email_address'] = email_address
-    response = await client.post(
+    res = await client.post(
         url=f'/users/{duplicate["username"]}',
         json=duplicate,
     )
-    assert check_error(response, errors.EmailAddressAlreadyTakenError)
+    assert check_error(res, errors.EmailAddressAlreadyTakenError)
     entry = await database.database['accounts'].find_one({})
     assert entry['_id'] == username
 
@@ -249,12 +250,12 @@ async def test_updating_existing_user_with_valid_email_address_in_use(
     )
     account_data = copy.deepcopy(account_data)
     account_data['email_address'] = account_datas[1]['email_address']
-    response = await client.put(
+    res = await client.put(
         url=f'/users/{username}',
         headers=headers,
         json=account_data,
     )
-    assert check_error(response, errors.EmailAddressAlreadyTakenError)
+    assert check_error(res, errors.EmailAddressAlreadyTakenError)
 
 
 # TODO delete user
@@ -282,17 +283,17 @@ async def test_fetching_existing_survey(
         json=configuration,
     )
     # reset cache in order to test fetching with cache miss
-    main.survey_manager.cache.reset()
-    response = await client.get(f'/users/{username}/surveys/{survey_name}')
-    assert response.status_code == 200
-    assert response.json() == configuration
+    sve.CACHE.reset()
+    res = await client.get(f'/users/{username}/surveys/{survey_name}')
+    assert res.status_code == 200
+    assert res.json() == configuration
 
 
 @pytest.mark.asyncio
 async def test_fetching_nonexistent_survey(client, username):
     """Test that exception is raised when requesting a nonexistent survey."""
-    response = await client.get(f'/users/{username}/surveys/complex')
-    assert check_error(response, errors.SurveyNotFoundError)
+    res = await client.get(f'/users/{username}/surveys/complex')
+    assert check_error(res, errors.SurveyNotFoundError)
 
 
 @pytest.mark.asyncio
@@ -313,9 +314,9 @@ async def test_fetching_survey_in_draft_mode(
         json=configuration,
     )
     # reset cache in order to test fetching with cache miss
-    main.survey_manager.cache.reset()
-    response = await client.get(f'/users/{username}/surveys/{survey_name}')
-    assert check_error(response, errors.SurveyNotFoundError)
+    sve.CACHE.reset()
+    res = await client.get(f'/users/{username}/surveys/{survey_name}')
+    assert check_error(res, errors.SurveyNotFoundError)
 
 
 ################################################################################
@@ -333,13 +334,13 @@ async def test_creating_survey_with_valid_configuration(
         cleanup,
     ):
     """Test that survey is correctly created given a valid configuration."""
-    response = await client.post(
+    res = await client.post(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
         json=configuration,
     )
-    assert response.status_code == 200
-    assert main.survey_manager.cache.fetch(username, survey_name)
+    assert res.status_code == 200
+    assert sve.CACHE.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one({})
     assert entry['username'] == username
     assert entry['survey_name'] == survey_name
@@ -356,14 +357,14 @@ async def test_creating_survey_with_invalid_configuration(
     ):
     """Test that survey creation fails with an invalid configuration."""
     configuration = invalid_configurationss[survey_name][0]
-    response = await client.post(
+    res = await client.post(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
         json=configuration,
     )
-    assert check_error(response, None)
+    assert check_error(res, None)
     with pytest.raises(KeyError):
-        main.survey_manager.cache.fetch(username, survey_name)
+        sve.CACHE.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one()
     assert entry is None
 
@@ -390,13 +391,13 @@ async def test_updating_existing_survey_with_valid_configuration(
     )
     configuration = copy.deepcopy(configuration)
     configuration['description'] = 'Hello World!'
-    response = await client.put(
+    res = await client.put(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
         json=configuration,
     )
-    assert response.status_code == 200
-    survey = main.survey_manager.cache.fetch(username, survey_name)
+    assert res.status_code == 200
+    survey = sve.CACHE.fetch(username, survey_name)
     assert survey.configuration['description'] == configuration['description']
     entry = await database.database['configurations'].find_one()
     assert entry['description'] == configuration['description']
@@ -412,14 +413,14 @@ async def test_updating_nonexistent_survey_with_valid_configuration(
         cleanup,
     ):
     """Test that survey update fails when the survey does not exist."""
-    response = await client.put(
+    res = await client.put(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
         json=configuration,
     )
-    assert check_error(response, errors.SurveyNotFoundError)
+    assert check_error(res, errors.SurveyNotFoundError)
     with pytest.raises(KeyError):
-        main.survey_manager.cache.fetch(username, survey_name)
+        sve.CACHE.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one()
     assert entry is None
 
@@ -441,13 +442,13 @@ async def test_updating_survey_name_to_survey_name_not_in_use(
     )
     configuration = copy.deepcopy(configuration)
     configuration['survey_name'] = 'kangaroo'
-    response = await client.put(
+    res = await client.put(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
         json=configuration,
     )
-    assert response.status_code == 200
-    assert main.survey_manager.cache.fetch(username, 'kangaroo')
+    assert res.status_code == 200
+    assert sve.CACHE.fetch(username, 'kangaroo')
     entry = await database.database['configurations'].find_one()
     assert entry['survey_name'] == 'kangaroo'
 
@@ -474,13 +475,13 @@ async def test_updating_survey_name_to_survey_name_in_use(
         headers=headers,
         json=configuration,
     )
-    response = await client.put(
+    res = await client.put(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
         json=configuration,
     )
-    assert check_error(response, errors.SurveyNameAlreadyTakenError)
-    assert main.survey_manager.cache.fetch(username, survey_name)
+    assert check_error(res, errors.SurveyNameAlreadyTakenError)
+    assert sve.CACHE.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one(
         filter={'survey_name': survey_name},
     )
@@ -509,10 +510,10 @@ async def test_updating_survey_with_existing_submissions(
     # push changed configuration
     configuration = copy.deepcopy(configuration)
     configuration['description'] = 'chameleon'
-    response = await client.put(url=path, headers=headers, json=configuration)
+    res = await client.put(url=path, headers=headers, json=configuration)
     # check validity
-    assert check_error(response, errors.SubmissionsExistError)
-    survey = main.survey_manager.cache.fetch(username, survey_name)
+    assert check_error(res, errors.SubmissionsExistError)
+    survey = sve.CACHE.fetch(username, survey_name)
     assert survey.configuration['description'] != configuration['description']
     entry = await database.database['configurations'].find_one()
     assert entry['description'] != configuration['description']
@@ -543,9 +544,9 @@ async def test_creating_submission(
     """Test that submission works given a valid submission."""
     path = f'/users/{username}/surveys/{survey_name}'
     await client.post(url=path, headers=headers, json=configuration)
-    survey = await main.survey_manager.fetch(username, survey_name)
-    response = await client.post(url=f'{path}/submissions', json=submissions[0])
-    assert response.status_code == 200
+    survey = await sve.fetch(username, survey_name)
+    res = await client.post(url=f'{path}/submissions', json=submissions[0])
+    assert res.status_code == 200
     entry = await survey.unverified_submissions.find_one()
     assert entry['data'] == submissions[0]
 
@@ -563,12 +564,12 @@ async def test_creating_invalid_submission(
     """Test that submit correctly fails given an invalid submissions."""
     path = f'/users/{username}/surveys/{survey_name}'
     await client.post(url=path, headers=headers, json=configuration)
-    survey = await main.survey_manager.fetch(username, survey_name)
-    response = await client.post(
+    survey = await sve.fetch(username, survey_name)
+    res = await client.post(
         url=f'{path}/submissions',
         json=invalid_submissionss[survey_name][0],
     )
-    assert check_error(response, None)
+    assert check_error(res, None)
     entry = await survey.unverified_submissions.find_one()
     assert entry is None
 
@@ -593,12 +594,12 @@ async def test_verifying_valid_verification_token(
     await client.post(url=path, headers=headers, json=configuration)
     await client.post(url=f'{path}/submissions', json=submissions[0])
     verification_token = conftest.valid_token()
-    response = await client.get(
+    res = await client.get(
         url=f'{path}/verification/{verification_token}',
         allow_redirects=False,
     )
-    assert response.status_code == 307
-    survey = await main.survey_manager.fetch(username, survey_name)
+    assert res.status_code == 307
+    survey = await sve.fetch(username, survey_name)
     e = await survey.unverified_submissions.find_one(
         filter={'_id': verification_token},
     )
@@ -638,7 +639,7 @@ async def test_verifying_valid_verification_token_submission_replacement(
         url=f'{path}/verification/{conftest.valid_token()}',
         allow_redirects=False,
     )
-    survey = await main.survey_manager.fetch(username, survey_name)
+    survey = await sve.fetch(username, survey_name)
     x = await survey.submissions.find_one({'_id': email_address})
     assert x['data'] == submission
 
@@ -655,12 +656,12 @@ async def test_verifying_invalid_verification_token(
     """Test that request is rejected given an invalid verification token."""
     path = f'/users/{username}/surveys/{survey_name}'
     await client.post(url=path, headers=headers, json=configuration)
-    response = await client.get(
+    res = await client.get(
         url=f'{path}/verification/{str(42).zfill(64)}',
         allow_redirects=False,
     )
-    assert response.status_code == 401
-    survey = await main.survey_manager.fetch(username, survey_name)
+    assert res.status_code == 401
+    survey = await sve.fetch(username, survey_name)
     x = await survey.submissions.find_one({})
     assert x is None
 
@@ -692,9 +693,9 @@ async def test_fetching_results(
                 allow_redirects=False,
             )
         # aggregate and fetch results
-        response = await client.get(url=f'{path}/results', headers=headers)
-        assert response.status_code == 200
-        assert response.json() == resultss[survey_name]
+        res = await client.get(url=f'{path}/results', headers=headers)
+        assert res.status_code == 200
+        assert res.json() == resultss[survey_name]
 
 
 @pytest.mark.asyncio
@@ -710,9 +711,9 @@ async def test_fetching_results_without_submissions(
     """Test that aggregation works when no submissions have yet been made."""
     path = f'/users/{username}/surveys/{survey_name}'
     await client.post(url=path, headers=headers, json=configuration)
-    response = await client.get(url=f'{path}/results', headers=headers)
-    assert response.status_code == 200
-    assert response.json() == default_resultss[survey_name]
+    res = await client.get(url=f'{path}/results', headers=headers)
+    assert res.status_code == 200
+    assert res.json() == default_resultss[survey_name]
 
 
 ################################################################################
@@ -731,11 +732,11 @@ async def test_generating_access_token_with_non_verified_account(
     ):
     """Test that authentication fails when the account is not verified."""
     await client.post(url=f'/users/{username}', json=account_data)
-    response = await client.post(
+    res = await client.post(
         f'/authentication',
         json={'identifier': username, 'password': password},
     )
-    assert check_error(response, errors.AccountNotVerifiedError)
+    assert check_error(res, errors.AccountNotVerifiedError)
 
 
 @pytest.mark.asyncio

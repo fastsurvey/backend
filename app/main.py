@@ -2,8 +2,8 @@ import fastapi
 import fastapi.middleware.cors
 import pydantic
 
-import app.account as ac
-import app.survey as sv
+import app.account as acn
+import app.survey as sve
 import app.documentation as docs
 import app.settings as settings
 import app.validation as validation
@@ -24,10 +24,8 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
-# instantiate survey manager
-survey_manager = sv.SurveyManager()
 # instantiate account manager
-account_manager = ac.AccountManager(survey_manager)
+account_manager = acn.AccountManager()
 
 
 # add pydantic ValidationError exception handler
@@ -117,7 +115,7 @@ async def fetch_survey(
     draft mode **are not** returned.
 
     """
-    return await survey_manager.fetch_configuration(
+    return await sve.fetch_configuration(
         data.username,
         data.survey_name,
         return_drafts=False,
@@ -130,11 +128,7 @@ async def create_survey(
         data: validation.CreateSurveyRequest = fastapi.Depends(),
     ):
     """Create new survey with given configuration."""
-    await survey_manager.create(
-        data.username,
-        data.survey_name,
-        data.configuration.dict(by_alias=True),
-    )
+    await sve.create(data.username, data.configuration.dict(by_alias=True))
 
 
 @app.put(**docs.SPECIFICATIONS['update_survey'])
@@ -143,7 +137,7 @@ async def update_survey(
         data: validation.UpdateSurveyRequest = fastapi.Depends(),
     ):
     """Update survey with given configuration."""
-    await survey_manager.update(
+    await sve.update(
         data.username,
         data.survey_name,
         data.configuration.dict(by_alias=True),
@@ -156,7 +150,7 @@ async def reset_survey(
         data: validation.ResetSurveyRequest = fastapi.Depends(),
     ):
     """Reset a survey by deleting all submission data including any results."""
-    await survey_manager.reset(data.username, data.survey_name)
+    await sve.reset(data.username, data.survey_name)
 
 
 @app.delete(**docs.SPECIFICATIONS['delete_survey'])
@@ -165,7 +159,7 @@ async def delete_survey(
         data: validation.DeleteSurveyRequest = fastapi.Depends(),
     ):
     """Delete given survey including all its submissions and other data."""
-    await survey_manager.delete(data.username, data.survey_name)
+    await sve.delete(data.username, data.survey_name)
 
 
 @app.post(**docs.SPECIFICATIONS['create_submission'])
@@ -173,7 +167,7 @@ async def create_submission(
         data: validation.CreateSubmissionRequest = fastapi.Depends(),
     ):
     """Validate submission and store it under pending submissions."""
-    survey = await survey_manager.fetch(
+    survey = await sve.fetch(
         data.username,
         data.survey_name,
         return_drafts=False,
@@ -187,7 +181,7 @@ async def verify_submission(
         data: validation.VerifySubmissionRequest = fastapi.Depends(),
     ):
     """Verify user token and either fail or redirect to success page."""
-    survey = await survey_manager.fetch(
+    survey = await sve.fetch(
         data.username,
         data.survey_name,
         return_drafts=False,
@@ -201,7 +195,7 @@ async def fetch_results(
         data: validation.FetchResultsRequest = fastapi.Depends(),
     ):
     """Fetch the results of the given survey."""
-    survey = await survey_manager.fetch(data.username, data.survey_name)
+    survey = await sve.fetch(data.username, data.survey_name)
     return await survey.aggregate()
 
 

@@ -2,7 +2,7 @@ import pytest
 import asyncio
 import json
 
-import app.main as main
+import app.survey as sve
 import app.authentication as auth
 import app.resources.database as database
 import app.email as email
@@ -178,7 +178,7 @@ async def reset():
     other = await database.database.list_collection_names()
     for name in set(other) - static:
         await database.database[name].drop()
-    main.survey_manager.cache.reset()
+    sve.CACHE.reset()
 
 
 @pytest.fixture(scope='session', autouse=True)
