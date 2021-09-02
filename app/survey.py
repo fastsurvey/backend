@@ -164,7 +164,7 @@ CACHE = SurveyCache()
 async def fetch(username, survey_name, return_drafts=True):
     """Return the survey object corresponding to user and survey name."""
     try:
-        return CACHE.fetch(username, survey_name)
+        survey = CACHE.fetch(username, survey_name)
     except KeyError:
         configuration = await database.database['configurations'].find_one(
             filter={'username': username, 'survey_name': survey_name},
@@ -172,10 +172,11 @@ async def fetch(username, survey_name, return_drafts=True):
         )
         if configuration is None:
             raise errors.SurveyNotFoundError()
-        if configuration['draft'] and not return_drafts:
-            raise errors.SurveyNotFoundError()
         CACHE.update(username, configuration)
-        return CACHE.fetch(username, survey_name)
+        survey = CACHE.fetch(username, survey_name)
+    if survey.configuration['draft'] and not return_drafts:
+        raise errors.SurveyNotFoundError()
+    return survey
 
 
 async def create(username, configuration):
