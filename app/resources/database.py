@@ -16,6 +16,11 @@ database['configurations'].create_index(
 )
 database['accounts'].create_indexes([
         pymongo.IndexModel(
+            keys='username',
+            name='username_index',
+            unique=True,
+        ),
+        pymongo.IndexModel(
             keys='email_address',
             name='email_address_index',
             unique=True,
@@ -34,6 +39,11 @@ database['accounts'].create_indexes([
     ]
 )
 database['access_tokens'].create_indexes([
+        pymongo.IndexModel(
+            keys='username',
+            name='username_index',
+            unique=True,
+        ),
         pymongo.IndexModel(
             keys='access_token_hash',
             name='access_token_hash_index',

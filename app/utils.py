@@ -1,4 +1,5 @@
 import time
+import random
 
 
 def combine(username, survey_name):
@@ -14,3 +15,8 @@ def identify(username, configuration):
 def now():
     """Return current unixtime utc timestamp integer."""
     return int(time.time())
+
+
+def identifier():
+    """Generate a random string useful as identifier."""
+    return f'{random.randrange(16**16):016x}'

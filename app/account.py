@@ -13,7 +13,7 @@ import app.survey as sve
 async def fetch(username):
     """Return the account data corresponding to given user name."""
     account_data = await database.database['accounts'].find_one(
-        filter={'_id': username},
+        filter={'username': username},
         projection={
             '_id': False,
             'email_address': True,
@@ -28,43 +28,43 @@ async def fetch(username):
 async def create(account_data):
     """Create new user account with some default account data."""
     timestamp = utils.now()
+    password_hash = auth.hash_password(account_data['password'])
     verification_token = auth.generate_token()
-    account = {
-        '_id': account_data['username'],
-        'email_address': account_data['email_address'],
-        'password_hash': auth.hash_password(account_data['password']),
-        'creation_time': timestamp,
-        'modification_time': timestamp,
-        'verified': False,
-        'verification_token_hash': auth.hash_token(verification_token),
-    }
+    verification_token_hash = auth.hash_token(verification_token)
     while True:
         try:
-            await database.database['accounts'].insert_one(account)
+            await database.database['accounts'].insert_one(
+                document={
+                    'username': account_data['username'],
+                    'email_address': account_data['email_address'],
+                    'password_hash': password_hash,
+                    'creation_time': timestamp,
+                    'modification_time': timestamp,
+                    'verified': False,
+                    'verification_token_hash': verification_token_hash,
+                },
+            )
             break
         except pymongo.errors.DuplicateKeyError as error:
             index = str(error).split()[7]
-            if index == '_id_':
+            if index == 'username_index':
                 raise errors.UsernameAlreadyTakenError()
             if index == 'email_address_index':
                 raise errors.EmailAddressAlreadyTakenError()
             if index == 'verification_token_hash_index':
                 verification_token = auth.generate_token()
-                account_data['verification_token_hash'] = auth.hash_token(
-                    verification_token
-                )
+                verification_token_hash = auth.hash_token(verification_token)
             else:
                 raise errors.InternalServerError()
-
     status = await email.send_account_verification(
-        account['email_address'],
+        account_data['email_address'],
         account_data['username'],
         verification_token,
     )
     if status != 200:
         # we do not delete the unverified account here, as the user could
         # request a new verification email, and the account gets deleted
-        # anyways after a few minutes
+        # anyways after a while
         raise fastapi.HTTPException(
             422,
             [{
@@ -90,12 +90,8 @@ async def verify(verification_token):
 
 async def update(username, account_data):
     """Update existing user account data in the database."""
-
-    # TODO handle username change with transactions
-    # TODO handle email change specially, as it needs to be reverified
-
     entry = await database.database['accounts'].find_one(
-        filter={'_id': username},
+        filter={'username': username},
         projection={
             '_id': False,
             'email_address': True,
@@ -114,7 +110,7 @@ async def update(username, account_data):
     if update:
         update['modification_time'] = utils.now()
         res = await database.database['accounts'].update_one(
-            filter={'_id': username},
+            filter={'username': username},
             update={'$set': update},
         )
         if res.matched_count == 0:
@@ -123,10 +119,8 @@ async def update(username, account_data):
 
 async def delete(username):
     """Delete the user including all their surveys from the database."""
-    await database.database['access_tokens'].delete_one(
-        filter={'username': username},
-    )
-    await database.database['accounts'].delete_one({'_id': username})
+    await database.database['accounts'].delete_one({'username': username})
+    await database.database['access_tokens'].delete_one({'username': username})
     cursor = database.database['configurations'].find(
         filter={'username': username},
         projection={'_id': False, 'survey_name': True},
@@ -145,11 +139,16 @@ async def login(identifier, password):
     expression = (
         {'email_address': identifier}
         if '@' in identifier
-        else {'_id': identifier}
+        else {'username': identifier}
     )
     account_data = await database.database['accounts'].find_one(
         filter=expression,
-        projection={'password_hash': True, 'verified': True},
+        projection={
+            '_id': False,
+            'username': True,
+            'password_hash': True,
+            'verified': True,
+        },
     )
     if account_data is None:
         raise errors.UserNotFoundError()
@@ -158,15 +157,12 @@ async def login(identifier, password):
     if not auth.verify_password(password, account_data['password_hash']):
         raise errors.InvalidPasswordError()
     access_token = auth.generate_token()
-
-    # TODO introduce unique user_id and use access_token_hash as _id
-
     while True:
         try:
             await database.database['access_tokens'].find_one_and_replace(
-                filter={'_id': account_data['_id']},
+                filter={'username': account_data['username']},
                 replacement={
-                    '_id': account_data['_id'],
+                    'username': account_data['username'],
                     'access_token_hash': auth.hash_token(access_token),
                     'issuance_time': utils.now(),
                 },
@@ -180,7 +176,7 @@ async def login(identifier, password):
             else:
                 raise errors.InternalServerError()
     return {
-        'username': account_data['_id'],
+        'username': account_data['username'],
         'access_token': access_token,
     }
 
@@ -203,5 +199,4 @@ async def fetch_configurations(username, skip, limit):
         skip=skip,
         limit=limit,
     )
-    configurations = await cursor.to_list(None)
-    return configurations
+    return await cursor.to_list(None)

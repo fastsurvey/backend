@@ -103,7 +103,7 @@ async def test_creating_user_with_valid_account_data(
     res = await client.post(url=f'/users/{username}', json=account_data)
     assert res.status_code == 200
     entry = await database.database['accounts'].find_one({})
-    assert entry['_id'] == username
+    assert entry['username'] == username
 
 
 @pytest.mark.asyncio
@@ -172,7 +172,7 @@ async def test_creating_user_email_address_already_taken(
     )
     assert check_error(res, errors.EmailAddressAlreadyTakenError)
     entry = await database.database['accounts'].find_one({})
-    assert entry['_id'] == username
+    assert entry['username'] == username
 
 
 ################################################################################
@@ -823,7 +823,7 @@ async def test_verifying_email_address_with_invalid_verification_token(
         json={'verification_token': conftest.invalid_token()},
     )
     assert check_error(res, errors.InvalidVerificationTokenError)
-    x = await database.database['accounts'].find_one({'_id': username})
+    x = await database.database['accounts'].find_one({'username': username})
     assert not x['verified']
 
 
@@ -847,5 +847,5 @@ async def test_verifying_previously_verified_email_address(
         json={'verification_token': conftest.valid_token()},
     )
     assert check_error(res, errors.InvalidVerificationTokenError)
-    x = await database.database['accounts'].find_one({'_id': username})
+    x = await database.database['accounts'].find_one({'username': username})
     assert x['verified']
