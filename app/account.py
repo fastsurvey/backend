@@ -159,14 +159,12 @@ async def login(identifier, password):
     access_token = auth.generate_token()
     while True:
         try:
-            await database.database['access_tokens'].find_one_and_replace(
-                filter={'username': account_data['username']},
-                replacement={
+            await database.database['access_tokens'].insert_one(
+                document={
                     'username': account_data['username'],
                     'access_token_hash': auth.hash_token(access_token),
                     'issuance_time': utils.now(),
                 },
-                upsert=True,
             )
             break
         except pymongo.errors.DuplicateKeyError as error:
