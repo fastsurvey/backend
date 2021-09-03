@@ -24,8 +24,6 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
-# instantiate account manager
-account_manager = acn.AccountManager()
 
 
 # add pydantic ValidationError exception handler
@@ -58,7 +56,7 @@ async def fetch_user(
         data: validation.FetchUserRequest = fastapi.Depends(),
     ):
     """Fetch the given user's account data."""
-    return await account_manager.fetch(data.username)
+    return await acn.fetch(data.username)
 
 
 @app.post(**docs.SPECIFICATIONS['create_user'])
@@ -66,7 +64,7 @@ async def create_user(
         data: validation.CreateUserRequest = fastapi.Depends(),
     ):
     """Create a new user based on the given account data."""
-    await account_manager.create(data.account_data.dict())
+    await acn.create(data.account_data.dict())
 
 
 @app.put(**docs.SPECIFICATIONS['update_user'])
@@ -75,7 +73,7 @@ async def update_user(
         data: validation.UpdateUserRequest = fastapi.Depends(),
     ):
     """Update the given user's account data."""
-    await account_manager.update(data.username, data.account_data.dict())
+    await acn.update(data.username, data.account_data.dict())
 
 
 @app.delete(**docs.SPECIFICATIONS['delete_user'])
@@ -84,7 +82,7 @@ async def delete_user(
         data: validation.DeleteUserRequest = fastapi.Depends(),
     ):
     """Delete the user and all their surveys from the database."""
-    await account_manager.delete(data.username)
+    await acn.delete(data.username)
 
 
 @app.get(**docs.SPECIFICATIONS['fetch_surveys'])
@@ -98,7 +96,7 @@ async def fetch_surveys(
     draft mode **are** returned.
 
     """
-    return await account_manager.fetch_configurations(
+    return await acn.fetch_configurations(
         data.username,
         data.skip,
         data.limit,
@@ -205,7 +203,7 @@ async def login(
         data: validation.LoginRequest = fastapi.Depends(),
     ):
     """Generate an access token used to authenticate to protected routes."""
-    return await account_manager.login(
+    return await acn.login(
         data.authentication_credentials.identifier,
         data.authentication_credentials.password,
     )
@@ -216,7 +214,7 @@ async def logout(
         data: validation.LogoutRequest = fastapi.Depends(),
     ):
     """Logout a user by rendering their access token useless."""
-    return await account_manager.logout(data.access_token)
+    return await acn.logout(data.access_token)
 
 
 @app.post(**docs.SPECIFICATIONS['verify_account_email_address'])
@@ -224,6 +222,4 @@ async def verify_account_email_address(
         data: validation.VerifyAccountEmailAddressRequest = fastapi.Depends(),
     ):
     """Verify an email address given the verification token sent via email."""
-    return await account_manager.verify(
-        data.verification_credentials.verification_token,
-    )
+    return await acn.verify(data.verification_credentials.verification_token)

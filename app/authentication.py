@@ -49,11 +49,11 @@ def authorize(func):
         res = await database.database['access_tokens'].find_one_and_update(
             filter={'access_token_hash': hash_token(access_token)},
             update={'$set': {'issuance_time': utils.now()}},
-            projection={'_id': True},
+            projection={'_id': False, 'username': True},
         )
         if res is None:
             raise errors.InvalidAccessTokenError()
-        if kwargs['data'].username != res['_id']:
+        if kwargs['data'].username != res['username']:
             raise errors.AccessForbiddenError()
         return await func(**kwargs)
     return wrapper
