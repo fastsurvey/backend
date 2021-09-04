@@ -215,13 +215,14 @@ async def update(username, survey_name, configuration):
     try:
         res = await database.database['configurations'].replace_one(
             filter={'_id': survey.survey_id},
-            replacement={
-                'username': username,
-                **configuration,
-            },
+            replacement={'username': username, **configuration},
         )
-    except pymongo.errors.DuplicateKeyError:
-        raise errors.SurveyNameAlreadyTakenError()
+    except pymongo.errors.DuplicateKeyError as error:
+        index = str(error).split()[7]
+        if index == 'username_survey_name_index':
+            raise errors.SurveyNameAlreadyTakenError()
+        else:
+            raise errors.InternalServerError()
     if res.matched_count == 0:
         raise errors.SurveyNotFoundError()
     CACHE.update(survey.survey_id, username, configuration)
@@ -229,6 +230,9 @@ async def update(username, survey_name, configuration):
 
 async def reset(username, survey_name):
     """Delete all submission data but keep the configuration."""
+
+    # TODO use transaction
+
     survey = await fetch(username, survey_name)
     await survey.submission.drop()
     await survey.unverified_submission.drop()
@@ -236,6 +240,9 @@ async def reset(username, survey_name):
 
 async def delete(username, survey_name):
     """Delete the survey and all its data from the database and cache."""
+
+    # TODO use transaction
+
     survey = await fetch(username, survey_name)
     await database.database['configurations'].delete_one(
         filter={'_id': survey.survey_id},

@@ -14,11 +14,7 @@ async def fetch(username):
     """Return the account data corresponding to given user name."""
     account_data = await database.database['accounts'].find_one(
         filter={'username': username},
-        projection={
-            '_id': False,
-            'email_address': True,
-            'verified': True,
-        },
+        projection={'_id': False, 'email_address': True, 'verified': True},
     )
     if account_data is None:
         raise errors.UserNotFoundError()
@@ -90,7 +86,7 @@ async def verify(verification_token):
 
 async def update(username, account_data):
     """Update existing user account data in the database."""
-    entry = await database.database['accounts'].find_one(
+    x = await database.database['accounts'].find_one(
         filter={'username': username},
         projection={
             '_id': False,
@@ -98,27 +94,48 @@ async def update(username, account_data):
             'password_hash': True,
         },
     )
-    if entry is None:
+    if x is None:
         raise errors.UserNotFoundError()
-    update = {}
+
+    update = {'modification_time': utils.now()}
     if account_data['username'] != username:
+        update['username'] = account_data['username']
+    if account_data['email_address'] != x['email_address']:
         raise errors.NotImplementedError()
-    if account_data['email_address'] != entry['email_address']:
-        raise errors.NotImplementedError()
-    if not auth.verify_password(account_data['password'], entry['password_hash']):
+    if not auth.verify_password(account_data['password'], x['password_hash']):
         update['password_hash'] = auth.hash_password(account_data['password'])
-    if update:
-        update['modification_time'] = utils.now()
+    if len(update) == 1:
+        return
+
+    if 'username' in update.keys():
+        with database.client.start_session() as session:
+            with session.start_transaction():
+                res = await database.database['accounts'].update_one(
+                    filter={'username': username},
+                    update={'$set': update},
+                )
+                await database.database['configurations'].update_many(
+                    filter={'username': username},
+                    update={'$set': {'username': account_data['username']}},
+                )
+                await database.database['access_tokens'].update_many(
+                    filter={'username': username},
+                    update={'$set': {'username': account_data['username']}},
+                )
+    else:
         res = await database.database['accounts'].update_one(
             filter={'username': username},
             update={'$set': update},
         )
-        if res.matched_count == 0:
-            raise errors.UserNotFoundError()
+    if res.matched_count == 0:
+        raise errors.UserNotFoundError()
 
 
 async def delete(username):
     """Delete the user including all their surveys from the database."""
+
+    # TODO use transaction
+
     await database.database['accounts'].delete_one({'username': username})
     await database.database['access_tokens'].delete_one({'username': username})
     cursor = database.database['configurations'].find(
