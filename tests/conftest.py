@@ -178,7 +178,6 @@ async def reset():
     other = await database.database.list_collection_names()
     for name in set(other) - static:
         await database.database[name].drop()
-    sve.CACHE.reset()
 
 
 @pytest.fixture(scope='session', autouse=True)

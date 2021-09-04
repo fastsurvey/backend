@@ -1,5 +1,4 @@
 import pymongo.errors
-import cachetools
 import fastapi.responses
 
 import app.aggregation as aggregation
@@ -113,77 +112,28 @@ class Survey:
 
 
 ################################################################################
-# Cache Layer
-################################################################################
-
-
-class SurveyCache:
-    """A cache layer for survey objects replacing by least recently used.
-
-    When the survey is already cached, the time to get it is reduced by a
-    factor of about 10.
-
-    """
-
-    def __init__(self):
-        self._size = 2**10
-        self._cache = cachetools.LRUCache(maxsize=self._size)
-
-    def reset(self):
-        """Reset the cache by removing all cached elements."""
-        self._cache = cachetools.LRUCache(maxsize=self._size)
-
-    def fetch(self, username, survey_name):
-        """Fetch and return a survey object from the local cache.
-
-        Raises KeyError if survey is not cached.
-
-        """
-        x = utils.combine(username, survey_name)
-        return self._cache[x]
-
-    def update(self, survey_id, username, configuration):
-        """Update or create survey object in the local cache."""
-        x = utils.combine(username, configuration['survey_name'])
-        self._cache[x] = Survey(survey_id, username, configuration)
-
-    def delete(self, username, survey_name):
-        """Remove survey object from the local cache."""
-        x = utils.combine(username, survey_name)
-        self._cache.pop(x, None)
-
-
-################################################################################
 # Functions To Manage Surveys
 ################################################################################
 
 
-CACHE = SurveyCache()
-
-
 async def fetch(username, survey_name, return_drafts=True):
     """Return the survey object corresponding to user and survey name."""
-    try:
-        survey = CACHE.fetch(username, survey_name)
-    except KeyError:
-        configuration = await database.database['configurations'].find_one(
-            filter={'username': username, 'survey_name': survey_name},
-            projection={'username': False},
-        )
-        if configuration is None:
-            raise errors.SurveyNotFoundError()
-        survey_id = configuration.pop('_id')
-        CACHE.update(survey_id, username, configuration)
-        survey = CACHE.fetch(username, survey_name)
-    if survey.configuration['draft'] and not return_drafts:
+    configuration = await database.database['configurations'].find_one(
+        filter={'username': username, 'survey_name': survey_name},
+        projection={'username': False},
+    )
+    if configuration is None:
         raise errors.SurveyNotFoundError()
-    return survey
+    if configuration['draft'] and not return_drafts:
+        raise errors.SurveyNotFoundError()
+    survey_id = configuration.pop('_id')
+    return Survey(survey_id, username, configuration)
 
 
 async def create(username, configuration):
-    """Create a new survey configuration in the database and cache."""
+    """Create a new survey configuration in the database."""
     try:
-        res = await database.database['configurations'].insert_one(
+        await database.database['configurations'].insert_one(
             document={'username': username, **configuration},
         )
     except pymongo.errors.DuplicateKeyError as error:
@@ -192,7 +142,6 @@ async def create(username, configuration):
             raise errors.SurveyNameAlreadyTakenError()
         else:
             raise errors.InternalServerError()
-    CACHE.update(res.inserted_id, username, configuration)
 
 
 async def update(username, survey_name, configuration):
@@ -225,7 +174,6 @@ async def update(username, survey_name, configuration):
             raise errors.InternalServerError()
     if res.matched_count == 0:
         raise errors.SurveyNotFoundError()
-    CACHE.update(survey.survey_id, username, configuration)
 
 
 async def reset(username, survey_name):
@@ -247,6 +195,5 @@ async def delete(username, survey_name):
     await database.database['configurations'].delete_one(
         filter={'_id': survey.survey_id},
     )
-    CACHE.delete(username, survey_name)
     await survey.submission.drop()
     await survey.unverified_submission.drop()

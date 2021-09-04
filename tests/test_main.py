@@ -282,8 +282,6 @@ async def test_fetching_existing_survey(
         headers=headers,
         json=configuration,
     )
-    # reset cache in order to test fetching with cache miss
-    sve.CACHE.reset()
     res = await client.get(f'/users/{username}/surveys/{survey_name}')
     assert res.status_code == 200
     assert res.json() == configuration
@@ -313,8 +311,6 @@ async def test_fetching_survey_in_draft_mode(
         headers=headers,
         json=configuration,
     )
-    # reset cache in order to test fetching with cache miss
-    sve.CACHE.reset()
     res = await client.get(f'/users/{username}/surveys/{survey_name}')
     assert check_error(res, errors.SurveyNotFoundError)
 
@@ -340,7 +336,6 @@ async def test_creating_survey_with_valid_configuration(
         json=configuration,
     )
     assert res.status_code == 200
-    assert sve.CACHE.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one({})
     assert entry['username'] == username
     assert entry['survey_name'] == survey_name
@@ -363,8 +358,6 @@ async def test_creating_survey_with_invalid_configuration(
         json=configuration,
     )
     assert check_error(res, None)
-    with pytest.raises(KeyError):
-        sve.CACHE.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one()
     assert entry is None
 
@@ -397,7 +390,7 @@ async def test_updating_existing_survey_with_valid_configuration(
         json=configuration,
     )
     assert res.status_code == 200
-    survey = sve.CACHE.fetch(username, survey_name)
+    survey = await sve.fetch(username, survey_name)
     assert survey.configuration['description'] == configuration['description']
     entry = await database.database['configurations'].find_one()
     assert entry['description'] == configuration['description']
@@ -419,8 +412,6 @@ async def test_updating_nonexistent_survey_with_valid_configuration(
         json=configuration,
     )
     assert check_error(res, errors.SurveyNotFoundError)
-    with pytest.raises(KeyError):
-        sve.CACHE.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one()
     assert entry is None
 
@@ -448,7 +439,6 @@ async def test_updating_survey_name_to_survey_name_not_in_use(
         json=configuration,
     )
     assert res.status_code == 200
-    assert sve.CACHE.fetch(username, 'kangaroo')
     entry = await database.database['configurations'].find_one()
     assert entry['survey_name'] == 'kangaroo'
 
@@ -481,7 +471,6 @@ async def test_updating_survey_name_to_survey_name_in_use(
         json=configuration,
     )
     assert check_error(res, errors.SurveyNameAlreadyTakenError)
-    assert sve.CACHE.fetch(username, survey_name)
     entry = await database.database['configurations'].find_one(
         filter={'survey_name': survey_name},
     )
@@ -513,7 +502,7 @@ async def test_updating_survey_with_existing_submissions(
     res = await client.put(url=path, headers=headers, json=configuration)
     # check validity
     assert check_error(res, errors.SubmissionsExistError)
-    survey = sve.CACHE.fetch(username, survey_name)
+    survey = await sve.fetch(username, survey_name)
     assert survey.configuration['description'] != configuration['description']
     entry = await database.database['configurations'].find_one()
     assert entry['description'] != configuration['description']
