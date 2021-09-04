@@ -11,6 +11,11 @@ import app.errors as errors
 import tests.conftest as conftest
 
 
+################################################################################
+# Helper Functions
+################################################################################
+
+
 @pytest.fixture(scope='module')
 async def client():
     """Provide a HTTPX AsyncClient that is properly closed after testing."""
@@ -19,21 +24,21 @@ async def client():
     await client.aclose()
 
 
-@pytest.fixture(scope='function')
-@pytest.mark.asyncio
-async def headers(
-        mock_email_sending,
-        mock_token_generation,
-        client,
-        username,
-        account_data,
-    ):
-    """Create a user and provide a valid authentication header."""
-    await client.post(f'/users/{username}', json=account_data)
-    await client.post(
+async def setup_account(client, username, account_data):
+    """Create a test account."""
+    return await client.post(f'/users/{username}', json=account_data)
+
+
+async def setup_verification(client):
+    """Verify the test account."""
+    return await client.post(
         url='/verification',
         json={'verification_token': conftest.valid_token()},
     )
+
+
+async def setup_headers(client, account_data):
+    """Provide a valid authentication header for the test account."""
     res = await client.post(
         url='/authentication',
         json={
@@ -46,7 +51,11 @@ async def headers(
 
 
 def check_error(response, error):
-    """Check that a HTTPX request returned with a specific error."""
+    """Check that a HTTPX request returned with a specific error.
+
+    TODO use an error value of None to mean no error (status code 200)
+
+    """
     if error is None:
         return response.status_code == 422
     return (
@@ -56,38 +65,48 @@ def check_error(response, error):
 
 
 ################################################################################
-# Fetch User
+# Route: Fetch User
 ################################################################################
 
 
 @pytest.mark.asyncio
-async def test_fetching_existing_user_with_valid_access_token(
+async def test_fetching_verified_account_with_valid_access_token(
+        mock_email_sending,
+        mock_token_generation,
         client,
         headers,
         username,
+        account_data,
         cleanup,
     ):
     """Test that correct account data is returned on valid request."""
+    await setup_account(client, username, account_data)
+    await setup_verification(client)
+    headers = await setup_headers(client, account_data)
     res = await client.get(f'/users/{username}', headers=headers)
     assert res.status_code == 200
     assert set(res.json().keys()) == {'email_address', 'verified'}
 
 
 @pytest.mark.asyncio
-async def test_fetching_existing_user_with_invalid_access_token(
+async def test_fetching_verified_account_with_invalid_access_token(
+        mock_email_sending,
+        mock_token_generation,
         client,
-        headers,
         username,
+        account_data,
         cleanup,
     ):
     """Test that request is correctly rejected for invalid access token."""
+    await setup_account(client, username, account_data)
+    await setup_verification(client)
     headers = {'Authorization': f'Bearer {conftest.invalid_token()}'}
     res = await client.get(f'/users/{username}', headers=headers)
     assert check_error(res, errors.InvalidAccessTokenError)
 
 
 ################################################################################
-# Create User
+# Route: Create User
 ################################################################################
 
 
@@ -100,10 +119,10 @@ async def test_creating_user_with_valid_account_data(
         cleanup,
     ):
     """Test that account is created successfully on valid request."""
-    res = await client.post(url=f'/users/{username}', json=account_data)
+    res = await setup_account(client, username, account_data)
     assert res.status_code == 200
-    entry = await database.database['accounts'].find_one({})
-    assert entry['username'] == username
+    e = await database.database['accounts'].find_one()
+    assert e['username'] == username
 
 
 @pytest.mark.asyncio
@@ -113,11 +132,10 @@ async def test_creating_user_with_invalid_account_data(
     ):
     """Test that account creation fails when given invalid account data."""
     account_data = invalid_account_datas[0]
-    username = account_data['username']
-    res = await client.post(url=f'/users/{username}', json=account_data)
+    res = await setup_account(client, account_data['username'], account_data)
     assert check_error(res, None)
-    entry = await database.database['accounts'].find_one({})
-    assert entry is None
+    e = await database.database['accounts'].find_one()
+    assert e is None
 
 
 @pytest.mark.asyncio
@@ -126,10 +144,10 @@ async def test_creating_user_with_username_mismatch_in_route_and_body(
         account_data,
     ):
     """Test that account creation fails when given invalid account data."""
-    res = await client.post(url=f'/users/kangaroo', json=account_data)
+    res = await setup_account(client, 'kangaroo', account_data)
     assert check_error(res, None)
-    entry = await database.database['accounts'].find_one({})
-    assert entry is None
+    e = await database.database['accounts'].find_one({})
+    assert e is None
 
 
 @pytest.mark.asyncio
@@ -143,13 +161,13 @@ async def test_creating_user_username_already_taken(
         cleanup,
     ):
     """Test that account creation fails when the username is already taken."""
-    await client.post(url=f'/users/{username}', json=account_data)
+    await setup_account(client, username, account_data)
     duplicate = copy.deepcopy(account_datas[1])
     duplicate['username'] = username
-    res = await client.post(url=f'/users/{username}', json=duplicate)
+    res = await setup_account(client, username, duplicate)
     assert check_error(res, errors.UsernameAlreadyTakenError)
-    entry = await database.database['accounts'].find_one({})
-    assert entry['email_address'] == email_address
+    e = await database.database['accounts'].find_one({})
+    assert e['email_address'] == email_address
 
 
 @pytest.mark.asyncio
@@ -163,61 +181,119 @@ async def test_creating_user_email_address_already_taken(
         cleanup,
     ):
     """Test that account creation fails when the email address is in use."""
-    await client.post(url=f'/users/{username}', json=account_data)
+    await setup_account(client, username, account_data)
     duplicate = copy.deepcopy(account_datas[1])
     duplicate['email_address'] = email_address
-    res = await client.post(
-        url=f'/users/{duplicate["username"]}',
-        json=duplicate,
-    )
+    res = await setup_account(client, duplicate['username'], duplicate)
     assert check_error(res, errors.EmailAddressAlreadyTakenError)
-    entry = await database.database['accounts'].find_one({})
-    assert entry['username'] == username
+    e = await database.database['accounts'].find_one({})
+    assert e['username'] == username
 
 
 ################################################################################
-# Update User
+# Route: Update User
 ################################################################################
 
 
-# TODO test_updating_existing_user_with_valid_username_not_in_use
-# TODO test_updating_existent_user_with_valid_username_in_use
 # TODO test_updating_existing_user_with_valid_email_address_not_in_use
-
-# TODO test_updating_nonexistent_user_with_valid_account_data
-# this should return a 401, not a 404, we need to implement that an access
-# token is useless when the user is deleted/does not exist for this
+# TODO test_updating_existing_user_with_valid_email_address_in_use
+# TODO update all fields at the same time
 
 
 @pytest.mark.asyncio
 async def test_updating_existing_user_with_no_changes(
+        mock_email_sending,
+        mock_token_generation,
         client,
-        headers,
         username,
         account_data,
         cleanup,
-):
+    ):
     """Test that account is correctly updated given valid account data."""
-    x = await database.database['accounts'].find_one({})
+    await setup_account(client, username, account_data)
+    await setup_verification(client)
+    headers = await setup_headers(client, account_data)
+    e = await database.database['accounts'].find_one()
     res = await client.put(
         url=f'/users/{username}',
         headers=headers,
         json=account_data,
     )
     assert res.status_code == 200
-    assert x == await database.database['accounts'].find_one({})
+    assert e == await database.database['accounts'].find_one()
 
 
 @pytest.mark.asyncio
-async def test_updating_existing_user_with_valid_password(
+async def test_updating_existing_user_with_valid_username_not_in_use(
+        mock_email_sending,
+        mock_token_generation,
         client,
-        headers,
         username,
         account_data,
         account_datas,
         cleanup,
-):
+    ):
     """Test that account is correctly updated given valid account data."""
+    await setup_account(client, username, account_data)
+    await setup_verification(client)
+    headers = await setup_headers(client, account_data)
+    account_data = copy.deepcopy(account_data)
+    account_data['username'] = account_datas[1]['username']
+    res = await client.put(
+        url=f'/users/{username}',
+        headers=headers,
+        json=account_data,
+    )
+    assert res.status_code == 200
+    e = await database.database['accounts'].find_one()
+    assert account_data['username'] == e['username']
+
+
+@pytest.mark.asyncio
+async def test_updating_existing_user_with_valid_username_in_use(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        email_address,
+        account_data,
+        account_datas,
+        cleanup,
+    ):
+    """Test that account update is rejected if the new username is in use."""
+    await setup_account(client, username, account_data)
+    await setup_account(client, account_datas[1]['username'], account_datas[1])
+    await setup_verification(client)
+    headers = await setup_headers(client, account_data)
+    account_data = copy.deepcopy(account_data)
+    account_data['username'] = account_datas[1]['username']
+    res = await client.put(
+        url=f'/users/{username}',
+        headers=headers,
+        json=account_data,
+    )
+    assert check_error(res, errors.UsernameAlreadyTakenError)
+    e = await database.database['accounts'].find_one(
+        filter={'email_address': email_address},
+    )
+    assert username == e['username']
+
+
+
+@pytest.mark.asyncio
+async def test_updating_existing_user_with_valid_password(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        account_datas,
+        cleanup,
+    ):
+    """Test that account is correctly updated given valid account data."""
+    await setup_account(client, username, account_data)
+    await setup_verification(client)
+    headers = await setup_headers(client, account_data)
     account_data = copy.deepcopy(account_data)
     account_data['password'] = account_datas[1]['password']
     res = await client.put(
@@ -226,23 +302,21 @@ async def test_updating_existing_user_with_valid_password(
         json=account_data,
     )
     assert res.status_code == 200
-    x = await database.database['accounts'].find_one({})
-    assert auth.verify_password(
-        password=account_data['password'],
-        password_hash=x['password_hash'],
-    )
+    e = await database.database['accounts'].find_one()
+    assert auth.verify_password(account_data['password'], e['password_hash'])
 
 
 @pytest.mark.skip(reason='todo')
 @pytest.mark.asyncio
 async def test_updating_existing_user_with_valid_email_address_in_use(
+        mock_email_sending,
+        mock_token_generation,
         client,
-        headers,
         username,
         account_data,
         account_datas,
         cleanup,
-):
+    ):
     """Test that updating the email address to one in use fails correctly."""
     await client.post(
         url=f'/users/{account_datas[1]["username"]}',
@@ -263,7 +337,7 @@ async def test_updating_existing_user_with_valid_email_address_in_use(
 
 
 ################################################################################
-# Fetch Survey
+# Route: Fetch Survey
 ################################################################################
 
 
@@ -316,7 +390,7 @@ async def test_fetching_survey_in_draft_mode(
 
 
 ################################################################################
-# Create Survey
+# Route: Create Survey
 ################################################################################
 
 
@@ -363,7 +437,7 @@ async def test_creating_survey_with_invalid_configuration(
 
 
 ################################################################################
-# Update Survey
+# Route: Update Survey
 ################################################################################
 
 
@@ -513,7 +587,7 @@ async def test_updating_survey_with_existing_submissions(
 
 
 ################################################################################
-# Create Submission
+# Route: Create Submission
 #
 # It suffices here to test only one valid and one invalid submission, instead
 # of all examples that we have, as the validation is tested on its own.
@@ -564,7 +638,7 @@ async def test_creating_invalid_submission(
 
 
 ################################################################################
-# Verify submission
+# Route: Verify submission
 ################################################################################
 
 
@@ -656,7 +730,7 @@ async def test_verifying_invalid_verification_token(
 
 
 ################################################################################
-# Fetch Results
+# Route: Fetch Results
 ################################################################################
 
 
@@ -706,7 +780,7 @@ async def test_fetching_results_without_submissions(
 
 
 ################################################################################
-# Generate Access Token
+# Route: Generate Access Token
 ################################################################################
 
 
@@ -792,7 +866,7 @@ async def test_generating_access_token_with_invalid_password(
 
 
 ################################################################################
-# Verify Email Address
+# Route: Verify Email Address
 ################################################################################
 
 
