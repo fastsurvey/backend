@@ -96,7 +96,7 @@ async def update(username, account_data):
     )
     if x is None:
         raise errors.UserNotFoundError()
-
+    # determine update steps
     update = {'modification_time': utils.now()}
     if account_data['username'] != username:
         update['username'] = account_data['username']
@@ -106,7 +106,7 @@ async def update(username, account_data):
         update['password_hash'] = auth.hash_password(account_data['password'])
     if len(update) == 1:
         return
-
+    # perform update (with transaction if needed)
     if 'username' in update.keys():
         with database.client.start_session() as session:
             with session.start_transaction():
@@ -133,22 +133,26 @@ async def update(username, account_data):
 
 async def delete(username):
     """Delete the user including all their surveys from the database."""
-
-    # TODO use transaction
-
-    await database.database['accounts'].delete_one({'username': username})
-    await database.database['access_tokens'].delete_one({'username': username})
-    cursor = database.database['configurations'].find(
-        filter={'username': username},
-        projection={'_id': False, 'survey_name': True},
-    )
-    survey_names = [
-        configuration['survey_name']
-        for configuration
-        in await cursor.to_list(None)
-    ]
-    for survey_name in survey_names:
-        await sve.delete(username, survey_name)
+    with database.client.start_session() as session:
+        with session.start_transaction():
+            await database.database['accounts'].delete_one(
+                filter={'username': username},
+            )
+            await database.database['access_tokens'].delete_many(
+                filter={'username': username},
+            )
+            cursor = database.database['configurations'].find(
+                filter={'username': username},
+                projection={'_id': True},
+            )
+            survey_ids = [x['_id'] for x in await cursor.to_list(None)]
+            await database.database['configurations'].delete_many(
+                filter={'_id': {'$in': survey_ids}},
+            )
+            for survey_id in survey_ids:
+                base = f'surveys.{str(survey_id)}'
+                await database.database[f'{base}.submissions'].drop()
+                await database.database[f'{base}.unverified-submissions'].drop()
 
 
 async def login(identifier, password):

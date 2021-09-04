@@ -145,7 +145,7 @@ async def create(username, configuration):
 
 
 async def update(username, survey_name, configuration):
-    """Update a survey configuration in the database and cache.
+    """Update a survey configuration in the database.
 
     Survey updates are only possible if the survey has no submissions yet.
     This is to ensure that submissions cannot be invalidated and means
@@ -177,23 +177,21 @@ async def update(username, survey_name, configuration):
 
 
 async def reset(username, survey_name):
-    """Delete all submission data but keep the configuration."""
-
-    # TODO use transaction
-
+    """Delete all submission data but keep the survey configuration."""
     survey = await fetch(username, survey_name)
-    await survey.submission.drop()
-    await survey.unverified_submission.drop()
+    with database.client.start_session() as session:
+        with session.start_transaction():
+            await survey.submissions.drop()
+            await survey.unverified_submissions.drop()
 
 
 async def delete(username, survey_name):
-    """Delete the survey and all its data from the database and cache."""
-
-    # TODO use transaction
-
+    """Delete the survey and all its data from the database."""
     survey = await fetch(username, survey_name)
-    await database.database['configurations'].delete_one(
-        filter={'_id': survey.survey_id},
-    )
-    await survey.submission.drop()
-    await survey.unverified_submission.drop()
+    with database.client.start_session() as session:
+        with session.start_transaction():
+            await database.database['configurations'].delete_one(
+                filter={'_id': survey.survey_id},
+            )
+            await survey.submissions.drop()
+            await survey.unverified_submissions.drop()
