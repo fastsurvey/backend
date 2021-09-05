@@ -256,12 +256,14 @@ async def test_updating_existing_user_with_valid_username_not_in_use(
         username,
         account_data,
         account_datas,
+        configuration,
         cleanup,
     ):
     """Test that account is correctly updated given valid account data."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
+    await setup_survey(client, headers, username, configuration)
     account_data = copy.deepcopy(account_data)
     account_data['username'] = account_datas[1]['username']
     res = await client.put(
@@ -639,17 +641,51 @@ async def test_resetting_survey_with_existing_submissions(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     await setup_submission(client, username, survey_name, submissions[0])
+    await setup_submission_verification(client, username, survey_name)
+    survey = await sve.fetch(username, survey_name)
     res = await client.delete(
         url=f'/users/{username}/surveys/{survey_name}/submissions',
         headers=headers,
     )
     assert res.status_code == 200
+    assert await database.database['configurations'].find_one() is not None
+    assert await survey.submissions.find_one() is None
+    assert await survey.unverified_submissions.find_one() is None
+
+
+################################################################################
+# Route: Delete Survey
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_resetting_survey_with_existing_submissions(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        survey_name,
+        configuration,
+        submissions,
+        cleanup,
+    ):
+    """Test that a survey including all submissions is correctly deleted."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    await setup_survey(client, headers, username, configuration)
+    await setup_submission(client, username, survey_name, submissions[0])
+    await setup_submission_verification(client, username, survey_name)
     survey = await sve.fetch(username, survey_name)
-    assert await survey.submissions.find_one() == None
-    assert await survey.unverified_submissions.find_one() == None
-
-
-# TODO delete survey
+    res = await client.delete(
+        url=f'/users/{username}/surveys/{survey_name}',
+        headers=headers,
+    )
+    assert res.status_code == 200
+    assert await database.database['configurations'].find_one() is None
+    assert await survey.submissions.find_one() is None
+    assert await survey.unverified_submissions.find_one() is None
 
 
 ################################################################################
