@@ -14,11 +14,7 @@ async def fetch(username):
     """Return the account data corresponding to given user name."""
     account_data = await database.database['accounts'].find_one(
         filter={'username': username},
-        projection={
-            '_id': False,
-            'email_address': True,
-            'verified': True,
-        },
+        projection={'_id': False, 'email_address': True, 'verified': True},
     )
     if account_data is None:
         raise errors.UserNotFoundError()
@@ -90,7 +86,7 @@ async def verify(verification_token):
 
 async def update(username, account_data):
     """Update existing user account data in the database."""
-    entry = await database.database['accounts'].find_one(
+    x = await database.database['accounts'].find_one(
         filter={'username': username},
         projection={
             '_id': False,
@@ -98,40 +94,74 @@ async def update(username, account_data):
             'password_hash': True,
         },
     )
-    if entry is None:
+    if x is None:
         raise errors.UserNotFoundError()
-    update = {}
+    # determine update steps
+    update = {'modification_time': utils.now()}
     if account_data['username'] != username:
+        update['username'] = account_data['username']
+    if account_data['email_address'] != x['email_address']:
         raise errors.NotImplementedError()
-    if account_data['email_address'] != entry['email_address']:
-        raise errors.NotImplementedError()
-    if not auth.verify_password(account_data['password'], entry['password_hash']):
+    if not auth.verify_password(account_data['password'], x['password_hash']):
         update['password_hash'] = auth.hash_password(account_data['password'])
-    if update:
-        update['modification_time'] = utils.now()
-        res = await database.database['accounts'].update_one(
-            filter={'username': username},
-            update={'$set': update},
-        )
-        if res.matched_count == 0:
-            raise errors.UserNotFoundError()
+    if len(update) == 1:
+        return
+    # perform update (with transaction if needed)
+    try:
+        if 'username' in update.keys():
+            async with await database.client.start_session() as session:
+                async with session.start_transaction():
+                    res = await database.database['accounts'].update_one(
+                        filter={'username': username},
+                        update={'$set': update},
+                    )
+                    await database.database['configurations'].update_many(
+                        filter={'username': username},
+                        update={'$set': {'username': account_data['username']}},
+                    )
+                    await database.database['access_tokens'].update_many(
+                        filter={'username': username},
+                        update={'$set': {'username': account_data['username']}},
+                    )
+        else:
+            res = await database.database['accounts'].update_one(
+                filter={'username': username},
+                update={'$set': update},
+            )
+    except pymongo.errors.DuplicateKeyError as error:
+        index = str(error).split()[7]
+        if index == 'username_index':
+            raise errors.UsernameAlreadyTakenError()
+        if index == 'email_address_index':
+            raise errors.EmailAddressAlreadyTakenError()
+        else:
+            raise errors.InternalServerError()
+    if res.matched_count == 0:
+        raise errors.UserNotFoundError()
 
 
 async def delete(username):
     """Delete the user including all their surveys from the database."""
-    await database.database['accounts'].delete_one({'username': username})
-    await database.database['access_tokens'].delete_one({'username': username})
-    cursor = database.database['configurations'].find(
-        filter={'username': username},
-        projection={'_id': False, 'survey_name': True},
-    )
-    survey_names = [
-        configuration['survey_name']
-        for configuration
-        in await cursor.to_list(None)
-    ]
-    for survey_name in survey_names:
-        await sve.delete(username, survey_name)
+    async with await database.client.start_session() as session:
+        async with session.start_transaction():
+            await database.database['accounts'].delete_one(
+                filter={'username': username},
+            )
+            await database.database['access_tokens'].delete_many(
+                filter={'username': username},
+            )
+            cursor = database.database['configurations'].find(
+                filter={'username': username},
+                projection={'_id': True},
+            )
+            survey_ids = [x['_id'] for x in await cursor.to_list(None)]
+            await database.database['configurations'].delete_many(
+                filter={'_id': {'$in': survey_ids}},
+            )
+            for survey_id in survey_ids:
+                base = f'surveys.{str(survey_id)}'
+                await database.database[f'{base}.submissions'].drop()
+                await database.database[f'{base}.unverified-submissions'].drop()
 
 
 async def login(identifier, password):
