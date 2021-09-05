@@ -363,8 +363,38 @@ async def test_updating_existing_user_with_valid_email_address_in_use(
     assert check_error(res, errors.EmailAddressAlreadyTakenError)
 
 
-# TODO delete user
-# TODO fetch surveys
+################################################################################
+# Route: Delete User
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_deleting_existing_user(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        survey_name,
+        configuration,
+        submissions,
+        cleanup,
+    ):
+    """Test that correct configuration is returned for an existing survey."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    await setup_survey(client, headers, username, configuration)
+    await setup_submission(client, username, survey_name, submissions[0])
+    await setup_submission_verification(client, username, survey_name)
+    survey = await sve.fetch(username, survey_name)
+    res = await client.delete(url=f'/users/{username}', headers=headers)
+    assert res.status_code == 200
+    assert await database.database['accounts'].find_one() is None
+    assert await database.database['access_tokens'].find_one() is None
+    assert await database.database['configurations'].find_one() is None
+    assert await survey.submissions.find_one() is None
+    assert await survey.unverified_submissions.find_one() is None
 
 
 ################################################################################

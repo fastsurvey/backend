@@ -7,7 +7,6 @@ import app.authentication as auth
 import app.utils as utils
 import app.resources.database as database
 import app.errors as errors
-import app.survey as sve
 
 
 async def fetch(username):
