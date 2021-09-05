@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "backend"
-version = "0.2.0"
+version = "0.3.0"
 description = ""
 authors = ["Felix Böhm <felix@felixboehm.dev>"]
 
@@ -12,8 +12,6 @@ dnspython = "^2.0.0"
 uvicorn = "^0.11.8"
 pymongo = "^3.11.0"
 httpx = "^0.14.3"
-cachetools = "^4.1.1"
-PyJWT = "^1.7.1"
 passlib = "^1.7.4"
 python-multipart = "^0.0.5"
 cryptography = "^3.2.1"
