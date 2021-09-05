@@ -34,8 +34,6 @@ class DeleteUserRequest(models.BaseModel):
 class FetchSurveysRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
-    skip: pydantic.conint(strict=True, ge=0) = docs.ARGUMENTS['skip']
-    limit: pydantic.conint(strict=True, ge=0) = docs.ARGUMENTS['limit']
 
 
 class FetchSurveyRequest(models.BaseModel):

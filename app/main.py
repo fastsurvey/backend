@@ -96,11 +96,7 @@ async def fetch_surveys(
     draft mode **are** returned.
 
     """
-    return await acn.fetch_configurations(
-        data.username,
-        data.skip,
-        data.limit,
-    )
+    return await acn.fetch_configurations(data.username)
 
 
 @app.get(**docs.SPECIFICATIONS['fetch_survey'])
