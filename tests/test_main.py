@@ -990,12 +990,12 @@ async def test_fetching_results_without_submissions(
 
 
 ################################################################################
-# Route: Generate Access Token
+# Route: Login
 ################################################################################
 
 
 @pytest.mark.asyncio
-async def test_generating_access_token_with_non_verified_account(
+async def test_logging_in_with_non_verified_account(
         mock_email_sending,
         client,
         username,
@@ -1013,7 +1013,7 @@ async def test_generating_access_token_with_non_verified_account(
 
 
 @pytest.mark.asyncio
-async def test_generating_access_token_with_valid_credentials(
+async def test_logging_in_with_valid_credentials(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -1036,7 +1036,7 @@ async def test_generating_access_token_with_valid_credentials(
 
 
 @pytest.mark.asyncio
-async def test_generating_access_token_invalid_username(
+async def test_logging_in_invalid_username(
         client,
         username,
         password,
@@ -1050,7 +1050,7 @@ async def test_generating_access_token_invalid_username(
 
 
 @pytest.mark.asyncio
-async def test_generating_access_token_with_invalid_password(
+async def test_logging_in_with_invalid_password(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -1066,6 +1066,36 @@ async def test_generating_access_token_with_invalid_password(
         json={'identifier': username, 'password': 'kangaroo'},
     )
     assert check_error(res, errors.InvalidPasswordError)
+
+
+################################################################################
+# Route: Logout
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_logging_out_existing_access_token(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        cleanup,
+    ):
+    """Test that logout flow works correctly."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    res = await client.delete(url='/authentication', headers=headers)
+    assert res.status_code == 200
+    assert await database.database['access_token'].find_one() is None
+    # try changing account data with old access token
+    res = await client.put(
+        url=f'/users/{username}',
+        headers=headers,
+        json=account_data,
+    )
+    assert check_error(res, errors.InvalidAccessTokenError)
 
 
 ################################################################################
