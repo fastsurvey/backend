@@ -91,6 +91,19 @@ def check_error(response, error):
 
 
 ################################################################################
+# Route: Status
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_fetching_server_status(client):
+    """Test that correct status data is returned."""
+    res = await client.get(f'/status')
+    assert res.status_code == 200
+    assert set(res.json().keys()) == {'commit_sha', 'branch_name', 'start_time'}
+
+
+################################################################################
 # Route: Fetch User
 ################################################################################
 
@@ -380,7 +393,7 @@ async def test_deleting_existing_user(
         submissions,
         cleanup,
     ):
-    """Test that correct configuration is returned for an existing survey."""
+    """Test that all data is correctly wiped when a user is deleted."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
@@ -412,7 +425,7 @@ async def test_fetching_existing_surveys(
         configurations,
         cleanup,
     ):
-    """Test that correct configuration is returned for an existing survey."""
+    """Test that correct configurations of a specific user are returned."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
@@ -436,7 +449,7 @@ async def test_fetching_nonexistent_surveys(
         account_data,
         cleanup,
     ):
-    """Test that correct configuration is returned for an existing survey."""
+    """Test that an empty list is returned when no surveys exist."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
@@ -737,7 +750,7 @@ async def test_resetting_survey_with_existing_submissions(
 
 
 @pytest.mark.asyncio
-async def test_resetting_survey_with_existing_submissions(
+async def test_deleting_existing_survey_with_existing_submissions(
         mock_email_sending,
         mock_token_generation,
         client,
