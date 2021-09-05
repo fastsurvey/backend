@@ -107,34 +107,43 @@ async def update(username, account_data):
     if len(update) == 1:
         return
     # perform update (with transaction if needed)
-    if 'username' in update.keys():
-        with database.client.start_session() as session:
-            with session.start_transaction():
-                res = await database.database['accounts'].update_one(
-                    filter={'username': username},
-                    update={'$set': update},
-                )
-                await database.database['configurations'].update_many(
-                    filter={'username': username},
-                    update={'$set': {'username': account_data['username']}},
-                )
-                await database.database['access_tokens'].update_many(
-                    filter={'username': username},
-                    update={'$set': {'username': account_data['username']}},
-                )
-    else:
-        res = await database.database['accounts'].update_one(
-            filter={'username': username},
-            update={'$set': update},
-        )
+    try:
+        if 'username' in update.keys():
+            async with await database.client.start_session() as session:
+                async with session.start_transaction():
+                    res = await database.database['accounts'].update_one(
+                        filter={'username': username},
+                        update={'$set': update},
+                    )
+                    await database.database['configurations'].update_many(
+                        filter={'username': username},
+                        update={'$set': {'username': account_data['username']}},
+                    )
+                    await database.database['access_tokens'].update_many(
+                        filter={'username': username},
+                        update={'$set': {'username': account_data['username']}},
+                    )
+        else:
+            res = await database.database['accounts'].update_one(
+                filter={'username': username},
+                update={'$set': update},
+            )
+    except pymongo.errors.DuplicateKeyError as error:
+        index = str(error).split()[7]
+        if index == 'username_index':
+            raise errors.UsernameAlreadyTakenError()
+        if index == 'email_address_index':
+            raise errors.EmailAddressAlreadyTakenError()
+        else:
+            raise errors.InternalServerError()
     if res.matched_count == 0:
         raise errors.UserNotFoundError()
 
 
 async def delete(username):
     """Delete the user including all their surveys from the database."""
-    with database.client.start_session() as session:
-        with session.start_transaction():
+    async with await database.client.start_session() as session:
+        async with session.start_transaction():
             await database.database['accounts'].delete_one(
                 filter={'username': username},
             )

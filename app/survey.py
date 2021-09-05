@@ -179,8 +179,8 @@ async def update(username, survey_name, configuration):
 async def reset(username, survey_name):
     """Delete all submission data but keep the survey configuration."""
     survey = await fetch(username, survey_name)
-    with database.client.start_session() as session:
-        with session.start_transaction():
+    async with await database.client.start_session() as session:
+        async with session.start_transaction():
             await survey.submissions.drop()
             await survey.unverified_submissions.drop()
 
@@ -188,8 +188,8 @@ async def reset(username, survey_name):
 async def delete(username, survey_name):
     """Delete the survey and all its data from the database."""
     survey = await fetch(username, survey_name)
-    with database.client.start_session() as session:
-        with session.start_transaction():
+    async with await database.client.start_session() as session:
+        async with session.start_transaction():
             await database.database['configurations'].delete_one(
                 filter={'_id': survey.survey_id},
             )
