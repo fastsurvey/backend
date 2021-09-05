@@ -65,16 +65,6 @@ ARGUMENTS = {
             'password': '12345678'
         },
     ),
-    'skip': fastapi.Query(
-        0,
-        description='The index of the first returned configuration',
-        example=0,
-    ),
-    'limit': fastapi.Query(
-        10,
-        description='The query result count limit; 0 means no limit',
-        example=10,
-    ),
     'verification_token': fastapi.Path(
         ...,
         description='The verification token',

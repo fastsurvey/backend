@@ -209,13 +209,11 @@ async def logout(access_token):
         raise errors.InvalidAccessTokenError()
 
 
-async def fetch_configurations(username, skip, limit):
+async def fetch_configurations(username):
     """Return a list of the user's survey configurations."""
     cursor = database.database['configurations'].find(
         filter={'username': username},
         projection={'_id': False, 'username': False},
         sort=[('start', pymongo.DESCENDING)],
-        skip=skip,
-        limit=limit,
     )
     return await cursor.to_list(None)
