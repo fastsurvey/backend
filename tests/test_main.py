@@ -398,6 +398,54 @@ async def test_deleting_existing_user(
 
 
 ################################################################################
+# Route: Fetch Surveys
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_fetching_existing_surveys(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        configurations,
+        cleanup,
+    ):
+    """Test that correct configuration is returned for an existing survey."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    for configuration in configurations.values():
+        await setup_survey(client, headers, username, configuration)
+    res = await client.get(url=f'/users/{username}/surveys', headers=headers)
+    assert res.status_code == 200
+    assert res.json() == sorted(
+        configurations.values(),
+        key=lambda x: x['start'],
+        reverse=True,
+    )
+
+
+@pytest.mark.asyncio
+async def test_fetching_nonexistent_surveys(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        cleanup,
+    ):
+    """Test that correct configuration is returned for an existing survey."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    res = await client.get(url=f'/users/{username}/surveys', headers=headers)
+    assert res.status_code == 200
+    assert res.json() == []
+
+
+################################################################################
 # Route: Fetch Survey
 ################################################################################
 
