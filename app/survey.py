@@ -70,15 +70,21 @@ class Survey:
                     break
                 except pymongo.errors.DuplicateKeyError:
                     verification_token = auth.generate_token()
-            status = await email.send_submission_verification(
+
+            # Sending the submission verification email can fail (e.g. because
+            # of an invalid email address). Nevertheless, we don't react to this
+            # happening here as the author will be able to request a new
+            # verification email in the future. In the case of an invalid
+            # email address the submission will simply remain as a valid
+            # unverified submission.
+
+            await email.send_submission_verification(
                 submission[str(self.index)],
                 self.username,
                 self.survey_name,
                 self.configuration['title'],
                 verification_token,
             )
-            if status != 200:
-                raise errors.InternalServerError()
 
     async def verify(self, verification_token):
         """Verify the user's email address and save submission as verified."""

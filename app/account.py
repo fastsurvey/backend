@@ -51,32 +51,24 @@ async def create(account_data):
                 verification_token_hash = auth.hash_token(verification_token)
             else:
                 raise errors.InternalServerError()
-    status = await email.send_account_verification(
+
+    # Sending the account verification email can fail (e.g. because of an
+    # invalid email address). Nevertheless, we don't react to this happening
+    # here as the user will be able to request a new verification email in the
+    # future. In the case of an invalid email address the account will be
+    # deleted after a while as part of deleting unverified accounts.
+
+    await email.send_account_verification(
         account_data['email_address'],
         account_data['username'],
         verification_token,
     )
-    if status != 200:
-        # we do not delete the unverified account here, as the user could
-        # request a new verification email, and the account gets deleted
-        # anyways after a while
-        raise fastapi.HTTPException(
-            422,
-            [{
-                'loc': ['body', 'email_address'],
-                'msg': 'invalid email_address',
-                'type': 'value_error',
-            }]
-        )
 
 
 async def verify(verification_token):
     """Verify an existing account via its unique verification token."""
     res = await database.database['accounts'].update_one(
-        filter={
-            'verification_token_hash': auth.hash_token(verification_token),
-            'verified': False,
-        },
+        filter={'verification_token_hash': auth.hash_token(verification_token)},
         update={'$set': {'verified': True}}
     )
     if res.matched_count == 0:

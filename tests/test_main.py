@@ -1104,6 +1104,23 @@ async def test_logging_out_existing_access_token(
 
 
 @pytest.mark.asyncio
+async def test_verifying_email_address_with_valid_verification_token(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        cleanup,
+    ):
+    """Test that email verification succeeds given valid verification token."""
+    await setup_account(client, username, account_data)
+    res = await setup_account_verification(client)
+    assert res.status_code == 200
+    e = await database.database['accounts'].find_one({'username': username})
+    assert e['verified']
+
+
+@pytest.mark.asyncio
 async def test_verifying_email_address_with_invalid_verification_token(
         mock_email_sending,
         mock_token_generation,
@@ -1112,7 +1129,7 @@ async def test_verifying_email_address_with_invalid_verification_token(
         account_data,
         cleanup,
     ):
-    """Test that email verification fails with invalid verification token."""
+    """Test that email verification fails given invalid verification token."""
     await setup_account(client, username, account_data)
     res = await client.post(
         url=f'/verification',
@@ -1132,10 +1149,10 @@ async def test_verifying_previously_verified_email_address(
         account_data,
         cleanup,
     ):
-    """Test that email verification works given valid credentials."""
+    """Test that verification succeeds even if account is already verified."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     res = await setup_account_verification(client)
-    assert check_error(res, errors.InvalidVerificationTokenError)
+    assert res.status_code == 200
     e = await database.database['accounts'].find_one({'username': username})
     assert e['verified']
