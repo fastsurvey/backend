@@ -100,7 +100,12 @@ async def test_fetching_server_status(client):
     """Test that correct status data is returned."""
     res = await client.get(f'/status')
     assert res.status_code == 200
-    assert set(res.json().keys()) == {'commit_sha', 'branch_name', 'start_time'}
+    assert set(res.json().keys()) == {
+        'environment',
+        'commit_sha',
+        'branch_name',
+        'start_time',
+    }
 
 
 ################################################################################

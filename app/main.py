@@ -44,6 +44,7 @@ async def validation_error_exception_handler(request, exc):
 async def server_status():
     """Return some information about the server."""
     return dict(
+        environment=settings.ENVIRONMENT,
         commit_sha=settings.COMMIT_SHA,
         branch_name=settings.BRANCH_NAME,
         start_time=settings.START_TIME,
