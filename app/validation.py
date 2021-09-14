@@ -4,7 +4,7 @@ import app.documentation as docs
 import app.models as models
 
 
-class FetchUserRequest(models.BaseModel):
+class ReadUserRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
 
@@ -31,12 +31,12 @@ class DeleteUserRequest(models.BaseModel):
     username: models.Username = docs.ARGUMENTS['username']
 
 
-class FetchSurveysRequest(models.BaseModel):
+class ReadSurveysRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
 
 
-class FetchSurveyRequest(models.BaseModel):
+class ReadSurveyRequest(models.BaseModel):
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.Username = docs.ARGUMENTS['survey_name']
 
@@ -61,13 +61,13 @@ class UpdateSurveyRequest(models.BaseModel):
     configuration: models.Configuration = docs.ARGUMENTS['configuration']
 
 
-class ResetSurveyRequest(models.BaseModel):
+class DeleteSurveyRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
 
 
-class DeleteSurveyRequest(models.BaseModel):
+class ReadSubmissionsRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
@@ -79,13 +79,19 @@ class CreateSubmissionRequest(models.BaseModel):
     submission: dict = docs.ARGUMENTS['submission']
 
 
+class ResetSurveyRequest(models.BaseModel):
+    access_token: models.Token = docs.ARGUMENTS['access_token']
+    username: models.Username = docs.ARGUMENTS['username']
+    survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
+
+
 class VerifySubmissionRequest(models.BaseModel):
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
     verification_token: models.Token = docs.ARGUMENTS['verification_token']
 
 
-class FetchResultsRequest(models.BaseModel):
+class ReadResultsRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']

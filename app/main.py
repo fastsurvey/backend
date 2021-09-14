@@ -51,13 +51,13 @@ async def server_status():
     )
 
 
-@app.get(**docs.SPECIFICATIONS['fetch_user'])
+@app.get(**docs.SPECIFICATIONS['read_user'])
 @auth.authorize
-async def fetch_user(
-        data: validation.FetchUserRequest = fastapi.Depends(),
+async def read_user(
+        data: validation.ReadUserRequest = fastapi.Depends(),
     ):
     """Fetch the given user's account data."""
-    return await acn.fetch(data.username)
+    return await acn.read(data.username)
 
 
 @app.post(**docs.SPECIFICATIONS['create_user'])
@@ -86,10 +86,10 @@ async def delete_user(
     await acn.delete(data.username)
 
 
-@app.get(**docs.SPECIFICATIONS['fetch_surveys'])
+@app.get(**docs.SPECIFICATIONS['read_surveys'])
 @auth.authorize
-async def fetch_surveys(
-        data: validation.FetchSurveysRequest = fastapi.Depends(),
+async def read_surveys(
+        data: validation.ReadSurveysRequest = fastapi.Depends(),
     ):
     """Fetch the user's survey configurations sorted by the start date.
 
@@ -97,12 +97,12 @@ async def fetch_surveys(
     draft mode **are** returned.
 
     """
-    return await acn.fetch_configurations(data.username)
+    return await acn.read_configurations(data.username)
 
 
-@app.get(**docs.SPECIFICATIONS['fetch_survey'])
-async def fetch_survey(
-        data: validation.FetchSurveyRequest = fastapi.Depends(),
+@app.get(**docs.SPECIFICATIONS['read_survey'])
+async def read_survey(
+        data: validation.ReadSurveyRequest = fastapi.Depends(),
     ):
     """Fetch a survey configuration.
 
@@ -110,7 +110,7 @@ async def fetch_survey(
     draft mode **are not** returned.
 
     """
-    survey = await sve.fetch(
+    survey = await sve.read(
         data.username,
         data.survey_name,
         return_drafts=False,
@@ -140,15 +140,6 @@ async def update_survey(
     )
 
 
-@app.delete(**docs.SPECIFICATIONS['reset_survey'])
-@auth.authorize
-async def reset_survey(
-        data: validation.ResetSurveyRequest = fastapi.Depends(),
-    ):
-    """Reset a survey by deleting all submission data including any results."""
-    await sve.reset(data.username, data.survey_name)
-
-
 @app.delete(**docs.SPECIFICATIONS['delete_survey'])
 @auth.authorize
 async def delete_survey(
@@ -158,12 +149,22 @@ async def delete_survey(
     await sve.delete(data.username, data.survey_name)
 
 
+@app.get(**docs.SPECIFICATIONS['read_submissions'])
+@auth.authorize
+async def read_submissions(
+        data: validation.ReadSubmissionsRequest = fastapi.Depends(),
+    ):
+    """Return all valid submissions of a survey."""
+    survey = await sve.read(data.username, data.survey_name)
+    return await survey.read_submissions()
+
+
 @app.post(**docs.SPECIFICATIONS['create_submission'])
 async def create_submission(
         data: validation.CreateSubmissionRequest = fastapi.Depends(),
     ):
     """Validate submission and store it under pending submissions."""
-    survey = await sve.fetch(
+    survey = await sve.read(
         data.username,
         data.survey_name,
         return_drafts=False,
@@ -172,12 +173,21 @@ async def create_submission(
     return await survey.submit(data.submission)
 
 
+@app.delete(**docs.SPECIFICATIONS['reset_survey'])
+@auth.authorize
+async def reset_survey(
+        data: validation.ResetSurveyRequest = fastapi.Depends(),
+    ):
+    """Reset a survey by deleting all submission data including any results."""
+    await sve.reset(data.username, data.survey_name)
+
+
 @app.get(**docs.SPECIFICATIONS['verify_submission'])
 async def verify_submission(
         data: validation.VerifySubmissionRequest = fastapi.Depends(),
     ):
     """Verify user token and either fail or redirect to success page."""
-    survey = await sve.fetch(
+    survey = await sve.read(
         data.username,
         data.survey_name,
         return_drafts=False,
@@ -185,13 +195,13 @@ async def verify_submission(
     return await survey.verify(data.verification_token)
 
 
-@app.get(**docs.SPECIFICATIONS['fetch_results'])
+@app.get(**docs.SPECIFICATIONS['read_results'])
 @auth.authorize
-async def fetch_results(
-        data: validation.FetchResultsRequest = fastapi.Depends(),
+async def read_results(
+        data: validation.ReadResultsRequest = fastapi.Depends(),
     ):
     """Fetch the results of the given survey."""
-    survey = await sve.fetch(data.username, data.survey_name)
+    survey = await sve.read(data.username, data.survey_name)
     return await survey.aggregate()
 
 

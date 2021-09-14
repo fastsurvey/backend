@@ -117,12 +117,20 @@ class Survey:
         return await aggregation.aggregate(self.submissions, self.configuration)
 
 
+    async def read_submissions(self):
+        """Fetch all valid submissions."""
+        cursor = self.submissions.aggregate(
+            pipeline=[{'$replaceRoot': {'newRoot': '$submission'}}]
+        )
+        return await cursor.to_list(length=None)
+
+
 ################################################################################
 # Functions To Manage Surveys
 ################################################################################
 
 
-async def fetch(username, survey_name, return_drafts=True):
+async def read(username, survey_name, return_drafts=True):
     """Return the survey object corresponding to user and survey name."""
     configuration = await database.database['configurations'].find_one(
         filter={'username': username, 'survey_name': survey_name},
@@ -162,7 +170,7 @@ async def update(username, survey_name, configuration):
     survey_name.
 
     """
-    survey = await fetch(username, survey_name)
+    survey = await read(username, survey_name)
     counter = await survey.submissions.count_documents({})
     counter += await survey.unverified_submissions.count_documents({})
     if counter > 0:
@@ -184,7 +192,7 @@ async def update(username, survey_name, configuration):
 
 async def reset(username, survey_name):
     """Delete all submission data but keep the survey configuration."""
-    survey = await fetch(username, survey_name)
+    survey = await read(username, survey_name)
     async with await database.client.start_session() as session:
         async with session.start_transaction():
             await survey.submissions.drop()
@@ -193,7 +201,7 @@ async def reset(username, survey_name):
 
 async def delete(username, survey_name):
     """Delete the survey and all its data from the database."""
-    survey = await fetch(username, survey_name)
+    survey = await read(username, survey_name)
     async with await database.client.start_session() as session:
         async with session.start_transaction():
             await database.database['configurations'].delete_one(

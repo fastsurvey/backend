@@ -9,7 +9,7 @@ import app.resources.database as database
 import app.errors as errors
 
 
-async def fetch(username):
+async def read(username):
     """Return the account data corresponding to given user name."""
     account_data = await database.database['accounts'].find_one(
         filter={'username': username},
@@ -209,7 +209,7 @@ async def logout(access_token):
         raise errors.InvalidAccessTokenError()
 
 
-async def fetch_configurations(username):
+async def read_configurations(username):
     """Return a list of the user's survey configurations."""
     cursor = database.database['configurations'].find(
         filter={'username': username},

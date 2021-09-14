@@ -147,7 +147,7 @@ SPECIFICATIONS = {
             'start_time': 1623779418,
         },
     ),
-    'fetch_user': _generate_responses_documentation(
+    'read_user': _generate_responses_documentation(
         path='/users/{username}',
         response={
             'email_address': 'contact@fastsurvey.de',
@@ -181,7 +181,7 @@ SPECIFICATIONS = {
             errors.AccessForbiddenError,
         ],
     ),
-    'fetch_surveys': _generate_responses_documentation(
+    'read_surveys': _generate_responses_documentation(
         path='/users/{username}/surveys',
         response=[_SAMPLE_CONFIGURATION],
         error_classes=[
@@ -189,7 +189,7 @@ SPECIFICATIONS = {
             errors.AccessForbiddenError,
         ],
     ),
-    'fetch_survey': _generate_responses_documentation(
+    'read_survey': _generate_responses_documentation(
         path='/users/{username}/surveys/{survey_name}',
         response=_SAMPLE_CONFIGURATION,
         error_classes=[
@@ -223,6 +223,14 @@ SPECIFICATIONS = {
             errors.AccessForbiddenError,
         ],
     ),
+    'read_submissions': _generate_responses_documentation(
+        path='/users/{username}/surveys/{survey_name}/submissions',
+        error_classes=[
+            errors.InvalidAccessTokenError,
+            errors.AccessForbiddenError,
+            errors.SurveyNotFoundError,
+        ],
+    ),
     'create_submission': _generate_responses_documentation(
         path='/users/{username}/surveys/{survey_name}/submissions',
         error_classes=[
@@ -245,7 +253,7 @@ SPECIFICATIONS = {
             errors.InvalidTimingError,
         ],
     ),
-    'fetch_results': _generate_responses_documentation(
+    'read_results': _generate_responses_documentation(
         path='/users/{username}/surveys/{survey_name}/results',
         response=_SAMPLE_RESULTS,
         error_classes=[
