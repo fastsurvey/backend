@@ -142,6 +142,7 @@ SPECIFICATIONS = {
     'server_status': _generate_responses_documentation(
         path='/status',
         response={
+            'environment': 'production',
             'commit_sha': '219170f284f2d5e959d70689043aa0747cc52fc1',
             'branch_name': 'master',
             'start_time': 1623779418,
@@ -225,6 +226,7 @@ SPECIFICATIONS = {
     ),
     'read_submissions': _generate_responses_documentation(
         path='/users/{username}/surveys/{survey_name}/submissions',
+        response=[_SAMPLE_SUBMISSION],
         error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,

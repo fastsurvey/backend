@@ -96,7 +96,7 @@ def check_error(response, error):
 
 
 @pytest.mark.asyncio
-async def test_fetching_server_status(client):
+async def test_reading_server_status(client):
     """Test that correct status data is returned."""
     res = await client.get(f'/status')
     assert res.status_code == 200
@@ -109,12 +109,12 @@ async def test_fetching_server_status(client):
 
 
 ################################################################################
-# Route: Fetch User
+# Route: Read User
 ################################################################################
 
 
 @pytest.mark.asyncio
-async def test_fetching_verified_account_with_valid_access_token(
+async def test_reading_verified_account_with_valid_access_token(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -132,7 +132,7 @@ async def test_fetching_verified_account_with_valid_access_token(
 
 
 @pytest.mark.asyncio
-async def test_fetching_verified_account_with_invalid_access_token(
+async def test_reading_verified_account_with_invalid_access_token(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -405,7 +405,7 @@ async def test_deleting_existing_user(
     await setup_survey(client, headers, username, configuration)
     await setup_submission(client, username, survey_name, submissions[0])
     await setup_submission_verification(client, username, survey_name)
-    survey = await sve.fetch(username, survey_name)
+    survey = await sve.read(username, survey_name)
     res = await client.delete(url=f'/users/{username}', headers=headers)
     assert res.status_code == 200
     assert await database.database['accounts'].find_one() is None
@@ -416,12 +416,12 @@ async def test_deleting_existing_user(
 
 
 ################################################################################
-# Route: Fetch Surveys
+# Route: Read Surveys
 ################################################################################
 
 
 @pytest.mark.asyncio
-async def test_fetching_existing_surveys(
+async def test_reading_existing_surveys(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -446,7 +446,7 @@ async def test_fetching_existing_surveys(
 
 
 @pytest.mark.asyncio
-async def test_fetching_nonexistent_surveys(
+async def test_reading_nonexistent_surveys(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -464,12 +464,12 @@ async def test_fetching_nonexistent_surveys(
 
 
 ################################################################################
-# Route: Fetch Survey
+# Route: Read Survey
 ################################################################################
 
 
 @pytest.mark.asyncio
-async def test_fetching_existing_survey(
+async def test_reading_existing_survey(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -490,14 +490,14 @@ async def test_fetching_existing_survey(
 
 
 @pytest.mark.asyncio
-async def test_fetching_nonexistent_survey(client, username, survey_name):
+async def test_reading_nonexistent_survey(client, username, survey_name):
     """Test that exception is raised when requesting a nonexistent survey."""
     res = await client.get(f'/users/{username}/surveys/{survey_name}')
     assert check_error(res, errors.SurveyNotFoundError)
 
 
 @pytest.mark.asyncio
-async def test_fetching_survey_in_draft_mode(
+async def test_reading_survey_in_draft_mode(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -715,41 +715,6 @@ async def test_updating_survey_with_existing_submissions(
 
 
 ################################################################################
-# Route: Reset Survey
-################################################################################
-
-
-@pytest.mark.asyncio
-async def test_resetting_survey_with_existing_submissions(
-        mock_email_sending,
-        mock_token_generation,
-        client,
-        username,
-        account_data,
-        survey_name,
-        configuration,
-        submissions,
-        cleanup,
-    ):
-    """Test that verified and unverified submissions are correctly deleted."""
-    await setup_account(client, username, account_data)
-    await setup_account_verification(client)
-    headers = await setup_headers(client, account_data)
-    await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, survey_name, submissions[0])
-    await setup_submission_verification(client, username, survey_name)
-    survey = await sve.fetch(username, survey_name)
-    res = await client.delete(
-        url=f'/users/{username}/surveys/{survey_name}/submissions',
-        headers=headers,
-    )
-    assert res.status_code == 200
-    assert await database.database['configurations'].find_one() is not None
-    assert await survey.submissions.find_one() is None
-    assert await survey.unverified_submissions.find_one() is None
-
-
-################################################################################
 # Route: Delete Survey
 ################################################################################
 
@@ -773,7 +738,7 @@ async def test_deleting_existing_survey_with_existing_submissions(
     await setup_survey(client, headers, username, configuration)
     await setup_submission(client, username, survey_name, submissions[0])
     await setup_submission_verification(client, username, survey_name)
-    survey = await sve.fetch(username, survey_name)
+    survey = await sve.read(username, survey_name)
     res = await client.delete(
         url=f'/users/{username}/surveys/{survey_name}',
         headers=headers,
@@ -782,6 +747,64 @@ async def test_deleting_existing_survey_with_existing_submissions(
     assert await database.database['configurations'].find_one() is None
     assert await survey.submissions.find_one() is None
     assert await survey.unverified_submissions.find_one() is None
+
+
+################################################################################
+# Route: Read Submissions
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_reading_submissions_with_submissions(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        survey_name,
+        configuration,
+        submissions,
+        cleanup,
+    ):
+    """Test that survey submissions are correctly retrieved."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    await setup_survey(client, headers, username, configuration)
+    for submission in submissions:
+        await setup_submission(client, username, survey_name, submission)
+        await setup_submission_verification(client, username, survey_name)
+    res = await client.get(
+        url=f'/users/{username}/surveys/{survey_name}/submissions',
+        headers=headers,
+    )
+    assert res.status_code == 200
+    assert len(res.json()) == len(submissions)
+    assert all([submission in res.json() for submission in submissions])
+
+
+@pytest.mark.asyncio
+async def test_reading_submissions_without_submissions(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        survey_name,
+        configuration,
+        cleanup,
+    ):
+    """Test that empty list is returned when no submissions exist."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    await setup_survey(client, headers, username, configuration)
+    res = await client.get(
+        url=f'/users/{username}/surveys/{survey_name}/submissions',
+        headers=headers,
+    )
+    assert res.status_code == 200
+    assert res.json() == []
 
 
 ################################################################################
@@ -811,7 +834,7 @@ async def test_creating_submission(
     await setup_survey(client, headers, username, configuration)
     res = await setup_submission(client, username, survey_name, submissions[0])
     assert res.status_code == 200
-    survey = await sve.fetch(username, survey_name)
+    survey = await sve.read(username, survey_name)
     e = await survey.unverified_submissions.find_one()
     assert e['submission'] == submissions[0]
 
@@ -836,9 +859,44 @@ async def test_creating_invalid_submission(
     submission = invalid_submissionss[survey_name][0]
     res = await setup_submission(client, username, survey_name, submission)
     assert check_error(res, None)
-    survey = await sve.fetch(username, survey_name)
+    survey = await sve.read(username, survey_name)
     e = await survey.unverified_submissions.find_one()
     assert e is None
+
+
+################################################################################
+# Route: Reset Survey
+################################################################################
+
+
+@pytest.mark.asyncio
+async def test_resetting_survey_with_existing_submissions(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        survey_name,
+        configuration,
+        submissions,
+        cleanup,
+    ):
+    """Test that verified and unverified submissions are correctly deleted."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    await setup_survey(client, headers, username, configuration)
+    await setup_submission(client, username, survey_name, submissions[0])
+    await setup_submission_verification(client, username, survey_name)
+    survey = await sve.read(username, survey_name)
+    res = await client.delete(
+        url=f'/users/{username}/surveys/{survey_name}/submissions',
+        headers=headers,
+    )
+    assert res.status_code == 200
+    assert await database.database['configurations'].find_one() is not None
+    assert await survey.submissions.find_one() is None
+    assert await survey.unverified_submissions.find_one() is None
 
 
 ################################################################################
@@ -866,7 +924,7 @@ async def test_verifying_valid_verification_token(
     await setup_submission(client, username, survey_name, submissions[0])
     res = await setup_submission_verification(client, username, survey_name)
     assert res.status_code == 307
-    survey = await sve.fetch(username, survey_name)
+    survey = await sve.read(username, survey_name)
     e = await survey.unverified_submissions.find_one(
         filter={'_id': auth.hash_token(conftest.valid_token())},
     )
@@ -901,7 +959,7 @@ async def test_verifying_valid_verification_token_submission_replacement(
     submission[str(0)] = email_address
     await setup_submission(client, username, survey_name, submission)
     await setup_submission_verification(client, username, survey_name)
-    survey = await sve.fetch(username, survey_name)
+    survey = await sve.read(username, survey_name)
     e = await survey.submissions.find_one({'_id': email_address})
     assert e['submission'] == submission
 
@@ -930,18 +988,18 @@ async def test_verifying_invalid_verification_token(
         allow_redirects=False,
     )
     assert res.status_code == 401
-    survey = await sve.fetch(username, survey_name)
+    survey = await sve.read(username, survey_name)
     e = await survey.submissions.find_one()
     assert e is None
 
 
 ################################################################################
-# Route: Fetch Results
+# Route: Read Results
 ################################################################################
 
 
 @pytest.mark.asyncio
-async def test_fetching_results(
+async def test_reading_results(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -970,7 +1028,7 @@ async def test_fetching_results(
 
 
 @pytest.mark.asyncio
-async def test_fetching_results_without_submissions(
+async def test_reading_results_without_submissions(
         mock_email_sending,
         mock_token_generation,
         client,
