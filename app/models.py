@@ -159,8 +159,6 @@ class Configuration(Field):
         max_items=Length.A,
      ) = pydantic.Field(alias='fields')
 
-    # TODO check that field identifiers are unique
-
     @pydantic.validator('end')
     def validate_end(cls, v, values):
         if 'start' in values and v < values['start']:
@@ -169,10 +167,14 @@ class Configuration(Field):
 
     @pydantic.validator('fields_')
     def validate_fields(cls, v):
+        identifiers = set()
         count = 0
         for field in v:
+            identifiers.add(field['identifier'])
             if field.type == 'email' and field.verify:
                 count += 1
+        if len(identifiers) < len(v):
+            raise ValueError('field identifiers have to be unique')
         if count > 1:
             raise ValueError('only one email field with verification allowed')
         return v
