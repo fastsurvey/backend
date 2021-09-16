@@ -30,9 +30,9 @@
             "type": "selection",
             "title": "What are your favorite ice cream flavors?",
             "description": "",
+            "options": ["Strawberry", "Vanilla", "Chocolate"],
             "min_select": 1,
-            "max_select": 2,
-            "options": ["Strawberry", "Vanilla", "Chocolate"]
+            "max_select": 2
         },
         {
             "type": "text",
