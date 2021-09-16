@@ -7,6 +7,7 @@
     "draft": false,
     "fields": [
         {
+            "identifier": 0,
             "type": "email",
             "title": "What's your email address?",
             "description": "",
@@ -15,18 +16,21 @@
             "verify": true
         },
         {
+            "identifier": 1,
             "type": "option",
             "title": "I have read and agree to the terms and conditions",
             "description": "",
             "required": true
         },
         {
+            "identifier": 2,
             "type": "radio",
             "title": "What is your favorite fruit?",
             "description": "",
             "options": ["Asparagus", "Spinach", "Artichoke", "None of these is a fruit"]
         },
         {
+            "identifier": 3,
             "type": "selection",
             "title": "What are your favorite ice cream flavors?",
             "description": "",
@@ -35,6 +39,7 @@
             "options": ["Strawberry", "Vanilla", "Chocolate"]
         },
         {
+            "identifier": 4,
             "type": "text",
             "title": "Why do you like ice cream?",
             "description": "",

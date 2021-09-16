@@ -146,9 +146,16 @@ async def read(username, survey_name, return_drafts=True):
 
 async def create(username, configuration):
     """Create a new survey configuration in the database."""
+    for i, field in enumerate(configuration['fields']):
+        if field['identifier'] != i:
+            raise errors.InvalidSyntaxError()
     try:
         await database.database['configurations'].insert_one(
-            document={'username': username, **configuration},
+            document={
+                'username': username,
+                'max_identifier': configuration['fields'][-1]['identifier'],
+                **configuration,
+            },
         )
     except pymongo.errors.DuplicateKeyError as error:
         index = str(error).split()[7]
@@ -161,9 +168,11 @@ async def create(username, configuration):
 async def update(username, survey_name, configuration):
     """Update a survey configuration in the database.
 
-    Survey updates are only possible if the survey has no submissions yet.
-    This is to ensure that submissions cannot be invalidated and means
-    that the only thing to update in the database is the configuration.
+    Survey updates are possible even if the survey already has submissions.
+    This works by assigning each field an identifier that is unique over the
+    lifetime of the survey. During updates, new fields are assigned a new
+    identifier. Changes to individual fields do not affect their identifier.
+    Changes to the field type necessitate a new identifier.
 
     The configuration includes the survey_name despite it already being
     specified in the route. We do this in order to enable changing the
@@ -171,14 +180,36 @@ async def update(username, survey_name, configuration):
 
     """
     survey = await read(username, survey_name)
-    counter = await survey.submissions.count_documents({})
-    counter += await survey.unverified_submissions.count_documents({})
-    if counter > 0:
-        raise errors.SubmissionsExistError()
+
+    def identifiers(configuration):
+        return {field['identifier'] for field in configuration['fields']}
+
+    # check that fields with unchanged identifier have the same field type
+    for x in configuration['fields']:
+        for y in survey.configuration['fields']:
+            if x['identifier'] == y['identifier'] and x['type'] != y['type']:
+                raise errors.InvalidSyntaxError()
+
+    # check that new fields are numbered in ascending order
+    new = identifiers(configuration) - identifiers(survey.configuration)
+    for i, e in enumerate(sorted(new)):
+        if e != survey.max_identifier + i + 1:
+            raise errors.InvalidSyntaxError()
+
+    # write changes to database
     try:
         res = await database.database['configurations'].replace_one(
-            filter={'_id': survey.survey_id},
-            replacement={'username': username, **configuration},
+            filter={
+                '_id': survey.survey_id,
+                # this ensures that even when the configuration changed
+                # between read and write, that only valid updates are written
+                'max_identifier': survey.max_identifier,
+            },
+            replacement={
+                'username': username,
+                'max_identifier': max(identifiers(configuration)),
+                **configuration,
+            },
         )
     except pymongo.errors.DuplicateKeyError as error:
         index = str(error).split()[7]
@@ -187,7 +218,7 @@ async def update(username, survey_name, configuration):
         else:
             raise errors.InternalServerError()
     if res.matched_count == 0:
-        raise errors.SurveyNotFoundError()
+        raise errors.InvalidSyntaxError()
 
 
 async def reset(username, survey_name):

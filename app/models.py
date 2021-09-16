@@ -13,6 +13,7 @@ class Length(int, enum.Enum):
     A = 32
     B = 256
     C = 4096
+    D = 65536
 
 
 class Pattern(str, enum.Enum):
@@ -68,6 +69,7 @@ class AccountData(BaseModel):
 
 
 class Field(BaseModel):
+    identifier: pydantic.conint(strict=True, ge=0, le=Length.D)
     title: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
     description: pydantic.StrictStr
 
@@ -156,6 +158,8 @@ class Configuration(Field):
         min_items=1,
         max_items=Length.A,
      ) = pydantic.Field(alias='fields')
+
+    # TODO check that field identifiers are unique
 
     @pydantic.validator('end')
     def validate_end(cls, v, values):
