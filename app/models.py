@@ -142,7 +142,9 @@ class TextField(Field):
         return v
 
 
-class Configuration(Field):
+class Configuration(BaseModel):
+    title: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
+    description: pydantic.StrictStr
     survey_name: SurveyName
     start: pydantic.conint(strict=True, ge=0, le=4102444800)
     end: pydantic.conint(strict=True, ge=0, le=4102444800)
@@ -170,7 +172,7 @@ class Configuration(Field):
         identifiers = set()
         count = 0
         for field in v:
-            identifiers.add(field['identifier'])
+            identifiers.add(field.identifier)
             if field.type == 'email' and field.verify:
                 count += 1
         if len(identifiers) < len(v):

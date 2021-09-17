@@ -438,10 +438,13 @@ async def test_reading_existing_surveys(
         await setup_survey(client, headers, username, configuration)
     res = await client.get(url=f'/users/{username}/surveys', headers=headers)
     assert res.status_code == 200
-    assert res.json() == sorted(
-        configurations.values(),
-        key=lambda x: x['start'],
-        reverse=True,
+    assert sorted(res.json(), key=lambda x: x['survey_name']) == sorted(
+        [
+            {'max_identifier': len(e['fields']) - 1, **e}
+            for e
+            in configurations.values()
+        ],
+        key=lambda x: x['survey_name'],
     )
 
 
@@ -486,7 +489,7 @@ async def test_reading_existing_survey(
     await setup_survey(client, headers, username, configuration)
     res = await client.get(f'/users/{username}/surveys/{survey_name}')
     assert res.status_code == 200
-    assert res.json() == configuration
+    assert res.json() == {'max_identifier': 4, **configuration}
 
 
 @pytest.mark.asyncio
@@ -572,8 +575,11 @@ async def test_creating_survey_with_invalid_configuration(
 ################################################################################
 
 
+########## TODO
+
+
 @pytest.mark.asyncio
-async def test_updating_existing_survey_with_valid_configuration(
+async def test_updating_existing_survey_with_valid_update_configuration(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -601,7 +607,39 @@ async def test_updating_existing_survey_with_valid_configuration(
 
 
 @pytest.mark.asyncio
-async def test_updating_nonexistent_survey_with_valid_configuration(
+async def test_updating_existing_survey_with_invalid_update_configuration(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        survey_name,
+        configuration,
+        cleanup,
+    ):
+    """Test that request is rejected when the update is not allowed."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    await setup_survey(client, headers, username, configuration)
+    # different field type but same identifier
+    c1 = copy.deepcopy(configuration)
+    c1['fields'][0] = {**c1['fields'][1], 'identifier': 0}
+    # invalid new identifier
+    c2 = copy.deepcopy(configuration)
+    c2['fields'][0]['identifier'] = len(c2['fields']) + 1
+    # check for errors
+    for x in [c1, c2]:
+        res = await client.put(
+            url=f'/users/{username}/surveys/{survey_name}',
+            headers=headers,
+            json=x,
+        )
+        assert check_error(res, errors.InvalidSyntaxError)
+
+
+@pytest.mark.asyncio
+async def test_updating_nonexistent_survey_with_valid_update_configuration(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -682,36 +720,6 @@ async def test_updating_survey_name_to_survey_name_in_use(
         filter={'survey_name': survey_name},
     )
     assert e is not None
-
-
-@pytest.mark.asyncio
-async def test_updating_survey_with_existing_submissions(
-        mock_email_sending,
-        mock_token_generation,
-        client,
-        username,
-        account_data,
-        survey_name,
-        configuration,
-        submissions,
-        cleanup,
-    ):
-    """Test that survey name update fails if it has existing submissions."""
-    await setup_account(client, username, account_data)
-    await setup_account_verification(client)
-    headers = await setup_headers(client, account_data)
-    await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, survey_name, submissions[0])
-    configuration = copy.deepcopy(configuration)
-    configuration['survey_name'] = 'kangaroo'
-    res = await client.put(
-        url=f'/users/{username}/surveys/{survey_name}',
-        headers=headers,
-        json=configuration,
-    )
-    assert check_error(res, errors.SubmissionsExistError)
-    e = await database.database['configurations'].find_one()
-    assert e['survey_name'] == survey_name
 
 
 ################################################################################

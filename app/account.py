@@ -214,6 +214,5 @@ async def read_configurations(username):
     cursor = database.database['configurations'].find(
         filter={'username': username},
         projection={'_id': False, 'username': False},
-        sort=[('start', pymongo.DESCENDING)],
     )
     return await cursor.to_list(None)

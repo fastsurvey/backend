@@ -7,6 +7,7 @@
     "draft": false,
     "fields": [
         {
+            "identifier": 0,
             "type": "text",
             "title": "Why do you like ice cream?",
             "description": "",

@@ -91,7 +91,7 @@ async def delete_user(
 async def read_surveys(
         data: validation.ReadSurveysRequest = fastapi.Depends(),
     ):
-    """Fetch the user's survey configurations sorted by the start date.
+    """Fetch all of the user's survey configurations.
 
     As this is a protected route, configurations of surveys that are in
     draft mode **are** returned.
@@ -115,7 +115,7 @@ async def read_survey(
         data.survey_name,
         return_drafts=False,
     )
-    return survey.configuration
+    return {'max_identifier': survey.max_identifier, **survey.configuration}
 
 
 @app.post(**docs.SPECIFICATIONS['create_survey'])

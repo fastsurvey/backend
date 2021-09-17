@@ -23,6 +23,7 @@ class Survey:
         """Create a survey from the given json configuration file."""
         self.survey_id = survey_id
         self.username = username
+        self.max_identifier = configuration.pop('max_identifier')
         self.configuration = configuration
         self.survey_name = self.configuration['survey_name']
         self.start = self.configuration['start']
