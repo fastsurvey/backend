@@ -142,6 +142,10 @@ def _build_invalid_complex_configurations(configuration):
     x = copy.deepcopy(configuration)
     x['fields'][2] = 42
     invalid_configurations.append(x)
+    # fields have duplicate identifiers
+    x = copy.deepcopy(configuration)
+    x['fields'][-1]['identifier'] = 2
+    invalid_configurations.append(x)
 
     return invalid_configurations
 
