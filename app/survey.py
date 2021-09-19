@@ -28,29 +28,26 @@ class Survey:
         self.survey_name = self.configuration['survey_name']
         self.start = self.configuration['start']
         self.end = self.configuration['end']
-        self.index = Survey._find_email_field_to_verify(self.configuration)
+        self.email_id = Survey._find_email_field_to_verify(self.configuration)
         self.submissions = database.database[
             f'surveys.{str(self.survey_id)}.submissions'
-        ]
-        self.unverified_submissions = database.database[
-            f'surveys.{str(self.survey_id)}.unverified-submissions'
         ]
         self.Submission = models.build_submission_model(configuration)
 
     @staticmethod
     def _find_email_field_to_verify(configuration):
-        """Find index of potential email field to verify in configuration."""
-        for index, field in enumerate(configuration['fields']):
+        """Find field identifier of potential email field to verify."""
+        for field in configuration['fields']:
             if field['type'] == 'email' and field['verify']:
-                return index
+                return field['identifier']
         return None
 
     async def submit(self, submission):
-        """Save a user submission in the submissions collection."""
+        """Save a user's submission in the submissions collection."""
         submission_time = utils.now()
         if submission_time < self.start or submission_time >= self.end:
             raise errors.InvalidTimingError()
-        if self.index is None:
+        if self.email_id is None:
             await self.submissions.insert_one(
                 document={
                     'submission_time': submission_time,
@@ -61,10 +58,11 @@ class Survey:
             verification_token = auth.generate_token()
             while True:
                 try:
-                    await self.unverified_submissions.insert_one(
+                    await self.submissions.insert_one(
                         document={
                             '_id': auth.hash_token(verification_token),
                             'submission_time': submission_time,
+                            'verified': False,
                             'submission': submission,
                         }
                     )
@@ -74,13 +72,13 @@ class Survey:
 
             # Sending the submission verification email can fail (e.g. because
             # of an invalid email address). Nevertheless, we don't react to this
-            # happening here as the author will be able to request a new
-            # verification email in the future. In the case of an invalid
-            # email address the submission will simply remain as a valid
-            # unverified submission.
+            # happening here. Maybe the author will be able to request a new
+            # verification email in the future. In the case of an invalid email
+            # address the submission will simply remain as a valid unverified
+            # submission.
 
             await email.send_submission_verification(
-                submission[str(self.index)],
+                submission[str(self.email_id)],
                 self.username,
                 self.survey_name,
                 self.configuration['title'],
@@ -90,24 +88,19 @@ class Survey:
     async def verify(self, verification_token):
         """Verify the user's email address and save submission as verified."""
         verification_time = utils.now()
-        if self.index is None:
-            raise errors.InvalidVerificationTokenError()
         if verification_time < self.start or verification_time >= self.end:
             raise errors.InvalidTimingError()
-        submission_doc = await self.unverified_submissions.find_one(
+        res = await self.submissions.update_one(
             filter={'_id': auth.hash_token(verification_token)},
-            projection={'_id': False},
-        )
-        if submission_doc is None:
-            raise errors.InvalidVerificationTokenError()
-        await self.submissions.replace_one(
-            filter={'_id': submission_doc['submission'][str(self.index)]},
-            replacement={
-                'verification_time': verification_time,
-                **submission_doc,
+            update={
+                '$set': {
+                    'verification_time': verification_time,
+                    'verified': True,
+                },
             },
-            upsert=True,
         )
+        if res.matched_count == 0:
+            raise errors.InvalidVerificationTokenError()
         return fastapi.responses.RedirectResponse(
             f'{settings.FRONTEND_URL}/{self.username}/{self.survey_name}'
             f'/success'
@@ -225,10 +218,7 @@ async def update(username, survey_name, configuration):
 async def reset(username, survey_name):
     """Delete all submission data but keep the survey configuration."""
     survey = await read(username, survey_name)
-    async with await database.client.start_session() as session:
-        async with session.start_transaction():
-            await survey.submissions.drop()
-            await survey.unverified_submissions.drop()
+    await survey.submissions.drop()
 
 
 async def delete(username, survey_name):
@@ -240,4 +230,3 @@ async def delete(username, survey_name):
                 filter={'_id': survey.survey_id},
             )
             await survey.submissions.drop()
-            await survey.unverified_submissions.drop()

@@ -412,7 +412,6 @@ async def test_deleting_existing_user(
     assert await database.database['access_tokens'].find_one() is None
     assert await database.database['configurations'].find_one() is None
     assert await survey.submissions.find_one() is None
-    assert await survey.unverified_submissions.find_one() is None
 
 
 ################################################################################
@@ -754,7 +753,6 @@ async def test_deleting_existing_survey_with_existing_submissions(
     assert res.status_code == 200
     assert await database.database['configurations'].find_one() is None
     assert await survey.submissions.find_one() is None
-    assert await survey.unverified_submissions.find_one() is None
 
 
 ################################################################################
@@ -843,7 +841,7 @@ async def test_creating_submission(
     res = await setup_submission(client, username, survey_name, submissions[0])
     assert res.status_code == 200
     survey = await sve.read(username, survey_name)
-    e = await survey.unverified_submissions.find_one()
+    e = await survey.submissions.find_one()
     assert e['submission'] == submissions[0]
 
 
@@ -868,7 +866,7 @@ async def test_creating_invalid_submission(
     res = await setup_submission(client, username, survey_name, submission)
     assert check_error(res, None)
     survey = await sve.read(username, survey_name)
-    e = await survey.unverified_submissions.find_one()
+    e = await survey.submissions.find_one()
     assert e is None
 
 
@@ -904,7 +902,6 @@ async def test_resetting_survey_with_existing_submissions(
     assert res.status_code == 200
     assert await database.database['configurations'].find_one() is not None
     assert await survey.submissions.find_one() is None
-    assert await survey.unverified_submissions.find_one() is None
 
 
 ################################################################################
@@ -933,43 +930,10 @@ async def test_verifying_valid_verification_token(
     res = await setup_submission_verification(client, username, survey_name)
     assert res.status_code == 307
     survey = await sve.read(username, survey_name)
-    e = await survey.unverified_submissions.find_one(
+    e = await survey.submissions.find_one(
         filter={'_id': auth.hash_token(conftest.valid_token())},
     )
-    assert e is not None  # still unchanged in unverified submissions
-    e = await survey.submissions.find_one({'_id': submissions[0][str(0)]})
-    assert e is not None  # now also in valid submissions
-
-
-@pytest.mark.asyncio
-async def test_verifying_valid_verification_token_submission_replacement(
-        mock_email_sending,
-        mock_token_generation,
-        client,
-        username,
-        account_data,
-        survey_name,
-        configuration,
-        submissions,
-        cleanup,
-    ):
-    """Test that previously verified submission is replaced with a new one."""
-    await setup_account(client, username, account_data)
-    await setup_account_verification(client)
-    headers = await setup_headers(client, account_data)
-    await setup_survey(client, headers, username, configuration)
-    # submit and verify first submission
-    await setup_submission(client, username, survey_name, submissions[0])
-    await setup_submission_verification(client, username, survey_name)
-    # submit and verify second submission with the same email address
-    email_address = submissions[0][str(0)]
-    submission = copy.deepcopy(submissions[1])
-    submission[str(0)] = email_address
-    await setup_submission(client, username, survey_name, submission)
-    await setup_submission_verification(client, username, survey_name)
-    survey = await sve.read(username, survey_name)
-    e = await survey.submissions.find_one({'_id': email_address})
-    assert e['submission'] == submission
+    assert e['verified']
 
 
 @pytest.mark.asyncio
@@ -997,8 +961,10 @@ async def test_verifying_invalid_verification_token(
     )
     assert res.status_code == 401
     survey = await sve.read(username, survey_name)
-    e = await survey.submissions.find_one()
-    assert e is None
+    e = await survey.submissions.find_one(
+        filter={'_id': auth.hash_token(conftest.valid_token())},
+    )
+    assert not e['verified']
 
 
 ################################################################################
