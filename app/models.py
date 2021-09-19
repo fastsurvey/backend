@@ -267,8 +267,9 @@ def build_submission_model(configuration):
         selection=build_selection_field_validation,
         text=build_text_field_validation,
     )
-    for identifier, field in enumerate(configuration['fields']):
-        mapping[field['type']](str(identifier), field, schema, validators)
+    for field in configuration['fields']:
+        identifier = str(field['identifier'])
+        mapping[field['type']](identifier, field, schema, validators)
     return pydantic.create_model(
         'Submission',
         **schema,
