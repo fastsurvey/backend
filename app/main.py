@@ -149,14 +149,14 @@ async def delete_survey(
     await sve.delete(data.username, data.survey_name)
 
 
-@app.get(**docs.SPECIFICATIONS['read_submissions'])
+@app.get(**docs.SPECIFICATIONS['export_submissions'])
 @auth.authorize
-async def read_submissions(
+async def export_submissions(
         data: validation.ReadSubmissionsRequest = fastapi.Depends(),
     ):
-    """Return all valid submissions of a survey."""
+    """Export the submissions of a survey in a consistent format."""
     survey = await sve.read(data.username, data.survey_name)
-    return await survey.read_submissions()
+    return await survey.export_submissions()
 
 
 @app.post(**docs.SPECIFICATIONS['create_submission'])

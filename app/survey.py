@@ -2,6 +2,7 @@ import pymongo.errors
 import fastapi.responses
 
 import app.aggregation as aggregation
+import app.export as export
 import app.utils as utils
 import app.email as email
 import app.settings as settings
@@ -111,12 +112,9 @@ class Survey:
         return await aggregation.aggregate(self.submissions, self.configuration)
 
 
-    async def read_submissions(self):
-        """Fetch all valid submissions."""
-        cursor = self.submissions.aggregate(
-            pipeline=[{'$replaceRoot': {'newRoot': '$submission'}}]
-        )
-        return await cursor.to_list(length=None)
+    async def export_submissions(self):
+        """Export the submissions of a survey in a consistent format."""
+        return await export.export(self.submissions, self.configuration)
 
 
 ################################################################################

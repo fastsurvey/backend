@@ -224,7 +224,7 @@ SPECIFICATIONS = {
             errors.AccessForbiddenError,
         ],
     ),
-    'read_submissions': _generate_responses_documentation(
+    'export_submissions': _generate_responses_documentation(
         path='/users/{username}/surveys/{survey_name}/submissions',
         response=[_SAMPLE_SUBMISSION],
         error_classes=[

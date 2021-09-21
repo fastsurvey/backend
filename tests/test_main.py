@@ -761,7 +761,7 @@ async def test_deleting_existing_survey_with_existing_submissions(
 
 
 @pytest.mark.asyncio
-async def test_reading_submissions_with_submissions(
+async def test_exporting_submissions_with_submissions(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -786,11 +786,16 @@ async def test_reading_submissions_with_submissions(
     )
     assert res.status_code == 200
     assert len(res.json()) == len(submissions)
-    assert all([submission in res.json() for submission in submissions])
+    identifiers = {
+        str(field['identifier'])
+        for field
+        in configuration['fields']
+    }
+    assert all([set(x.keys()) == identifiers for x in res.json()])
 
 
 @pytest.mark.asyncio
-async def test_reading_submissions_without_submissions(
+async def test_exporting_submissions_without_submissions(
         mock_email_sending,
         mock_token_generation,
         client,
