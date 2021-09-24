@@ -756,7 +756,7 @@ async def test_deleting_existing_survey_with_existing_submissions(
 
 
 ################################################################################
-# Route: Read Submissions
+# Route: Export Submissions
 ################################################################################
 
 
@@ -1004,31 +1004,6 @@ async def test_reading_results(
         )
         assert res.status_code == 200
         assert res.json() == resultss[survey_name]
-
-
-@pytest.mark.asyncio
-async def test_reading_results_without_submissions(
-        mock_email_sending,
-        mock_token_generation,
-        client,
-        username,
-        account_data,
-        survey_name,
-        configuration,
-        default_resultss,
-        cleanup,
-    ):
-    """Test that aggregation works when no submissions have yet been made."""
-    await setup_account(client, username, account_data)
-    await setup_account_verification(client)
-    headers = await setup_headers(client, account_data)
-    await setup_survey(client, headers, username, configuration)
-    res = await client.get(
-        url=f'/users/{username}/surveys/{survey_name}/results',
-        headers=headers,
-    )
-    assert res.status_code == 200
-    assert res.json() == default_resultss[survey_name]
 
 
 ################################################################################
