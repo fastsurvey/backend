@@ -1,6 +1,7 @@
 {
     "count": 5,
-    "aggregation": {
-        "0": null
+    "0": {
+        "count": 5,
+        "value": null
     }
 }

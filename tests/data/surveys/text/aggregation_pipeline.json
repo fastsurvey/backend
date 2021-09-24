@@ -7,6 +7,18 @@
                         "_id": null,
                         "count": {
                             "$sum": 1
+                        },
+                        "0+count": {
+                            "$sum": {
+                                "$toInt": {
+                                    "$ne": [
+                                        {
+                                            "$type": "$submission.0"
+                                        },
+                                        "missing"
+                                    ]
+                                }
+                            }
                         }
                     }
                 }
@@ -18,8 +30,11 @@
             "count": {
                 "$first": "$main.count"
             },
-            "aggregation": {
-                "0": null
+            "0": {
+                "count": {
+                    "$first": "$main.0+count"
+                },
+                "value": null
             }
         }
     }

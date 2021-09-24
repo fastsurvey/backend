@@ -112,9 +112,9 @@ def _build_aggregation_pipeline(configuration):
 
 def _format_results(results, configuration):
     """Format results obtained from the MongoDB aggregation."""
-    results['count'].setdefault('count', 0)
+    results.setdefault('count', 0)
     for field in configuration['fields']:
-        identifier = field['identifier']
+        identifier = str(field['identifier'])
         results[identifier].setdefault('count', 0)
         if field['type'] == 'option':
             results[identifier].setdefault('value', 0)

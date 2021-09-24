@@ -8,7 +8,6 @@ def test_building_aggregation_pipeline(
     ):
     """Test that correct aggregation pipeline is built from configuration."""
     for survey_name, configuration in configurations.items():
-        configuration = {'username': username, **configuration}
         x = aggregation._build_aggregation_pipeline(configuration)
         assert x == aggregation_pipelines[survey_name]
 

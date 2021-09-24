@@ -7,11 +7,23 @@
                         "_id": null,
                         "count": {
                             "$sum": 1
+                        },
+                        "0+count": {
+                            "$sum": {
+                                "$toInt": {
+                                    "$ne": [
+                                        {
+                                            "$type": "$submission.0"
+                                        },
+                                        "missing"
+                                    ]
+                                }
+                            }
                         }
                     }
                 }
             ],
-            "0": [
+            "a0": [
                 {
                     "$unwind": {
                         "path": "$submission.0"
@@ -28,7 +40,7 @@
                 {
                     "$group": {
                         "_id": null,
-                        "0": {
+                        "value": {
                             "$push": {
                                 "k": "$_id",
                                 "v": "$count"
@@ -38,8 +50,8 @@
                 },
                 {
                     "$project": {
-                        "0": {
-                            "$arrayToObject": "$0"
+                        "value": {
+                            "$arrayToObject": "$value"
                         }
                     }
                 }
@@ -51,9 +63,12 @@
             "count": {
                 "$first": "$main.count"
             },
-            "aggregation": {
-                "0": {
-                    "$first": "$0.0"
+            "0": {
+                "count": {
+                    "$first": "$main.0+count"
+                },
+                "value": {
+                    "$first": "$a0.value"
                 }
             }
         }
