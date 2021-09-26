@@ -1,6 +1,6 @@
 {
-    "survey_name": "complex",
-    "title": "Complex Test Survey",
+    "survey_name": "simple",
+    "title": "Simple Test Survey",
     "description": "",
     "start": 0,
     "end": 4102444800,
@@ -18,7 +18,7 @@
         {
             "identifier": 1,
             "type": "option",
-            "title": "I have read and agree to the terms and conditions",
+            "title": "I am a big fan of carrots.",
             "description": "",
             "required": true
         },
@@ -41,7 +41,7 @@
         {
             "identifier": 4,
             "type": "text",
-            "title": "Why do you like ice cream?",
+            "title": "How do you feel about surveys asking you how you feel about them?",
             "description": "",
             "min_chars": 10,
             "max_chars": 1000

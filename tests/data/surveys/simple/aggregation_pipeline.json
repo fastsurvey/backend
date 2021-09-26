@@ -78,6 +78,13 @@
             ],
             "a2": [
                 {
+                    "$match": {
+                        "submission.2": {
+                            "$exists": true
+                        }
+                    }
+                },
+                {
                     "$group": {
                         "_id": "$submission.2",
                         "count": {
