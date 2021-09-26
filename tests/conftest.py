@@ -33,88 +33,24 @@ def event_loop(request):
 
 
 ################################################################################
-# Test Data Loading (Surveys)
-################################################################################
-
-
-@pytest.fixture(scope='session')
-def configurations():
-    """Convenience method to access test survey configurations."""
-    return data.TEST_SURVEY_DOCUMENTSS['configurations']
-
-
-@pytest.fixture(scope='session')
-def invalid_configurationss():
-    """Convenience method to access invalid survey configurations."""
-    return data.TEST_SURVEY_DOCUMENTSS['invalid_configurationss']
-
-
-@pytest.fixture(scope='session')
-def submissionss():
-    """Convenience method to access test survey submissions."""
-    return data.TEST_SURVEY_DOCUMENTSS['submissionss']
-
-
-@pytest.fixture(scope='session')
-def invalid_submissionss():
-    """Convenience method to access invalid survey submissions."""
-    return data.TEST_SURVEY_DOCUMENTSS['invalid_submissionss']
-
-
-@pytest.fixture(scope='session')
-def aggregation_pipelines():
-    """Convenience method to access test survey aggregation pipelines."""
-    return data.TEST_SURVEY_DOCUMENTSS['aggregation_pipelines']
-
-
-@pytest.fixture(scope='session')
-def resultss():
-    """Convenience method to access test survey results."""
-    return data.TEST_SURVEY_DOCUMENTSS['resultss']
-
-
-################################################################################
-# Convenience Methods To Access Test Data Of A Generic Survey
-################################################################################
-
-
-@pytest.fixture(scope='session')
-def survey_name():
-    """Convenience method to access the name of a generic configuration."""
-    return 'complex'
-
-
-@pytest.fixture(scope='session')
-def configuration(survey_name, configurations):
-    """Convenience method to access a generic valid test configuration."""
-    return configurations[survey_name]
-
-
-@pytest.fixture(scope='session')
-def submissions(survey_name, submissionss):
-    """Convenience method to access valid submissions of a generic survey."""
-    return submissionss[survey_name]
-
-
-################################################################################
-# Test Data Loading (Accounts)
+# Methods To Access Test Account Datas
 ################################################################################
 
 
 @pytest.fixture(scope='session')
 def account_datas():
     """Convenience method to access test account datas."""
-    return data.TEST_ACCOUNT_DOCUMENTSS['account_datas']
+    return data.TEST_ACCOUNTS_DATA['account_datas']
 
 
 @pytest.fixture(scope='session')
 def invalid_account_datas():
     """Convenience method to access invalid account datas."""
-    return data.TEST_ACCOUNT_DOCUMENTSS['invalid_account_datas']
+    return data.TEST_ACCOUNTS_DATA['invalid_account_datas']
 
 
 ################################################################################
-# Convenience Methods To Access Account Data Of A Generic Account
+# Methods To Access Account Data Of A Generic Account
 ################################################################################
 
 
@@ -143,15 +79,73 @@ def password(account_data):
 
 
 ################################################################################
-# Test Data Loading (Other)
+# Methods To Access Test Data Of Complex Survey
 ################################################################################
 
 
 @pytest.fixture(scope='session')
-def variables():
-    """Provide the some miscellaneous values used for testing."""
-    with open('tests/data/variables.json', 'r') as e:
-        return json.load(e)
+def configurations():
+    """Provide complex test survey configurations."""
+    return data.COMPLEX_TEST_SURVEY_DATA['configurations']
+
+
+@pytest.fixture(scope='session')
+def submissionss():
+    """Provide complex test survey submissionss."""
+    return data.COMPLEX_TEST_SURVEY_DATA['submissionss']
+
+
+@pytest.fixture(scope='session')
+def resultss():
+    """Provide complex test survey resultss."""
+    return data.COMPLEX_TEST_SURVEY_DATA['resultss']
+
+
+################################################################################
+# Methods To Access Test Data Of Simple Survey
+################################################################################
+
+
+@pytest.fixture(scope='session')
+def configuration():
+    """Provide valid simple test survey configuration."""
+    return data.SIMPLE_TEST_SURVEY_DATA['configuration']
+
+
+@pytest.fixture(scope='session')
+def invalid_configurations():
+    """Provide invalid simple test survey configurations."""
+    return data.SIMPLE_TEST_SURVEY_DATA['invalid_configurations']
+
+
+@pytest.fixture(scope='session')
+def aggregation_pipeline():
+    """Provide valid simple test survey aggregation pipeline."""
+    return data.SIMPLE_TEST_SURVEY_DATA['aggregation_pipeline']
+
+
+@pytest.fixture(scope='session')
+def submissions():
+    """Provide valid simple test survey submissions."""
+    return data.SIMPLE_TEST_SURVEY_DATA['submissions']
+
+
+@pytest.fixture(scope='session')
+def invalid_submissions():
+    """Provide invalid simple test survey submissions."""
+    return data.SIMPLE_TEST_SURVEY_DATA['invalid_submissions']
+
+
+@pytest.fixture(scope='session')
+def results():
+    """Provide valid simple test survey results."""
+    return data.SIMPLE_TEST_SURVEY_DATA['results']
+
+
+@pytest.fixture(scope='session')
+def default_results():
+    """Provide valid simple test survey default results."""
+    return data.SIMPLE_TEST_SURVEY_DATA['default_results']
 
 
 ################################################################################
