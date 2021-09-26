@@ -992,11 +992,6 @@ async def test_reading_results_with_submissions(
             await setup_submission(client, username, 'complex', submission)
         res = await client.get(url=f'{base}/results', headers=headers)
         assert res.status_code == 200
-
-        import json
-        print()
-        print(json.dumps(res.json(), indent=4))
-
         assert res.json() == resultss[i+1]
 
 

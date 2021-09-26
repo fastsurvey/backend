@@ -173,11 +173,11 @@ def _build_invalid_configurations(configuration):
 
     # required parameter has invalid type
     x = copy.deepcopy(configuration)
-    x['fields'][0]['required'] = 1
+    x['fields'][1]['required'] = 1
     invalid_configurations.append(x)
     # type parameter is missing
     x = copy.deepcopy(configuration)
-    x['fields'][0].pop('type')
+    x['fields'][1].pop('type')
     invalid_configurations.append(x)
 
 
@@ -187,19 +187,19 @@ def _build_invalid_configurations(configuration):
 
 
     x = copy.deepcopy(configuration)
-    x['fields'][0]['options'] = None
+    x['fields'][2]['options'] = None
     invalid_configurations.append(x)
     # options parameter is missing
     x = copy.deepcopy(configuration)
-    x['fields'][0].pop('options')
+    x['fields'][2].pop('options')
     invalid_configurations.append(x)
     # options are not unique
     x = copy.deepcopy(configuration)
-    x['fields'][0]['options'] += x['fields'][0]['options'][0]
+    x['fields'][2]['options'] += x['fields'][2]['options'][0]
     invalid_configurations.append(x)
     # options list is empty
     x = copy.deepcopy(configuration)
-    x['fields'][0]['options'] = []
+    x['fields'][2]['options'] = []
     invalid_configurations.append(x)
 
 
@@ -210,35 +210,35 @@ def _build_invalid_configurations(configuration):
 
     # options parameter has invalid type
     x = copy.deepcopy(configuration)
-    x['fields'][0]['options'] = None
+    x['fields'][3]['options'] = None
     invalid_configurations.append(x)
     # min_select parameter has invalid type
     x = copy.deepcopy(configuration)
-    x['fields'][0]['min_select'] = float(x['fields'][0]['min_select'])
+    x['fields'][3]['min_select'] = float(x['fields'][3]['min_select'])
     invalid_configurations.append(x)
     # max_select parameter is missing
     x = copy.deepcopy(configuration)
-    x['fields'][0].pop('max_select')
+    x['fields'][3].pop('max_select')
     invalid_configurations.append(x)
     # options are not unique
     x = copy.deepcopy(configuration)
-    x['fields'][0]['options'] += x['fields'][0]['options'][0]
+    x['fields'][3]['options'] += x['fields'][3]['options'][0]
     invalid_configurations.append(x)
     # options list is empty
     x = copy.deepcopy(configuration)
-    x['fields'][0]['options'] = []
+    x['fields'][3]['options'] = []
     invalid_configurations.append(x)
     # min_select is greater than max_select
     x = copy.deepcopy(configuration)
-    x['fields'][0]['min_select'] = x['fields'][0]['max_select'] + 1
+    x['fields'][3]['min_select'] = x['fields'][3]['max_select'] + 1
     invalid_configurations.append(x)
     # min_select is less than zero
     x = copy.deepcopy(configuration)
-    x['fields'][0]['min_select'] = -1
+    x['fields'][3]['min_select'] = -1
     invalid_configurations.append(x)
     # max_select is greater than number of options
     x = copy.deepcopy(configuration)
-    x['fields'][0]['max_select'] = len(x['fields'][0]['options']) + 1
+    x['fields'][3]['max_select'] = len(x['fields'][3]['options']) + 1
     invalid_configurations.append(x)
 
 
@@ -249,23 +249,23 @@ def _build_invalid_configurations(configuration):
 
     # min_chars parameter has invalid type
     x = copy.deepcopy(configuration)
-    x['fields'][0]['min_chars'] = float(x['fields'][0]['min_chars'])
+    x['fields'][4]['min_chars'] = float(x['fields'][4]['min_chars'])
     invalid_configurations.append(x)
     # max_chars parameter is missing
     x = copy.deepcopy(configuration)
-    x['fields'][0].pop('max_chars')
+    x['fields'][4].pop('max_chars')
     invalid_configurations.append(x)
     # min_chars is greater than max_chars
     x = copy.deepcopy(configuration)
-    x['fields'][0]['min_chars'] = x['fields'][0]['max_chars'] + 1
+    x['fields'][4]['min_chars'] = x['fields'][4]['max_chars'] + 1
     invalid_configurations.append(x)
     # min_chars is less than zero
     x = copy.deepcopy(configuration)
-    x['fields'][0]['min_chars'] = -1
+    x['fields'][4]['min_chars'] = -1
     invalid_configurations.append(x)
     # max_chars is greater than character limit
     x = copy.deepcopy(configuration)
-    x['fields'][0]['max_chars'] = models.Length.C + 1
+    x['fields'][4]['max_chars'] = models.Length.C + 1
     invalid_configurations.append(x)
 
     return invalid_configurations
