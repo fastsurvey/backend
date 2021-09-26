@@ -393,7 +393,6 @@ async def test_deleting_existing_user(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         submissions,
         cleanup,
@@ -403,9 +402,9 @@ async def test_deleting_existing_user(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, survey_name, submissions[0])
-    await setup_submission_verification(client, username, survey_name)
-    survey = await sve.read(username, survey_name)
+    await setup_submission(client, username, 'simple', submissions[0])
+    await setup_submission_verification(client, username, 'simple')
+    survey = await sve.read(username, 'simple')
     res = await client.delete(url=f'/users/{username}', headers=headers)
     assert res.status_code == 200
     assert await database.database['accounts'].find_one() is None
@@ -426,6 +425,7 @@ async def test_reading_existing_surveys(
         client,
         username,
         account_data,
+        configuration,
         configurations,
         cleanup,
     ):
@@ -433,18 +433,13 @@ async def test_reading_existing_surveys(
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
-    for configuration in configurations.values():
-        await setup_survey(client, headers, username, configuration)
+    await setup_survey(client, headers, username, configuration)
+    await setup_survey(client, headers, username, configurations[0])
     res = await client.get(url=f'/users/{username}/surveys', headers=headers)
     assert res.status_code == 200
-    assert sorted(res.json(), key=lambda x: x['survey_name']) == sorted(
-        [
-            {'max_identifier': len(e['fields']) - 1, **e}
-            for e
-            in configurations.values()
-        ],
-        key=lambda x: x['survey_name'],
-    )
+    assert len(res.json()) == 2
+    assert {'max_identifier': 4, **configuration} in res.json()
+    assert {'max_identifier': 1, **configurations[0]} in res.json()
 
 
 @pytest.mark.asyncio
@@ -477,7 +472,6 @@ async def test_reading_existing_survey(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         cleanup,
     ):
@@ -486,15 +480,15 @@ async def test_reading_existing_survey(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    res = await client.get(f'/users/{username}/surveys/{survey_name}')
+    res = await client.get(f'/users/{username}/surveys/simple')
     assert res.status_code == 200
     assert res.json() == {'max_identifier': 4, **configuration}
 
 
 @pytest.mark.asyncio
-async def test_reading_nonexistent_survey(client, username, survey_name):
+async def test_reading_nonexistent_survey(client, username):
     """Test that exception is raised when requesting a nonexistent survey."""
-    res = await client.get(f'/users/{username}/surveys/{survey_name}')
+    res = await client.get(f'/users/{username}/surveys/simple')
     assert check_error(res, errors.SurveyNotFoundError)
 
 
@@ -505,7 +499,6 @@ async def test_reading_survey_in_draft_mode(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         cleanup,
     ):
@@ -516,7 +509,7 @@ async def test_reading_survey_in_draft_mode(
     configuration = copy.deepcopy(configuration)
     configuration['draft'] = True
     await setup_survey(client, headers, username, configuration)
-    res = await client.get(f'/users/{username}/surveys/{survey_name}')
+    res = await client.get(f'/users/{username}/surveys/simple')
     assert check_error(res, errors.SurveyNotFoundError)
 
 
@@ -532,7 +525,6 @@ async def test_creating_survey_with_valid_configuration(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         cleanup,
     ):
@@ -544,7 +536,7 @@ async def test_creating_survey_with_valid_configuration(
     assert res.status_code == 200
     e = await database.database['configurations'].find_one()
     assert e['username'] == username
-    assert e['survey_name'] == survey_name
+    assert e['survey_name'] == 'simple'
 
 
 @pytest.mark.asyncio
@@ -554,15 +546,14 @@ async def test_creating_survey_with_invalid_configuration(
         client,
         username,
         account_data,
-        survey_name,
-        invalid_configurationss,
+        invalid_configurations,
         cleanup,
     ):
     """Test that survey creation fails with an invalid configuration."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
-    configuration = invalid_configurationss[survey_name][0]
+    configuration = invalid_configurations[0]
     res = await setup_survey(client, headers, username, configuration)
     assert check_error(res, None)
     e = await database.database['configurations'].find_one()
@@ -574,35 +565,31 @@ async def test_creating_survey_with_invalid_configuration(
 ################################################################################
 
 
-########## TODO
-
-
 @pytest.mark.asyncio
-async def test_updating_existing_survey_with_valid_update_configuration(
+async def test_updating_existing_survey_with_valid_update_configurations(
         mock_email_sending,
         mock_token_generation,
         client,
         username,
         account_data,
-        survey_name,
-        configuration,
+        configurations,
         cleanup,
     ):
-    """Test that survey is correctly updated given a valid configuration."""
+    """Test that survey is correctly updated given a chain of valid updates."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
-    await setup_survey(client, headers, username, configuration)
-    configuration = copy.deepcopy(configuration)
-    configuration['description'] = 'Hello World!'
-    res = await client.put(
-        url=f'/users/{username}/surveys/{survey_name}',
-        headers=headers,
-        json=configuration,
-    )
-    assert res.status_code == 200
-    e = await database.database['configurations'].find_one()
-    assert e['description'] == configuration['description']
+    await setup_survey(client, headers, username, configurations[0])
+    for configuration in configurations[1:]:
+        res = await client.put(
+            url=f'/users/{username}/surveys/complex',
+            headers=headers,
+            json=configuration,
+        )
+        assert res.status_code == 200
+        e = await database.database['configurations'].find_one()
+        assert e['title'] == configuration['title']
+        assert e['description'] == configuration['description']
 
 
 @pytest.mark.asyncio
@@ -612,7 +599,6 @@ async def test_updating_existing_survey_with_invalid_update_configuration(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         cleanup,
     ):
@@ -630,7 +616,7 @@ async def test_updating_existing_survey_with_invalid_update_configuration(
     # check for errors
     for x in [c1, c2]:
         res = await client.put(
-            url=f'/users/{username}/surveys/{survey_name}',
+            url=f'/users/{username}/surveys/simple',
             headers=headers,
             json=x,
         )
@@ -644,7 +630,6 @@ async def test_updating_nonexistent_survey_with_valid_update_configuration(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         cleanup,
     ):
@@ -653,7 +638,7 @@ async def test_updating_nonexistent_survey_with_valid_update_configuration(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     res = await client.put(
-        url=f'/users/{username}/surveys/{survey_name}',
+        url=f'/users/{username}/surveys/simple',
         headers=headers,
         json=configuration,
     )
@@ -669,7 +654,6 @@ async def test_updating_survey_name_to_survey_name_not_in_use(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         cleanup,
     ):
@@ -681,7 +665,7 @@ async def test_updating_survey_name_to_survey_name_not_in_use(
     configuration = copy.deepcopy(configuration)
     configuration['survey_name'] = 'kangaroo'
     res = await client.put(
-        url=f'/users/{username}/surveys/{survey_name}',
+        url=f'/users/{username}/surveys/simple',
         headers=headers,
         json=configuration,
     )
@@ -697,7 +681,6 @@ async def test_updating_survey_name_to_survey_name_in_use(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         cleanup,
     ):
@@ -710,13 +693,13 @@ async def test_updating_survey_name_to_survey_name_in_use(
     configuration['survey_name'] = 'kangaroo'
     await setup_survey(client, headers, username, configuration)
     res = await client.put(
-        url=f'/users/{username}/surveys/{survey_name}',
+        url=f'/users/{username}/surveys/simple',
         headers=headers,
         json=configuration,
     )
     assert check_error(res, errors.SurveyNameAlreadyTakenError)
     e = await database.database['configurations'].find_one(
-        filter={'survey_name': survey_name},
+        filter={'survey_name': 'simple'},
     )
     assert e is not None
 
@@ -733,7 +716,6 @@ async def test_deleting_existing_survey_with_existing_submissions(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         submissions,
         cleanup,
@@ -743,11 +725,10 @@ async def test_deleting_existing_survey_with_existing_submissions(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, survey_name, submissions[0])
-    await setup_submission_verification(client, username, survey_name)
-    survey = await sve.read(username, survey_name)
+    await setup_submission(client, username, 'simple', submissions[0])
+    survey = await sve.read(username, 'simple')
     res = await client.delete(
-        url=f'/users/{username}/surveys/{survey_name}',
+        url=f'/users/{username}/surveys/simple',
         headers=headers,
     )
     assert res.status_code == 200
@@ -767,31 +748,42 @@ async def test_exporting_submissions_with_submissions(
         client,
         username,
         account_data,
-        survey_name,
-        configuration,
-        submissions,
+        configurations,
+        submissionss,
         cleanup,
     ):
-    """Test that survey submissions are correctly retrieved."""
+    """Test submissions export with intermediate configuration updates."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
-    await setup_survey(client, headers, username, configuration)
-    for submission in submissions:
-        await setup_submission(client, username, survey_name, submission)
-        await setup_submission_verification(client, username, survey_name)
-    res = await client.get(
-        url=f'/users/{username}/surveys/{survey_name}/submissions',
-        headers=headers,
-    )
+    base = f'/users/{username}/surveys/complex'
+
+    def extract_identifiers(configuration):
+        return {str(field['identifier']) for field in configuration['fields']}
+
+    # initial creation and first export without update
+    await setup_survey(client, headers, username, configurations[0])
+    for submission in submissionss[0]:
+        await setup_submission(client, username, 'complex', submission)
+    res = await client.get(url=f'{base}/submissions', headers=headers)
     assert res.status_code == 200
-    assert len(res.json()) == len(submissions)
-    identifiers = {
-        str(field['identifier'])
-        for field
-        in configuration['fields']
-    }
+    assert len(res.json()) == len(submissionss[0])
+    identifiers = extract_identifiers(configurations[0])
     assert all([set(x.keys()) == identifiers for x in res.json()])
+
+    # exports with intermediate updates
+    counter = len(submissionss[0])
+    for configuration, submissions in zip(configurations[1:], submissionss[1:]):
+        res = await client.put(url=base, headers=headers, json=configuration)
+        assert res.status_code == 200
+        for submission in submissions:
+            await setup_submission(client, username, 'complex', submission)
+        res = await client.get(url=f'{base}/submissions', headers=headers)
+        assert res.status_code == 200
+        counter += len(submissions)
+        assert len(res.json()) == counter
+        identifiers = extract_identifiers(configuration)
+        assert all([set(x.keys()) == identifiers for x in res.json()])
 
 
 @pytest.mark.asyncio
@@ -801,7 +793,6 @@ async def test_exporting_submissions_without_submissions(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         cleanup,
     ):
@@ -811,7 +802,7 @@ async def test_exporting_submissions_without_submissions(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     res = await client.get(
-        url=f'/users/{username}/surveys/{survey_name}/submissions',
+        url=f'/users/{username}/surveys/simple/submissions',
         headers=headers,
     )
     assert res.status_code == 200
@@ -833,7 +824,6 @@ async def test_creating_submission(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         submissions,
         cleanup,
@@ -843,9 +833,9 @@ async def test_creating_submission(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    res = await setup_submission(client, username, survey_name, submissions[0])
+    res = await setup_submission(client, username, 'simple', submissions[0])
     assert res.status_code == 200
-    survey = await sve.read(username, survey_name)
+    survey = await sve.read(username, 'simple')
     e = await survey.submissions.find_one()
     assert e['submission'] == submissions[0]
 
@@ -857,9 +847,8 @@ async def test_creating_invalid_submission(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
-        invalid_submissionss,
+        invalid_submissions,
         cleanup,
     ):
     """Test that submit correctly fails given an invalid submissions."""
@@ -867,10 +856,10 @@ async def test_creating_invalid_submission(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    submission = invalid_submissionss[survey_name][0]
-    res = await setup_submission(client, username, survey_name, submission)
+    submission = invalid_submissions[0]
+    res = await setup_submission(client, username, 'simple', submission)
     assert check_error(res, None)
-    survey = await sve.read(username, survey_name)
+    survey = await sve.read(username, 'simple')
     e = await survey.submissions.find_one()
     assert e is None
 
@@ -887,7 +876,6 @@ async def test_resetting_survey_with_existing_submissions(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         submissions,
         cleanup,
@@ -897,11 +885,10 @@ async def test_resetting_survey_with_existing_submissions(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, survey_name, submissions[0])
-    await setup_submission_verification(client, username, survey_name)
-    survey = await sve.read(username, survey_name)
+    await setup_submission(client, username, 'simple', submissions[0])
+    survey = await sve.read(username, 'simple')
     res = await client.delete(
-        url=f'/users/{username}/surveys/{survey_name}/submissions',
+        url=f'/users/{username}/surveys/simple/submissions',
         headers=headers,
     )
     assert res.status_code == 200
@@ -921,7 +908,6 @@ async def test_verifying_valid_verification_token(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         submissions,
         cleanup,
@@ -931,13 +917,11 @@ async def test_verifying_valid_verification_token(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, survey_name, submissions[0])
-    res = await setup_submission_verification(client, username, survey_name)
+    await setup_submission(client, username, 'simple', submissions[0])
+    res = await setup_submission_verification(client, username, 'simple')
     assert res.status_code == 307
-    survey = await sve.read(username, survey_name)
-    e = await survey.submissions.find_one(
-        filter={'_id': auth.hash_token(conftest.valid_token())},
-    )
+    survey = await sve.read(username, 'simple')
+    e = await survey.submissions.find_one()
     assert e['verified']
 
 
@@ -948,7 +932,6 @@ async def test_verifying_invalid_verification_token(
         client,
         username,
         account_data,
-        survey_name,
         configuration,
         submissions,
         cleanup,
@@ -958,17 +941,15 @@ async def test_verifying_invalid_verification_token(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, survey_name, submissions[0])
-    path = f'/users/{username}/surveys/{survey_name}'
+    await setup_submission(client, username, 'simple', submissions[0])
+    path = f'/users/{username}/surveys/simple'
     res = await client.get(
         url=f'{path}/verification/{conftest.invalid_token()}',
         allow_redirects=False,
     )
     assert res.status_code == 401
-    survey = await sve.read(username, survey_name)
-    e = await survey.submissions.find_one(
-        filter={'_id': auth.hash_token(conftest.valid_token())},
-    )
+    survey = await sve.read(username, 'simple')
+    e = await survey.submissions.find_one()
     assert not e['verified']
 
 
@@ -978,7 +959,7 @@ async def test_verifying_invalid_verification_token(
 
 
 @pytest.mark.asyncio
-async def test_reading_results(
+async def test_reading_results_with_submissions(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -989,21 +970,58 @@ async def test_reading_results(
         resultss,
         cleanup,
     ):
-    """Test that aggregating test submissions returns the correct result."""
+    """Test that aggregation works correctly even with intermediate updates."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
-    for survey_name, configuration in configurations.items():
-        await setup_survey(client, headers, username, configuration)
-        for submission in submissionss[survey_name]:
-            await setup_submission(client, username, survey_name, submission)
-            await setup_submission_verification(client, username, survey_name)
-        res = await client.get(
-            url=f'/users/{username}/surveys/{survey_name}/results',
-            headers=headers,
-        )
+    base = f'/users/{username}/surveys/complex'
+
+    # initial creation and first aggregation without update
+    await setup_survey(client, headers, username, configurations[0])
+    for submission in submissionss[0]:
+        await setup_submission(client, username, 'complex', submission)
+    res = await client.get(url=f'{base}/results', headers=headers)
+    assert res.status_code == 200
+    assert res.json() == resultss[0]
+
+    # aggregations with intermediate updates
+    for i, configuration in enumerate(configurations[1:]):
+        res = await client.put(url=base, headers=headers, json=configuration)
         assert res.status_code == 200
-        assert res.json() == resultss[survey_name]
+        for submission in submissionss[i+1]:
+            await setup_submission(client, username, 'complex', submission)
+        res = await client.get(url=f'{base}/results', headers=headers)
+        assert res.status_code == 200
+
+        import json
+        print()
+        print(json.dumps(res.json(), indent=4))
+
+        assert res.json() == resultss[i+1]
+
+
+@pytest.mark.asyncio
+async def test_reading_results_without_submissions(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        configuration,
+        default_results,
+        cleanup,
+    ):
+    """Test that aggregation works when no submissions have yet been made."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    await setup_survey(client, headers, username, configuration)
+    res = await client.get(
+        url=f'/users/{username}/surveys/simple/results',
+        headers=headers,
+    )
+    assert res.status_code == 200
+    assert res.json() == default_results
 
 
 ################################################################################

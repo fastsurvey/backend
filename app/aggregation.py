@@ -57,6 +57,11 @@ def _add_radio_field_aggregation_commands(pipeline, identifier):
     }
     pipeline[0]['$facet'][f'a{identifier}'] = [
         {
+            '$match': {
+                f'submission.{identifier}': {'$exists': True},
+            },
+        },
+        {
             '$group': {
                 '_id': f'$submission.{identifier}',
                 'count': {'$sum': 1},
@@ -82,12 +87,39 @@ def _add_radio_field_aggregation_commands(pipeline, identifier):
 
 def _add_selection_field_aggregation_commands(pipeline, identifier):
     """Add pipeline commands to aggregate selection field submissions."""
-    _add_radio_field_aggregation_commands(pipeline, identifier)
-    pipeline[0]['$facet'][f'a{identifier}'].insert(0, {
-        '$unwind': {
-            'path': f'$submission.{identifier}',
+    pipeline[0]['$facet']['main'][0]['$group'][f'{identifier}+count'] = {
+        '$sum': {'$toInt': {
+            '$ne': [{'$type': f'$submission.{identifier}'}, 'missing']
+        }},
+    }
+    pipeline[0]['$facet'][f'a{identifier}'] = [
+        {
+            '$unwind': {
+                'path': f'$submission.{identifier}',
+            },
         },
-    })
+        {
+            '$group': {
+                '_id': f'$submission.{identifier}',
+                'count': {'$sum': 1},
+            },
+        },
+        {
+            '$group': {
+                '_id': None,
+                'value': {'$push': {'k': '$_id', 'v': '$count'}},
+            },
+        },
+        {
+            '$project': {
+                'value': {'$arrayToObject': f'$value'},
+            },
+        },
+    ]
+    pipeline[1]['$project'][identifier] = {
+        'count': {'$first': f'$main.{identifier}+count'},
+        'value': {'$first': f'$a{identifier}.value'},
+    }
 
 
 def _add_text_field_aggregation_commands(pipeline, identifier):

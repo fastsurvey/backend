@@ -138,9 +138,9 @@ async def read(username, survey_name, return_drafts=True):
 
 async def create(username, configuration):
     """Create a new survey configuration in the database."""
-    for i, field in enumerate(configuration['fields']):
-        if field['identifier'] != i:
-            raise errors.InvalidSyntaxError()
+    identifiers = {field['identifier'] for field in configuration['fields']}
+    if identifiers != set(range(len(configuration['fields']))):
+        raise errors.InvalidSyntaxError()
     try:
         await database.database['configurations'].insert_one(
             document={
