@@ -106,6 +106,12 @@ class RadioField(Field):
         max_items=Length.A,
     )
 
+    @pydantic.validator('options')
+    def validate_options(cls, v):
+        if len(set(v)) < len(v):
+            raise ValueError('options must be unique')
+        return v
+
 
 class SelectionField(Field):
     type: typing.Literal['selection']
@@ -120,6 +126,12 @@ class SelectionField(Field):
     )
     min_select: pydantic.conint(strict=True, ge=0)
     max_select: pydantic.conint(strict=True, ge=0)
+
+    @pydantic.validator('options')
+    def validate_options(cls, v):
+        if len(set(v)) < len(v):
+            raise ValueError('options must be unique')
+        return v
 
     @pydantic.validator('max_select')
     def validate_max_select(cls, v, values):
@@ -194,8 +206,8 @@ def validate_option_field_submission(cls, v):
 
 
 def validate_selection_field_submission(cls, v):
-    if len(set(v)) != len(v):
-        raise ValueError('no duplicates allowed')
+    if len(set(v)) < len(v):
+        raise ValueError('no duplicate selections allowed')
     return v
 
 

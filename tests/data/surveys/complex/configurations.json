@@ -115,9 +115,9 @@
                 "type": "selection",
                 "title": "What are your favorite pizza toppings?",
                 "description": "",
+                "options": ["Margherita", "Hawaiian", "Capricciosa", "Quattro Formaggi"],
                 "min_select": 1,
-                "max_select": 2,
-                "options": ["Margherita", "Hawaiian", "Capricciosa", "Quattro Formaggi"]
+                "max_select": 2
             },
             {
                 "identifier": 3,
@@ -158,9 +158,9 @@
                 "type": "selection",
                 "title": "What are your favorite pizza toppings?",
                 "description": "",
+                "options": ["Quattro Stagioni", "Margherita", "Capricciosa", "Prosciutto", "Quattro Formaggi"],
                 "min_select": 3,
-                "max_select": 3,
-                "options": ["Quattro Stagioni", "Margherita", "Capricciosa", "Prosciutto", "Quattro Formaggi"]
+                "max_select": 3
             },
             {
                 "identifier": 3,
@@ -219,9 +219,9 @@
                 "type": "selection",
                 "title": "What are your favorite pizza toppings?",
                 "description": "",
+                "options": ["Quattro Stagioni", "Prosciutto", "Margherita", "Quattro Formaggi", "Capricciosa"],
                 "min_select": 2,
-                "max_select": 5,
-                "options": ["Quattro Stagioni", "Prosciutto", "Margherita", "Quattro Formaggi", "Capricciosa"]
+                "max_select": 5
             },
             {
                 "identifier": 7,
