@@ -13,6 +13,7 @@ class Length(int, enum.Enum):
     A = 32
     B = 256
     C = 4096
+    D = 65536
 
 
 class Pattern(str, enum.Enum):
@@ -68,6 +69,7 @@ class AccountData(BaseModel):
 
 
 class Field(BaseModel):
+    identifier: pydantic.conint(strict=True, ge=0, le=Length.D)
     title: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
     description: pydantic.StrictStr
 
@@ -152,7 +154,9 @@ class TextField(Field):
         return v
 
 
-class Configuration(Field):
+class Configuration(BaseModel):
+    title: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
+    description: pydantic.StrictStr
     survey_name: SurveyName
     start: pydantic.conint(strict=True, ge=0, le=4102444800)
     end: pydantic.conint(strict=True, ge=0, le=4102444800)
@@ -177,10 +181,14 @@ class Configuration(Field):
 
     @pydantic.validator('fields_')
     def validate_fields(cls, v):
+        identifiers = set()
         count = 0
         for field in v:
+            identifiers.add(field.identifier)
             if field.type == 'email' and field.verify:
                 count += 1
+        if len(identifiers) < len(v):
+            raise ValueError('field identifiers have to be unique')
         if count > 1:
             raise ValueError('only one email field with verification allowed')
         return v
@@ -271,8 +279,9 @@ def build_submission_model(configuration):
         selection=build_selection_field_validation,
         text=build_text_field_validation,
     )
-    for identifier, field in enumerate(configuration['fields']):
-        mapping[field['type']](str(identifier), field, schema, validators)
+    for field in configuration['fields']:
+        identifier = str(field['identifier'])
+        mapping[field['type']](identifier, field, schema, validators)
     return pydantic.create_model(
         'Submission',
         **schema,

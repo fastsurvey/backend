@@ -1,0 +1,192 @@
+[
+    {
+        "$facet": {
+            "main": [
+                {
+                    "$group": {
+                        "_id": null,
+                        "count": {
+                            "$sum": 1
+                        },
+                        "0+count": {
+                            "$sum": {
+                                "$toInt": {
+                                    "$ne": [
+                                        {
+                                            "$type": "$submission.0"
+                                        },
+                                        "missing"
+                                    ]
+                                }
+                            }
+                        },
+                        "1+count": {
+                            "$sum": {
+                                "$toInt": {
+                                    "$ne": [
+                                        {
+                                            "$type": "$submission.1"
+                                        },
+                                        "missing"
+                                    ]
+                                }
+                            }
+                        },
+                        "1+value": {
+                            "$sum": {
+                                "$toInt": "$submission.1"
+                            }
+                        },
+                        "2+count": {
+                            "$sum": {
+                                "$toInt": {
+                                    "$ne": [
+                                        {
+                                            "$type": "$submission.2"
+                                        },
+                                        "missing"
+                                    ]
+                                }
+                            }
+                        },
+                        "3+count": {
+                            "$sum": {
+                                "$toInt": {
+                                    "$ne": [
+                                        {
+                                            "$type": "$submission.3"
+                                        },
+                                        "missing"
+                                    ]
+                                }
+                            }
+                        },
+                        "4+count": {
+                            "$sum": {
+                                "$toInt": {
+                                    "$ne": [
+                                        {
+                                            "$type": "$submission.4"
+                                        },
+                                        "missing"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            "a2": [
+                {
+                    "$match": {
+                        "submission.2": {
+                            "$exists": true
+                        }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$submission.2",
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": null,
+                        "value": {
+                            "$push": {
+                                "k": "$_id",
+                                "v": "$count"
+                            }
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "value": {
+                            "$arrayToObject": "$value"
+                        }
+                    }
+                }
+            ],
+            "a3": [
+                {
+                    "$unwind": {
+                        "path": "$submission.3"
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$submission.3",
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": null,
+                        "value": {
+                            "$push": {
+                                "k": "$_id",
+                                "v": "$count"
+                            }
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "value": {
+                            "$arrayToObject": "$value"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    {
+        "$project": {
+            "count": {
+                "$first": "$main.count"
+            },
+            "0": {
+                "count": {
+                    "$first": "$main.0+count"
+                },
+                "value": null
+            },
+            "1": {
+                "count": {
+                    "$first": "$main.1+count"
+                },
+                "value": {
+                    "$first": "$main.1+value"
+                }
+            },
+            "2": {
+                "count": {
+                    "$first": "$main.2+count"
+                },
+                "value": {
+                    "$first": "$a2.value"
+                }
+            },
+            "3": {
+                "count": {
+                    "$first": "$main.3+count"
+                },
+                "value": {
+                    "$first": "$a3.value"
+                }
+            },
+            "4": {
+                "count": {
+                    "$first": "$main.4+count"
+                },
+                "value": null
+            }
+        }
+    }
+]

@@ -1,12 +1,13 @@
 {
-    "survey_name": "complex",
-    "title": "Complex Test Survey",
+    "survey_name": "simple",
+    "title": "Simple Test Survey",
     "description": "",
     "start": 0,
     "end": 4102444800,
     "draft": false,
     "fields": [
         {
+            "identifier": 0,
             "type": "email",
             "title": "What's your email address?",
             "description": "",
@@ -15,18 +16,21 @@
             "verify": true
         },
         {
+            "identifier": 1,
             "type": "option",
-            "title": "I have read and agree to the terms and conditions",
+            "title": "I am a big fan of carrots.",
             "description": "",
             "required": true
         },
         {
+            "identifier": 2,
             "type": "radio",
             "title": "What is your favorite fruit?",
             "description": "",
             "options": ["Asparagus", "Spinach", "Artichoke", "None of these is a fruit"]
         },
         {
+            "identifier": 3,
             "type": "selection",
             "title": "What are your favorite ice cream flavors?",
             "description": "",
@@ -35,8 +39,9 @@
             "max_select": 2
         },
         {
+            "identifier": 4,
             "type": "text",
-            "title": "Why do you like ice cream?",
+            "title": "How do you feel about surveys asking you how you feel about them?",
             "description": "",
             "min_chars": 10,
             "max_chars": 1000

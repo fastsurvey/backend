@@ -2,6 +2,7 @@ import pymongo.errors
 import fastapi.responses
 
 import app.aggregation as aggregation
+import app.export as export
 import app.utils as utils
 import app.email as email
 import app.settings as settings
@@ -23,33 +24,31 @@ class Survey:
         """Create a survey from the given json configuration file."""
         self.survey_id = survey_id
         self.username = username
+        self.max_identifier = configuration.pop('max_identifier')
         self.configuration = configuration
         self.survey_name = self.configuration['survey_name']
         self.start = self.configuration['start']
         self.end = self.configuration['end']
-        self.index = Survey._find_email_field_to_verify(self.configuration)
+        self.email_id = Survey._find_email_field_to_verify(self.configuration)
         self.submissions = database.database[
             f'surveys.{str(self.survey_id)}.submissions'
-        ]
-        self.unverified_submissions = database.database[
-            f'surveys.{str(self.survey_id)}.unverified-submissions'
         ]
         self.Submission = models.build_submission_model(configuration)
 
     @staticmethod
     def _find_email_field_to_verify(configuration):
-        """Find index of potential email field to verify in configuration."""
-        for index, field in enumerate(configuration['fields']):
+        """Find field identifier of potential email field to verify."""
+        for field in configuration['fields']:
             if field['type'] == 'email' and field['verify']:
-                return index
+                return field['identifier']
         return None
 
     async def submit(self, submission):
-        """Save a user submission in the submissions collection."""
+        """Save a user's submission in the submissions collection."""
         submission_time = utils.now()
         if submission_time < self.start or submission_time >= self.end:
             raise errors.InvalidTimingError()
-        if self.index is None:
+        if self.email_id is None:
             await self.submissions.insert_one(
                 document={
                     'submission_time': submission_time,
@@ -60,10 +59,11 @@ class Survey:
             verification_token = auth.generate_token()
             while True:
                 try:
-                    await self.unverified_submissions.insert_one(
+                    await self.submissions.insert_one(
                         document={
                             '_id': auth.hash_token(verification_token),
                             'submission_time': submission_time,
+                            'verified': False,
                             'submission': submission,
                         }
                     )
@@ -73,13 +73,13 @@ class Survey:
 
             # Sending the submission verification email can fail (e.g. because
             # of an invalid email address). Nevertheless, we don't react to this
-            # happening here as the author will be able to request a new
-            # verification email in the future. In the case of an invalid
-            # email address the submission will simply remain as a valid
-            # unverified submission.
+            # happening here. Maybe the author will be able to request a new
+            # verification email in the future. In the case of an invalid email
+            # address the submission will simply remain as a valid unverified
+            # submission.
 
             await email.send_submission_verification(
-                submission[str(self.index)],
+                submission[str(self.email_id)],
                 self.username,
                 self.survey_name,
                 self.configuration['title'],
@@ -89,24 +89,19 @@ class Survey:
     async def verify(self, verification_token):
         """Verify the user's email address and save submission as verified."""
         verification_time = utils.now()
-        if self.index is None:
-            raise errors.InvalidVerificationTokenError()
         if verification_time < self.start or verification_time >= self.end:
             raise errors.InvalidTimingError()
-        submission_doc = await self.unverified_submissions.find_one(
+        res = await self.submissions.update_one(
             filter={'_id': auth.hash_token(verification_token)},
-            projection={'_id': False},
-        )
-        if submission_doc is None:
-            raise errors.InvalidVerificationTokenError()
-        await self.submissions.replace_one(
-            filter={'_id': submission_doc['submission'][str(self.index)]},
-            replacement={
-                'verification_time': verification_time,
-                **submission_doc,
+            update={
+                '$set': {
+                    'verification_time': verification_time,
+                    'verified': True,
+                },
             },
-            upsert=True,
         )
+        if res.matched_count == 0:
+            raise errors.InvalidVerificationTokenError()
         return fastapi.responses.RedirectResponse(
             f'{settings.FRONTEND_URL}/{self.username}/{self.survey_name}'
             f'/success'
@@ -117,12 +112,9 @@ class Survey:
         return await aggregation.aggregate(self.submissions, self.configuration)
 
 
-    async def read_submissions(self):
-        """Fetch all valid submissions."""
-        cursor = self.submissions.aggregate(
-            pipeline=[{'$replaceRoot': {'newRoot': '$submission'}}]
-        )
-        return await cursor.to_list(length=None)
+    async def export_submissions(self):
+        """Export the submissions of a survey in a consistent format."""
+        return await export.export(self.submissions, self.configuration)
 
 
 ################################################################################
@@ -146,9 +138,16 @@ async def read(username, survey_name, return_drafts=True):
 
 async def create(username, configuration):
     """Create a new survey configuration in the database."""
+    identifiers = {field['identifier'] for field in configuration['fields']}
+    if identifiers != set(range(len(configuration['fields']))):
+        raise errors.InvalidSyntaxError()
     try:
         await database.database['configurations'].insert_one(
-            document={'username': username, **configuration},
+            document={
+                'username': username,
+                'max_identifier': configuration['fields'][-1]['identifier'],
+                **configuration,
+            },
         )
     except pymongo.errors.DuplicateKeyError as error:
         index = str(error).split()[7]
@@ -161,9 +160,11 @@ async def create(username, configuration):
 async def update(username, survey_name, configuration):
     """Update a survey configuration in the database.
 
-    Survey updates are only possible if the survey has no submissions yet.
-    This is to ensure that submissions cannot be invalidated and means
-    that the only thing to update in the database is the configuration.
+    Survey updates are possible even if the survey already has submissions.
+    This works by assigning each field an identifier that is unique over the
+    lifetime of the survey. During updates, new fields are assigned a new
+    identifier. Changes to individual fields do not affect their identifier.
+    Changes to the field type necessitate a new identifier.
 
     The configuration includes the survey_name despite it already being
     specified in the route. We do this in order to enable changing the
@@ -171,14 +172,36 @@ async def update(username, survey_name, configuration):
 
     """
     survey = await read(username, survey_name)
-    counter = await survey.submissions.count_documents({})
-    counter += await survey.unverified_submissions.count_documents({})
-    if counter > 0:
-        raise errors.SubmissionsExistError()
+
+    def identifiers(configuration):
+        return {field['identifier'] for field in configuration['fields']}
+
+    # check that fields with unchanged identifier have the same field type
+    for x in configuration['fields']:
+        for y in survey.configuration['fields']:
+            if x['identifier'] == y['identifier'] and x['type'] != y['type']:
+                raise errors.InvalidSyntaxError()
+
+    # check that new fields are numbered in ascending order
+    new = identifiers(configuration) - identifiers(survey.configuration)
+    for i, e in enumerate(sorted(new)):
+        if e != survey.max_identifier + i + 1:
+            raise errors.InvalidSyntaxError()
+
+    # write changes to database
     try:
         res = await database.database['configurations'].replace_one(
-            filter={'_id': survey.survey_id},
-            replacement={'username': username, **configuration},
+            filter={
+                '_id': survey.survey_id,
+                # this ensures that even when the configuration changed
+                # between read and write, that only valid updates are written
+                'max_identifier': survey.max_identifier,
+            },
+            replacement={
+                'username': username,
+                'max_identifier': max(identifiers(configuration)),
+                **configuration,
+            },
         )
     except pymongo.errors.DuplicateKeyError as error:
         index = str(error).split()[7]
@@ -187,16 +210,13 @@ async def update(username, survey_name, configuration):
         else:
             raise errors.InternalServerError()
     if res.matched_count == 0:
-        raise errors.SurveyNotFoundError()
+        raise errors.InvalidSyntaxError()
 
 
 async def reset(username, survey_name):
     """Delete all submission data but keep the survey configuration."""
     survey = await read(username, survey_name)
-    async with await database.client.start_session() as session:
-        async with session.start_transaction():
-            await survey.submissions.drop()
-            await survey.unverified_submissions.drop()
+    await survey.submissions.drop()
 
 
 async def delete(username, survey_name):
@@ -208,4 +228,3 @@ async def delete(username, survey_name):
                 filter={'_id': survey.survey_id},
             )
             await survey.submissions.drop()
-            await survey.unverified_submissions.drop()

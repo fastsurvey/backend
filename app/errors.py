@@ -13,6 +13,11 @@ class _CustomError(fastapi.HTTPException):
 ################################################################################
 
 
+class InvalidSyntaxError(_CustomError):
+    STATUS_CODE = 400
+    DETAIL = 'invalid syntax'
+
+
 class UsernameAlreadyTakenError(_CustomError):
     STATUS_CODE = 400
     DETAIL = 'username already taken'

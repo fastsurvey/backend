@@ -1,18 +1,12 @@
 import copy
 
-import app.utils as utils
-import app.resources.database as database
-
 
 AGGREGATION_PIPELINE_BASE = [
     {
         '$facet': {
             'main': [
                 {
-                    '$group': {
-                        '_id': None,
-                        'count': {'$sum': 1},
-                    },
+                    '$group': {'_id': None, 'count': {'$sum': 1}},
                 },
             ],
         },
@@ -20,132 +14,160 @@ AGGREGATION_PIPELINE_BASE = [
     {
         '$project': {
             'count': {'$first': '$main.count'},
-            'aggregation': {}
         },
     },
 ]
 
 
-def _add_email_aggregation_commands(pipeline, identifier):
-    """Add pipeline commands to aggregate email submissions."""
-    pipeline[1]['$project']['aggregation'][identifier] = None
+def _add_email_field_aggregation_commands(pipeline, identifier):
+    """Add pipeline commands to aggregate email field submissions."""
+    pipeline[0]['$facet']['main'][0]['$group'][f'{identifier}+count'] = {
+        '$sum': {'$toInt': {
+            '$ne': [{'$type': f'$submission.{identifier}'}, 'missing']
+        }},
+    }
+    pipeline[1]['$project'][identifier] = {
+        'count': {'$first': f'$main.{identifier}+count'},
+        'value': None,
+    }
 
 
-def _add_option_aggregation_commands(pipeline, identifier):
-    """Add pipeline commands to aggregate options submissions."""
-    pipeline[0]['$facet']['main'][0]['$group'][identifier] = {
+def _add_option_field_aggregation_commands(pipeline, identifier):
+    """Add pipeline commands to aggregate options field submissions."""
+    pipeline[0]['$facet']['main'][0]['$group'][f'{identifier}+count'] = {
+        '$sum': {'$toInt': {
+            '$ne': [{'$type': f'$submission.{identifier}'}, 'missing']
+        }},
+    }
+    pipeline[0]['$facet']['main'][0]['$group'][f'{identifier}+value'] = {
         '$sum': {'$toInt': f'$submission.{identifier}'}
     }
-    pipeline[1]['$project']['aggregation'][identifier] = {
-        '$first': f'$main.{identifier}',
+    pipeline[1]['$project'][identifier] = {
+        'count': {'$first': f'$main.{identifier}+count'},
+        'value': {'$first': f'$main.{identifier}+value'},
     }
 
 
-def _add_radio_aggregation_commands(pipeline, identifier):
-    """Add pipeline commands to aggregate radio submissions."""
-    pipeline[0]['$facet'][identifier] = [
+def _add_radio_field_aggregation_commands(pipeline, identifier):
+    """Add pipeline commands to aggregate radio field submissions."""
+    pipeline[0]['$facet']['main'][0]['$group'][f'{identifier}+count'] = {
+        '$sum': {'$toInt': {
+            '$ne': [{'$type': f'$submission.{identifier}'}, 'missing']
+        }},
+    }
+    pipeline[0]['$facet'][f'a{identifier}'] = [
+        {
+            '$match': {
+                f'submission.{identifier}': {'$exists': True},
+            },
+        },
         {
             '$group': {
                 '_id': f'$submission.{identifier}',
-                'count': {
-                    '$sum': 1,
-                },
+                'count': {'$sum': 1},
             },
         },
         {
             '$group': {
                 '_id': None,
-                identifier: {
-                    '$push': {
-                        'k': '$_id',
-                        'v': '$count',
-                    },
-                },
+                'value': {'$push': {'k': '$_id', 'v': '$count'}},
             },
         },
         {
             '$project': {
-                identifier: {
-                    '$arrayToObject': f'${identifier}',
-                },
+                'value': {'$arrayToObject': f'$value'},
             },
         },
     ]
-    pipeline[1]['$project']['aggregation'][identifier] = {
-        '$first': f'${identifier}.{identifier}',
+    pipeline[1]['$project'][identifier] = {
+        'count': {'$first': f'$main.{identifier}+count'},
+        'value': {'$first': f'$a{identifier}.value'},
     }
 
 
-def _add_selection_aggregation_commands(pipeline, identifier):
-    """Add pipeline commands to aggregate selection submissions."""
-    _add_radio_aggregation_commands(pipeline, identifier)
-    pipeline[0]['$facet'][identifier].insert(
-        0,
+def _add_selection_field_aggregation_commands(pipeline, identifier):
+    """Add pipeline commands to aggregate selection field submissions."""
+    pipeline[0]['$facet']['main'][0]['$group'][f'{identifier}+count'] = {
+        '$sum': {'$toInt': {
+            '$ne': [{'$type': f'$submission.{identifier}'}, 'missing']
+        }},
+    }
+    pipeline[0]['$facet'][f'a{identifier}'] = [
         {
             '$unwind': {
                 'path': f'$submission.{identifier}',
             },
         },
-    )
+        {
+            '$group': {
+                '_id': f'$submission.{identifier}',
+                'count': {'$sum': 1},
+            },
+        },
+        {
+            '$group': {
+                '_id': None,
+                'value': {'$push': {'k': '$_id', 'v': '$count'}},
+            },
+        },
+        {
+            '$project': {
+                'value': {'$arrayToObject': f'$value'},
+            },
+        },
+    ]
+    pipeline[1]['$project'][identifier] = {
+        'count': {'$first': f'$main.{identifier}+count'},
+        'value': {'$first': f'$a{identifier}.value'},
+    }
 
 
-def _add_text_aggregation_commands(pipeline, identifier):
-    """Add pipeline commands to aggregate text submissions."""
-    _add_email_aggregation_commands(pipeline, identifier)
+def _add_text_field_aggregation_commands(pipeline, identifier):
+    """Add pipeline commands to aggregate text field submissions."""
+    _add_email_field_aggregation_commands(pipeline, identifier)
 
 
 def _build_aggregation_pipeline(configuration):
     """Build MongoDB aggregation pipeline to aggregate survey submissions."""
-    aggregation_pipeline = copy.deepcopy(AGGREGATION_PIPELINE_BASE)
+    pipeline = copy.deepcopy(AGGREGATION_PIPELINE_BASE)
     functions = {
-        'email': _add_email_aggregation_commands,
-        'option': _add_option_aggregation_commands,
-        'radio': _add_radio_aggregation_commands,
-        'selection': _add_selection_aggregation_commands,
-        'text': _add_text_aggregation_commands,
+        'email': _add_email_field_aggregation_commands,
+        'option': _add_option_field_aggregation_commands,
+        'radio': _add_radio_field_aggregation_commands,
+        'selection': _add_selection_field_aggregation_commands,
+        'text': _add_text_field_aggregation_commands,
     }
-    for identifier, field in enumerate(configuration['fields']):
-        functions[field['type']](aggregation_pipeline, str(identifier))
-    return aggregation_pipeline
-
-
-def _build_default_results(configuration):
-    """Build default results to return when there are no submissions."""
-    results = {'count': 0, 'aggregation': {}}
-    for identifier, field in enumerate(configuration['fields']):
-        identifier = str(identifier)
-        if field['type'] == 'option':
-            results['aggregation'][identifier] = 0
-        elif field['type'] in ['radio', 'selection']:
-            results['aggregation'][identifier] = {
-                option: 0 for option in field['options']
-            }
-        else:
-            results['aggregation'][identifier] = None
-    return results
+    for field in configuration['fields']:
+        functions[field['type']](pipeline, str(field['identifier']))
+    return pipeline
 
 
 def _format_results(results, configuration):
     """Format results obtained from the MongoDB aggregation."""
-    for identifier, field in enumerate(configuration['fields']):
-        identifier = str(identifier)
+    results.setdefault('count', 0)
+    for field in configuration['fields']:
+        identifier = str(field['identifier'])
+        results[identifier].setdefault('count', 0)
+        if field['type'] == 'option':
+            results[identifier].setdefault('value', 0)
+        if field['type'] in ['email', 'text']:
+            results[identifier].setdefault('value', None)
         # add options that received no submissions and sort options as
         # specified in the configuration
         if field['type'] in ['radio', 'selection']:
+            results[identifier].setdefault('value', {})
             out = dict()
             for option in field['options']:
-                out[option] = results['aggregation'][identifier].get(option, 0)
-            results['aggregation'][identifier] = out
+                out[option] = results[identifier]['value'].get(option, 0)
+            results[identifier]['value'] = out
     return results
 
 
 async def aggregate(submissions, configuration):
-    """Aggregate and return the results of the survey."""
+    """Compute an aggregate of the submissions of a survey."""
     cursor = submissions.aggregate(
         pipeline=_build_aggregation_pipeline(configuration),
         allowDiskUse=True,
     )
     results = await cursor.to_list(length=None)
-    if 'count' in results[0]:
-        return _format_results(results[0], configuration)
-    return _build_default_results(configuration)
+    return _format_results(results[0], configuration)

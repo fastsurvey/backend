@@ -1,0 +1,32 @@
+{
+    "count": 5,
+    "0": {
+        "count": 5,
+        "value": null
+    },
+    "1": {
+        "count": 5,
+        "value": 5
+    },
+    "2": {
+        "count": 5,
+        "value": {
+            "Asparagus": 1,
+            "Spinach": 0,
+            "Artichoke": 3,
+            "None of these is a fruit": 1
+        }
+    },
+    "3": {
+        "count": 5,
+        "value": {
+            "Strawberry": 3,
+            "Vanilla": 1,
+            "Chocolate": 4
+        }
+    },
+    "4": {
+        "count": 5,
+        "value": null
+    }
+}

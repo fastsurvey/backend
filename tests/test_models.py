@@ -27,18 +27,16 @@ def test_account_data_failing(invalid_account_datas):
 ################################################################################
 
 
-def test_configurations_passing(configurations):
+def test_configurations_passing(configuration):
     """Test that configuration validation passes some valid configurations."""
-    for configuration in configurations.values():
-        models.Configuration(**configuration)
+    models.Configuration(**configuration)
 
 
-def test_configurations_failing(invalid_configurationss):
+def test_configurations_failing(invalid_configurations):
     """Test that configuration validation fails some invalid configurations."""
-    for invalid_configurations in invalid_configurationss.values():
-        for configuration in invalid_configurations:
-            with pytest.raises(pydantic.ValidationError):
-                models.Configuration(**configuration)
+    for configuration in invalid_configurations:
+        with pytest.raises(pydantic.ValidationError):
+            models.Configuration(**configuration)
 
 
 ################################################################################
@@ -46,18 +44,16 @@ def test_configurations_failing(invalid_configurationss):
 ################################################################################
 
 
-def test_submissions_passing(configurations, submissionss):
+def test_submissions_passing(configuration, submissions):
     """Test that submission validation passes some valid submissions."""
-    for survey_name, submissions in submissionss.items():
-        Submission = models.build_submission_model(configurations[survey_name])
-        for submission in submissions:
-            Submission(**submission)
+    Submission = models.build_submission_model(configuration)
+    for submission in submissions:
+        Submission(**submission)
 
 
-def test_submissions_failing(configurations, invalid_submissionss):
+def test_submissions_failing(configuration, invalid_submissions):
     """Test that submission validation fails some invalid submissions."""
-    for survey_name, invalid_submissions in invalid_submissionss.items():
-        Submission = models.build_submission_model(configurations[survey_name])
-        for submission in invalid_submissions:
-            with pytest.raises(pydantic.ValidationError):
-                Submission(**submission)
+    Submission = models.build_submission_model(configuration)
+    for submission in invalid_submissions:
+        with pytest.raises(pydantic.ValidationError):
+            Submission(**submission)
