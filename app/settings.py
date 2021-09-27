@@ -17,14 +17,12 @@ for var in _VARS:
 # test / development / production environment
 ENVIRONMENT = os.getenv('ENVIRONMENT')
 assert ENVIRONMENT in ['test', 'development', 'production']
-subdomain = dict(test='test.', development='dev.', production='')[ENVIRONMENT]
+subdomain = {'test': 'test.', 'development': 'dev.'}.get(ENVIRONMENT, '')
 
 # frontend url
 FRONTEND_URL = f'https://{subdomain}fastsurvey.de'
 # console url
 CONSOLE_URL = f'https://console.{subdomain}fastsurvey.de'
-# backend url
-BACKEND_URL = f'https://api.{subdomain}fastsurvey.de'
 # MongoDB connection string
 MONGODB_CONNECTION_STRING = os.getenv('MONGODB_CONNECTION_STRING')
 # Mailgun api key

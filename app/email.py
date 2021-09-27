@@ -41,10 +41,9 @@ async def send_account_verification(
     ):
     """Send a confirmation email to verify an account email address."""
     subject = 'Welcome to FastSurvey!'
-    link = f'{settings.CONSOLE_URL}/verify?token={verification_token}'
     content = _TEMPLATES['account_verification'].format(
         username=username,
-        link=link,
+        link=f'{settings.CONSOLE_URL}/verify?token={verification_token}',
     )
     return await _send(email_address, subject, content)
 
@@ -58,12 +57,11 @@ async def send_submission_verification(
     ):
     """Send a confirmation email to verify a submission email address."""
     subject = 'Please verify your submission'
-    link = (
-        f'{settings.BACKEND_URL}/users/{username}/surveys/{survey_name}'
-        f'/verification/{verification_token}'
-    )
     content = _TEMPLATES['submission_verification'].format(
         title=title,
-        link=link,
+        link=(
+            f'{settings.FRONTEND_URL}/{username}/{survey_name}'
+            f'/verify?token={verification_token}'
+        ),
     )
     return await _send(email_address, subject, content)

@@ -65,11 +65,6 @@ ARGUMENTS = {
             'password': '12345678'
         },
     ),
-    'verification_token': fastapi.Path(
-        ...,
-        description='The verification token',
-        example='6Ca1j7b5P3D8fO6WpsUHsE_eN3Fqq8V_sp_sV4RB2ubw9mtwRUM2cQh26jS_r65v',
-    ),
     'submission': fastapi.Body(
         ...,
         description='The user submission',
@@ -248,7 +243,7 @@ SPECIFICATIONS = {
         ],
     ),
     'verify_submission': _generate_responses_documentation(
-        path='/users/{username}/surveys/{survey_name}/verification/{verification_token}',
+        path='/users/{username}/surveys/{survey_name}/verification',
         error_classes=[
             errors.InvalidVerificationTokenError,
             errors.SurveyNotFoundError,

@@ -102,10 +102,6 @@ class Survey:
         )
         if res.matched_count == 0:
             raise errors.InvalidVerificationTokenError()
-        return fastapi.responses.RedirectResponse(
-            f'{settings.FRONTEND_URL}/{self.username}/{self.survey_name}'
-            f'/success'
-        )
 
     async def aggregate(self):
         """Query the survey submissions and return aggregated results."""

@@ -67,15 +67,6 @@ async def setup_submission(client, username, survey_name, submission):
     )
 
 
-async def setup_submission_verification(client, username, survey_name):
-    """Verify most recently created test submission."""
-    base = f'/users/{username}/surveys/{survey_name}'
-    return await client.get(
-        url=f'{base}/verification/{conftest.valid_token()}',
-        allow_redirects=False,
-    )
-
-
 def check_error(response, error):
     """Check that a HTTPX request returned with a specific error.
 
@@ -403,7 +394,6 @@ async def test_deleting_existing_user(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     await setup_submission(client, username, 'simple', submissions[0])
-    await setup_submission_verification(client, username, 'simple')
     survey = await sve.read(username, 'simple')
     res = await client.delete(url=f'/users/{username}', headers=headers)
     assert res.status_code == 200
@@ -918,8 +908,11 @@ async def test_verifying_valid_verification_token(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     await setup_submission(client, username, 'simple', submissions[0])
-    res = await setup_submission_verification(client, username, 'simple')
-    assert res.status_code == 307
+    res = await client.post(
+        url=f'/users/{username}/surveys/simple/verification',
+        json={'verification_token': conftest.valid_token()},
+    )
+    assert res.status_code == 200
     survey = await sve.read(username, 'simple')
     e = await survey.submissions.find_one()
     assert e['verified']
@@ -942,12 +935,11 @@ async def test_verifying_invalid_verification_token(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     await setup_submission(client, username, 'simple', submissions[0])
-    path = f'/users/{username}/surveys/simple'
-    res = await client.get(
-        url=f'{path}/verification/{conftest.invalid_token()}',
-        allow_redirects=False,
+    res = await client.post(
+        url=f'/users/{username}/surveys/simple/verification',
+        json={'verification_token': conftest.invalid_token()},
     )
-    assert res.status_code == 401
+    assert check_error(res, errors.InvalidVerificationTokenError)
     survey = await sve.read(username, 'simple')
     e = await survey.submissions.find_one()
     assert not e['verified']

@@ -182,17 +182,17 @@ async def reset_survey(
     await sve.reset(data.username, data.survey_name)
 
 
-@app.get(**docs.SPECIFICATIONS['verify_submission'])
+@app.post(**docs.SPECIFICATIONS['verify_submission'])
 async def verify_submission(
         data: validation.VerifySubmissionRequest = fastapi.Depends(),
     ):
-    """Verify user token and either fail or redirect to success page."""
+    """Verify a submission given the verification token sent via email."""
     survey = await sve.read(
         data.username,
         data.survey_name,
         return_drafts=False,
     )
-    return await survey.verify(data.verification_token)
+    return await survey.verify(data.verification_credentials.verification_token)
 
 
 @app.get(**docs.SPECIFICATIONS['read_results'])

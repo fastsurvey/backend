@@ -88,7 +88,9 @@ class ResetSurveyRequest(models.BaseModel):
 class VerifySubmissionRequest(models.BaseModel):
     username: models.Username = docs.ARGUMENTS['username']
     survey_name: models.SurveyName = docs.ARGUMENTS['survey_name']
-    verification_token: models.Token = docs.ARGUMENTS['verification_token']
+    verification_credentials: models.VerificationCredentials = (
+        docs.ARGUMENTS['verification_credentials']
+    )
 
 
 class ReadResultsRequest(models.BaseModel):
