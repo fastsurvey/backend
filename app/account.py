@@ -79,11 +79,7 @@ async def update(username, account_data):
     """Update existing user account data in the database."""
     x = await database.database['accounts'].find_one(
         filter={'username': username},
-        projection={
-            '_id': False,
-            'email_address': True,
-            'password_hash': True,
-        },
+        projection={'_id': False, 'email_address': True},
     )
     if x is None:
         raise errors.UserNotFoundError()
@@ -93,7 +89,7 @@ async def update(username, account_data):
         update['username'] = account_data['username']
     if account_data['email_address'] != x['email_address']:
         raise errors.NotImplementedError()
-    if not auth.verify_password(account_data['password'], x['password_hash']):
+    if account_data['password'] is not None:
         update['password_hash'] = auth.hash_password(account_data['password'])
     if len(update) == 1:
         return

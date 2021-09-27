@@ -260,7 +260,7 @@ async def test_updating_existing_user_with_no_changes(
     res = await client.put(
         url=f'/users/{username}',
         headers=headers,
-        json=account_data,
+        json={k: v for k, v in account_data.items() if k != 'password'},
     )
     assert res.status_code == 200
     assert e == await database.database['accounts'].find_one()

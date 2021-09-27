@@ -23,7 +23,7 @@ class CreateUserRequest(models.BaseModel):
 class UpdateUserRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS['access_token']
     username: models.Username = docs.ARGUMENTS['username']
-    account_data: models.AccountData = docs.ARGUMENTS['account_data']
+    account_data: models.AccountDataUpdate = docs.ARGUMENTS['account_data']
 
 
 class DeleteUserRequest(models.BaseModel):

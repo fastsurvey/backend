@@ -63,6 +63,13 @@ class AccountData(BaseModel):
     password: Password
 
 
+class AccountDataUpdate(BaseModel):
+    """Pydantic model used to validate updates to the account data."""
+    username: Username
+    email_address: EmailAddress
+    password: Password = None
+
+
 ################################################################################
 # Survey Configuration
 ################################################################################
