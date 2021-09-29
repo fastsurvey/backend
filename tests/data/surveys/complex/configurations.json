@@ -30,7 +30,7 @@
         "survey_name": "complex",
         "title": "Complex Test Survey",
         "description": "Enneapuses are the new octopuses.",
-        "start": 0,
+        "start": null,
         "end": 4102444800,
         "draft": false,
         "fields": [
@@ -194,7 +194,7 @@
         "title": "Very Good Sample Title",
         "description": "Enneapuses are the new octopuses, and other wisdoms.",
         "start": 1575724704,
-        "end": 2475965376,
+        "end": null,
         "draft": false,
         "fields": [
             {

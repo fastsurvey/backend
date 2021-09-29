@@ -36,6 +36,7 @@ EmailAddress = pydantic.constr(
     max_length=Length.B,
     regex=Pattern.EMAIL_ADDRESS.value,
 )
+Timestamp = pydantic.conint(strict=True, ge=0, le=4102444800)
 
 
 ################################################################################
@@ -165,8 +166,8 @@ class Configuration(BaseModel):
     title: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
     description: pydantic.StrictStr
     survey_name: SurveyName
-    start: pydantic.conint(strict=True, ge=0, le=4102444800)
-    end: pydantic.conint(strict=True, ge=0, le=4102444800)
+    start: typing.Optional[Timestamp] = pydantic.Field(...)
+    end: typing.Optional[Timestamp] = pydantic.Field(...)
     draft: pydantic.StrictBool
     fields_: pydantic.conlist(
         item_type=typing.Union[
@@ -182,8 +183,9 @@ class Configuration(BaseModel):
 
     @pydantic.validator('end')
     def validate_end(cls, v, values):
-        if 'start' in values and v < values['start']:
-            raise ValueError('end must be >= start')
+        if 'start' in values and values['start'] is not None:
+            if v is not None and v < values['start']:
+                raise ValueError('end must be >= start')
         return v
 
     @pydantic.validator('fields_')

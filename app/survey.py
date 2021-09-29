@@ -45,13 +45,15 @@ class Survey:
 
     async def submit(self, submission):
         """Save a user's submission in the submissions collection."""
-        submission_time = utils.now()
-        if submission_time < self.start or submission_time >= self.end:
+        timestamp = utils.now()
+        if self.start is not None and timestamp < self.start:
+            raise errors.InvalidTimingError()
+        if self.end is not None and timestamp >= self.end:
             raise errors.InvalidTimingError()
         if self.email_id is None:
             await self.submissions.insert_one(
                 document={
-                    'submission_time': submission_time,
+                    'submission_time': timestamp,
                     'submission': submission,
                 }
             )
@@ -62,7 +64,7 @@ class Survey:
                     await self.submissions.insert_one(
                         document={
                             '_id': auth.hash_token(verification_token),
-                            'submission_time': submission_time,
+                            'submission_time': timestamp,
                             'verified': False,
                             'submission': submission,
                         }
@@ -88,14 +90,16 @@ class Survey:
 
     async def verify(self, verification_token):
         """Verify the user's email address and save submission as verified."""
-        verification_time = utils.now()
-        if verification_time < self.start or verification_time >= self.end:
+        timestamp = utils.now()
+        if self.start is not None and timestamp < self.start:
+            raise errors.InvalidTimingError()
+        if self.end is not None and timestamp >= self.end:
             raise errors.InvalidTimingError()
         res = await self.submissions.update_one(
             filter={'_id': auth.hash_token(verification_token)},
             update={
                 '$set': {
-                    'verification_time': verification_time,
+                    'verification_time': timestamp,
                     'verified': True,
                 },
             },
