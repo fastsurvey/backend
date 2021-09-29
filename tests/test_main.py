@@ -394,7 +394,7 @@ async def test_deleting_existing_user(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     await setup_submission(client, username, 'simple', submissions[0])
-    survey = await sve.read(username, 'simple')
+    survey = await sve.fetch(username, 'simple')
     res = await client.delete(url=f'/users/{username}', headers=headers)
     assert res.status_code == 200
     assert await database.database['accounts'].find_one() is None
@@ -483,7 +483,7 @@ async def test_reading_nonexistent_survey(client, username):
 
 
 @pytest.mark.asyncio
-async def test_reading_survey_in_draft_mode(
+async def test_reading_existing_survey_in_draft_mode(
         mock_email_sending,
         mock_token_generation,
         client,
@@ -503,8 +503,35 @@ async def test_reading_survey_in_draft_mode(
     assert check_error(res, errors.SurveyNotFoundError)
 
 
+@pytest.mark.asyncio
+async def test_reading_existing_survey_outside_time_limits(
+        mock_email_sending,
+        mock_token_generation,
+        client,
+        username,
+        account_data,
+        configuration,
+        cleanup,
+    ):
+    """Test only meta data is returned on request outside time limits."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    configuration = copy.deepcopy(configuration)
+    configuration['end'] = configuration['start']
+    await setup_survey(client, headers, username, configuration)
+    res = await client.get(f'/users/{username}/surveys/simple')
+    assert res.status_code == 200
+    assert res.json() == {
+        k: v
+        for k, v
+        in configuration.items()
+        if k not in ['max_identifier', 'fields']
+    }
+
+
 ################################################################################
-# Route: Create Survey
+# route: create survey
 ################################################################################
 
 
@@ -716,7 +743,7 @@ async def test_deleting_existing_survey_with_existing_submissions(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     await setup_submission(client, username, 'simple', submissions[0])
-    survey = await sve.read(username, 'simple')
+    survey = await sve.fetch(username, 'simple')
     res = await client.delete(
         url=f'/users/{username}/surveys/simple',
         headers=headers,
@@ -825,7 +852,7 @@ async def test_creating_submission(
     await setup_survey(client, headers, username, configuration)
     res = await setup_submission(client, username, 'simple', submissions[0])
     assert res.status_code == 200
-    survey = await sve.read(username, 'simple')
+    survey = await sve.fetch(username, 'simple')
     e = await survey.submissions.find_one()
     assert e['submission'] == submissions[0]
 
@@ -849,7 +876,7 @@ async def test_creating_invalid_submission(
     submission = invalid_submissions[0]
     res = await setup_submission(client, username, 'simple', submission)
     assert check_error(res, None)
-    survey = await sve.read(username, 'simple')
+    survey = await sve.fetch(username, 'simple')
     e = await survey.submissions.find_one()
     assert e is None
 
@@ -876,7 +903,7 @@ async def test_resetting_survey_with_existing_submissions(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     await setup_submission(client, username, 'simple', submissions[0])
-    survey = await sve.read(username, 'simple')
+    survey = await sve.fetch(username, 'simple')
     res = await client.delete(
         url=f'/users/{username}/surveys/simple/submissions',
         headers=headers,
@@ -913,7 +940,7 @@ async def test_verifying_valid_verification_token(
         json={'verification_token': conftest.valid_token()},
     )
     assert res.status_code == 200
-    survey = await sve.read(username, 'simple')
+    survey = await sve.fetch(username, 'simple')
     e = await survey.submissions.find_one()
     assert e['verified']
 
@@ -940,7 +967,7 @@ async def test_verifying_invalid_verification_token(
         json={'verification_token': conftest.invalid_token()},
     )
     assert check_error(res, errors.InvalidVerificationTokenError)
-    survey = await sve.read(username, 'simple')
+    survey = await sve.fetch(username, 'simple')
     e = await survey.submissions.find_one()
     assert not e['verified']
 

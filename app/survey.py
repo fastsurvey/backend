@@ -122,8 +122,14 @@ class Survey:
 ################################################################################
 
 
+async def fetch(username, survey_name, return_drafts=True):
+    configuration = await read(username, survey_name, return_drafts)
+    survey_id = configuration.pop('_id')
+    return Survey(survey_id, username, configuration)
+
+
 async def read(username, survey_name, return_drafts=True):
-    """Return the survey object corresponding to user and survey name."""
+    """Return the survey configuration corresponding to the user's survey."""
     configuration = await database.database['configurations'].find_one(
         filter={'username': username, 'survey_name': survey_name},
         projection={'username': False},
@@ -132,8 +138,7 @@ async def read(username, survey_name, return_drafts=True):
         raise errors.SurveyNotFoundError()
     if configuration['draft'] and not return_drafts:
         raise errors.SurveyNotFoundError()
-    survey_id = configuration.pop('_id')
-    return Survey(survey_id, username, configuration)
+    return configuration
 
 
 async def create(username, configuration):
@@ -157,7 +162,7 @@ async def create(username, configuration):
             raise errors.InternalServerError()
 
 
-async def update(username, survey_name, configuration):
+async def update(username, survey_name, update):
     """Update a survey configuration in the database.
 
     Survey updates are possible even if the survey already has submissions.
@@ -171,36 +176,36 @@ async def update(username, survey_name, configuration):
     survey_name.
 
     """
-    survey = await read(username, survey_name)
+    configuration = await read(username, survey_name)
 
     def identifiers(configuration):
         return {field['identifier'] for field in configuration['fields']}
 
     # check that fields with unchanged identifier have the same field type
-    for x in configuration['fields']:
-        for y in survey.configuration['fields']:
+    for x in update['fields']:
+        for y in configuration['fields']:
             if x['identifier'] == y['identifier'] and x['type'] != y['type']:
                 raise errors.InvalidSyntaxError()
 
     # check that new fields are numbered in ascending order
-    new = identifiers(configuration) - identifiers(survey.configuration)
+    new = identifiers(update) - identifiers(configuration)
     for i, e in enumerate(sorted(new)):
-        if e != survey.max_identifier + i + 1:
+        if e != configuration['max_identifier'] + i + 1:
             raise errors.InvalidSyntaxError()
 
     # write changes to database
     try:
         res = await database.database['configurations'].replace_one(
             filter={
-                '_id': survey.survey_id,
+                '_id': configuration['_id'],
                 # this ensures that even when the configuration changed
                 # between read and write, that only valid updates are written
-                'max_identifier': survey.max_identifier,
+                'max_identifier': configuration['max_identifier'],
             },
             replacement={
                 'username': username,
-                'max_identifier': max(identifiers(configuration)),
-                **configuration,
+                'max_identifier': max(identifiers(update)),
+                **update,
             },
         )
     except pymongo.errors.DuplicateKeyError as error:
@@ -215,16 +220,18 @@ async def update(username, survey_name, configuration):
 
 async def reset(username, survey_name):
     """Delete all submission data but keep the survey configuration."""
-    survey = await read(username, survey_name)
-    await survey.submissions.drop()
+    identifier = (await read(username, survey_name))['_id']
+    submissions = database.database[f'surveys.{identifier}.submissions']
+    await submissions.drop()
 
 
 async def delete(username, survey_name):
     """Delete the survey and all its data from the database."""
-    survey = await read(username, survey_name)
+    identifier = (await read(username, survey_name))['_id']
+    submissions = database.database[f'surveys.{identifier}.submissions']
     async with await database.client.start_session() as session:
         async with session.start_transaction():
             await database.database['configurations'].delete_one(
-                filter={'_id': survey.survey_id},
+                filter={'_id': identifier},
             )
-            await survey.submissions.drop()
+            await submissions.drop()

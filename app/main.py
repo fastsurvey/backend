@@ -8,6 +8,7 @@ import app.documentation as docs
 import app.settings as settings
 import app.validation as validation
 import app.authentication as auth
+import app.utils as utils
 
 
 # create fastapi app
@@ -40,9 +41,9 @@ async def validation_error_exception_handler(request, exc):
 ################################################################################
 
 
-@app.get(**docs.SPECIFICATIONS['server_status'])
-async def server_status():
-    """Return some information about the server."""
+@app.get(**docs.SPECIFICATIONS['read_status'])
+async def read_status():
+    """Return some status information about the server."""
     return dict(
         environment=settings.ENVIRONMENT,
         commit_sha=settings.COMMIT_SHA,
@@ -107,15 +108,25 @@ async def read_survey(
     """Fetch a survey configuration.
 
     As this is an unprotected route, configurations of surveys that are in
-    draft mode **are not** returned.
+    draft mode **are not** returned. When outside the start/end limits of a
+    survey, only some meta information are returned.
 
     """
-    survey = await sve.read(
+    configuration = await sve.read(
         data.username,
         data.survey_name,
         return_drafts=False,
     )
-    return {'max_identifier': survey.max_identifier, **survey.configuration}
+    timestamp = utils.now()
+    exclude = ['_id']
+    if (
+        configuration['start'] is not None
+        and timestamp < configuration['start']
+        or configuration['end'] is not None
+        and timestamp >= configuration['end']
+    ):
+        exclude += ['fields', 'max_identifier']
+    return {k: v for k, v in configuration.items() if k not in exclude}
 
 
 @app.post(**docs.SPECIFICATIONS['create_survey'])
@@ -155,7 +166,7 @@ async def export_submissions(
         data: validation.ReadSubmissionsRequest = fastapi.Depends(),
     ):
     """Export the submissions of a survey in a consistent format."""
-    survey = await sve.read(data.username, data.survey_name)
+    survey = await sve.fetch(data.username, data.survey_name)
     return await survey.export_submissions()
 
 
@@ -164,7 +175,7 @@ async def create_submission(
         data: validation.CreateSubmissionRequest = fastapi.Depends(),
     ):
     """Validate submission and store it under pending submissions."""
-    survey = await sve.read(
+    survey = await sve.fetch(
         data.username,
         data.survey_name,
         return_drafts=False,
@@ -187,7 +198,7 @@ async def verify_submission(
         data: validation.VerifySubmissionRequest = fastapi.Depends(),
     ):
     """Verify a submission given the verification token sent via email."""
-    survey = await sve.read(
+    survey = await sve.fetch(
         data.username,
         data.survey_name,
         return_drafts=False,
@@ -201,7 +212,7 @@ async def read_results(
         data: validation.ReadResultsRequest = fastapi.Depends(),
     ):
     """Fetch the results of the given survey."""
-    survey = await sve.read(data.username, data.survey_name)
+    survey = await sve.fetch(data.username, data.survey_name)
     return await survey.aggregate()
 
 

@@ -134,7 +134,7 @@ def _generate_responses_documentation(path, response=None, error_classes=[]):
 
 
 SPECIFICATIONS = {
-    'server_status': _generate_responses_documentation(
+    'read_status': _generate_responses_documentation(
         path='/status',
         response={
             'environment': 'production',
