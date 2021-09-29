@@ -1,5 +1,6 @@
 import fastapi
 import fastapi.middleware.cors
+import fastapi.exceptions
 import pydantic
 
 import app.account as acn
@@ -9,6 +10,7 @@ import app.settings as settings
 import app.validation as validation
 import app.authentication as auth
 import app.utils as utils
+import app.errors as errors
 
 
 # create fastapi app
@@ -31,8 +33,16 @@ app.add_middleware(
 @app.exception_handler(pydantic.ValidationError)
 async def validation_error_exception_handler(request, exc):
     return fastapi.responses.JSONResponse(
-        status_code=422,
-        content={'detail': fastapi.encoders.jsonable_encoder(exc.errors())}
+        status_code=errors.InvalidSyntaxError.STATUS_CODE,
+        content={'detail': errors.InvalidSyntaxError.DETAIL},
+    )
+
+# add fastapi RequestValidationError exception handler
+@app.exception_handler(fastapi.exceptions.RequestValidationError)
+async def request_validation_error_exception_handler(request, exc):
+    return fastapi.responses.JSONResponse(
+        status_code=errors.InvalidSyntaxError.STATUS_CODE,
+        content={'detail': errors.InvalidSyntaxError.DETAIL},
     )
 
 

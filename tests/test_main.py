@@ -67,14 +67,10 @@ async def setup_submission(client, username, survey_name, submission):
     )
 
 
-def check_error(response, error):
-    """Check that a HTTPX request returned with a specific error.
-
-    TODO use an error value of None to mean no error (status code 200)
-
-    """
+def fails(response, error):
+    """Check that a HTTPX request returned with a specific error."""
     if error is None:
-        return response.status_code == 422
+        return response.status_code == 200
     return (
         response.status_code == error.STATUS_CODE
         and response.json()['detail'] == error.DETAIL
@@ -90,7 +86,7 @@ def check_error(response, error):
 async def test_reading_server_status(client):
     """Test that correct status data is returned."""
     res = await client.get(f'/status')
-    assert res.status_code == 200
+    assert fails(res, None)
     assert set(res.json().keys()) == {
         'environment',
         'commit_sha',
@@ -118,7 +114,7 @@ async def test_reading_verified_account_with_valid_access_token(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     res = await client.get(f'/users/{username}', headers=headers)
-    assert res.status_code == 200
+    assert fails(res, None)
     assert set(res.json().keys()) == {'email_address', 'verified'}
 
 
@@ -136,7 +132,7 @@ async def test_reading_verified_account_with_invalid_access_token(
     await setup_account_verification(client)
     headers = {'Authorization': f'Bearer {conftest.invalid_token()}'}
     res = await client.get(f'/users/{username}', headers=headers)
-    assert check_error(res, errors.InvalidAccessTokenError)
+    assert fails(res, errors.InvalidAccessTokenError)
 
 
 ################################################################################
@@ -154,7 +150,7 @@ async def test_creating_user_with_valid_account_data(
     ):
     """Test that account is created successfully on valid request."""
     res = await setup_account(client, username, account_data)
-    assert res.status_code == 200
+    assert fails(res, None)
     e = await database.database['accounts'].find_one()
     assert e['username'] == username
 
@@ -167,7 +163,7 @@ async def test_creating_user_with_invalid_account_data(
     """Test that account creation fails when given invalid account data."""
     account_data = invalid_account_datas[0]
     res = await setup_account(client, account_data['username'], account_data)
-    assert check_error(res, None)
+    assert fails(res, errors.InvalidSyntaxError)
     e = await database.database['accounts'].find_one()
     assert e is None
 
@@ -179,7 +175,7 @@ async def test_creating_user_with_username_mismatch_in_route_and_body(
     ):
     """Test that account creation fails when given invalid account data."""
     res = await setup_account(client, 'kangaroo', account_data)
-    assert check_error(res, None)
+    assert fails(res, errors.InvalidSyntaxError)
     e = await database.database['accounts'].find_one({})
     assert e is None
 
@@ -199,7 +195,7 @@ async def test_creating_user_username_already_taken(
     duplicate = copy.deepcopy(account_datas[1])
     duplicate['username'] = username
     res = await setup_account(client, username, duplicate)
-    assert check_error(res, errors.UsernameAlreadyTakenError)
+    assert fails(res, errors.UsernameAlreadyTakenError)
     e = await database.database['accounts'].find_one({})
     assert e['email_address'] == email_address
 
@@ -219,7 +215,7 @@ async def test_creating_user_email_address_already_taken(
     duplicate = copy.deepcopy(account_datas[1])
     duplicate['email_address'] = email_address
     res = await setup_account(client, duplicate['username'], duplicate)
-    assert check_error(res, errors.EmailAddressAlreadyTakenError)
+    assert fails(res, errors.EmailAddressAlreadyTakenError)
     e = await database.database['accounts'].find_one({})
     assert e['username'] == username
 
@@ -253,7 +249,7 @@ async def test_updating_existing_user_with_no_changes(
         headers=headers,
         json={k: v for k, v in account_data.items() if k != 'password'},
     )
-    assert res.status_code == 200
+    assert fails(res, None)
     assert e == await database.database['accounts'].find_one()
 
 
@@ -280,7 +276,7 @@ async def test_updating_existing_user_with_valid_username_not_in_use(
         headers=headers,
         json=account_data,
     )
-    assert res.status_code == 200
+    assert fails(res, None)
     e = await database.database['accounts'].find_one()
     assert account_data['username'] == e['username']
     e = await database.database['configurations'].find_one()
@@ -312,7 +308,7 @@ async def test_updating_existing_user_with_valid_username_in_use(
         headers=headers,
         json=account_data,
     )
-    assert check_error(res, errors.UsernameAlreadyTakenError)
+    assert fails(res, errors.UsernameAlreadyTakenError)
     e = await database.database['accounts'].find_one(
         filter={'email_address': email_address},
     )
@@ -341,7 +337,7 @@ async def test_updating_existing_user_with_valid_password(
         headers=headers,
         json=account_data,
     )
-    assert res.status_code == 200
+    assert fails(res, None)
     e = await database.database['accounts'].find_one()
     assert auth.verify_password(account_data['password'], e['password_hash'])
 
@@ -369,7 +365,7 @@ async def test_updating_existing_user_with_valid_email_address_in_use(
         headers=headers,
         json=account_data,
     )
-    assert check_error(res, errors.EmailAddressAlreadyTakenError)
+    assert fails(res, errors.EmailAddressAlreadyTakenError)
 
 
 ################################################################################
@@ -396,7 +392,7 @@ async def test_deleting_existing_user(
     await setup_submission(client, username, 'simple', submissions[0])
     survey = await sve.fetch(username, 'simple')
     res = await client.delete(url=f'/users/{username}', headers=headers)
-    assert res.status_code == 200
+    assert fails(res, None)
     assert await database.database['accounts'].find_one() is None
     assert await database.database['access_tokens'].find_one() is None
     assert await database.database['configurations'].find_one() is None
@@ -426,7 +422,7 @@ async def test_reading_existing_surveys(
     await setup_survey(client, headers, username, configuration)
     await setup_survey(client, headers, username, configurations[0])
     res = await client.get(url=f'/users/{username}/surveys', headers=headers)
-    assert res.status_code == 200
+    assert fails(res, None)
     assert len(res.json()) == 2
     assert {'max_identifier': 4, **configuration} in res.json()
     assert {'max_identifier': 1, **configurations[0]} in res.json()
@@ -446,7 +442,7 @@ async def test_reading_nonexistent_surveys(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     res = await client.get(url=f'/users/{username}/surveys', headers=headers)
-    assert res.status_code == 200
+    assert fails(res, None)
     assert res.json() == []
 
 
@@ -471,7 +467,7 @@ async def test_reading_existing_survey(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     res = await client.get(f'/users/{username}/surveys/simple')
-    assert res.status_code == 200
+    assert fails(res, None)
     assert res.json() == {'max_identifier': 4, **configuration}
 
 
@@ -479,7 +475,7 @@ async def test_reading_existing_survey(
 async def test_reading_nonexistent_survey(client, username):
     """Test that exception is raised when requesting a nonexistent survey."""
     res = await client.get(f'/users/{username}/surveys/simple')
-    assert check_error(res, errors.SurveyNotFoundError)
+    assert fails(res, errors.SurveyNotFoundError)
 
 
 @pytest.mark.asyncio
@@ -500,7 +496,7 @@ async def test_reading_existing_survey_in_draft_mode(
     configuration['draft'] = True
     await setup_survey(client, headers, username, configuration)
     res = await client.get(f'/users/{username}/surveys/simple')
-    assert check_error(res, errors.SurveyNotFoundError)
+    assert fails(res, errors.SurveyNotFoundError)
 
 
 @pytest.mark.asyncio
@@ -521,7 +517,7 @@ async def test_reading_existing_survey_outside_time_limits(
     configuration['end'] = configuration['start']
     await setup_survey(client, headers, username, configuration)
     res = await client.get(f'/users/{username}/surveys/simple')
-    assert res.status_code == 200
+    assert fails(res, None)
     assert res.json() == {
         k: v
         for k, v
@@ -550,7 +546,7 @@ async def test_creating_survey_with_valid_configuration(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     res = await setup_survey(client, headers, username, configuration)
-    assert res.status_code == 200
+    assert fails(res, None)
     e = await database.database['configurations'].find_one()
     assert e['username'] == username
     assert e['survey_name'] == 'simple'
@@ -572,7 +568,7 @@ async def test_creating_survey_with_invalid_configuration(
     headers = await setup_headers(client, account_data)
     configuration = invalid_configurations[0]
     res = await setup_survey(client, headers, username, configuration)
-    assert check_error(res, None)
+    assert fails(res, errors.InvalidSyntaxError)
     e = await database.database['configurations'].find_one()
     assert e is None
 
@@ -603,7 +599,7 @@ async def test_updating_existing_survey_with_valid_update_configurations(
             headers=headers,
             json=configuration,
         )
-        assert res.status_code == 200
+        assert fails(res, None)
         e = await database.database['configurations'].find_one()
         assert e['title'] == configuration['title']
         assert e['description'] == configuration['description']
@@ -637,7 +633,7 @@ async def test_updating_existing_survey_with_invalid_update_configuration(
             headers=headers,
             json=x,
         )
-        assert check_error(res, errors.InvalidSyntaxError)
+        assert fails(res, errors.InvalidSyntaxError)
 
 
 @pytest.mark.asyncio
@@ -659,7 +655,7 @@ async def test_updating_nonexistent_survey_with_valid_update_configuration(
         headers=headers,
         json=configuration,
     )
-    assert check_error(res, errors.SurveyNotFoundError)
+    assert fails(res, errors.SurveyNotFoundError)
     e = await database.database['configurations'].find_one()
     assert e is None
 
@@ -686,7 +682,7 @@ async def test_updating_survey_name_to_survey_name_not_in_use(
         headers=headers,
         json=configuration,
     )
-    assert res.status_code == 200
+    assert fails(res, None)
     e = await database.database['configurations'].find_one()
     assert e['survey_name'] == 'kangaroo'
 
@@ -714,7 +710,7 @@ async def test_updating_survey_name_to_survey_name_in_use(
         headers=headers,
         json=configuration,
     )
-    assert check_error(res, errors.SurveyNameAlreadyTakenError)
+    assert fails(res, errors.SurveyNameAlreadyTakenError)
     e = await database.database['configurations'].find_one(
         filter={'survey_name': 'simple'},
     )
@@ -748,7 +744,7 @@ async def test_deleting_existing_survey_with_existing_submissions(
         url=f'/users/{username}/surveys/simple',
         headers=headers,
     )
-    assert res.status_code == 200
+    assert fails(res, None)
     assert await database.database['configurations'].find_one() is None
     assert await survey.submissions.find_one() is None
 
@@ -783,7 +779,7 @@ async def test_exporting_submissions_with_submissions(
     for submission in submissionss[0]:
         await setup_submission(client, username, 'complex', submission)
     res = await client.get(url=f'{base}/submissions', headers=headers)
-    assert res.status_code == 200
+    assert fails(res, None)
     assert len(res.json()) == len(submissionss[0])
     identifiers = extract_identifiers(configurations[0])
     assert all([set(x.keys()) == identifiers for x in res.json()])
@@ -792,11 +788,11 @@ async def test_exporting_submissions_with_submissions(
     counter = len(submissionss[0])
     for configuration, submissions in zip(configurations[1:], submissionss[1:]):
         res = await client.put(url=base, headers=headers, json=configuration)
-        assert res.status_code == 200
+        assert fails(res, None)
         for submission in submissions:
             await setup_submission(client, username, 'complex', submission)
         res = await client.get(url=f'{base}/submissions', headers=headers)
-        assert res.status_code == 200
+        assert fails(res, None)
         counter += len(submissions)
         assert len(res.json()) == counter
         identifiers = extract_identifiers(configuration)
@@ -822,7 +818,7 @@ async def test_exporting_submissions_without_submissions(
         url=f'/users/{username}/surveys/simple/submissions',
         headers=headers,
     )
-    assert res.status_code == 200
+    assert fails(res, None)
     assert res.json() == []
 
 
@@ -851,7 +847,7 @@ async def test_creating_submission(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     res = await setup_submission(client, username, 'simple', submissions[0])
-    assert res.status_code == 200
+    assert fails(res, None)
     survey = await sve.fetch(username, 'simple')
     e = await survey.submissions.find_one()
     assert e['submission'] == submissions[0]
@@ -875,7 +871,7 @@ async def test_creating_invalid_submission(
     await setup_survey(client, headers, username, configuration)
     submission = invalid_submissions[0]
     res = await setup_submission(client, username, 'simple', submission)
-    assert check_error(res, None)
+    assert fails(res, errors.InvalidSyntaxError)
     survey = await sve.fetch(username, 'simple')
     e = await survey.submissions.find_one()
     assert e is None
@@ -908,7 +904,7 @@ async def test_resetting_survey_with_existing_submissions(
         url=f'/users/{username}/surveys/simple/submissions',
         headers=headers,
     )
-    assert res.status_code == 200
+    assert fails(res, None)
     assert await database.database['configurations'].find_one() is not None
     assert await survey.submissions.find_one() is None
 
@@ -939,7 +935,7 @@ async def test_verifying_valid_verification_token(
         url=f'/users/{username}/surveys/simple/verification',
         json={'verification_token': conftest.valid_token()},
     )
-    assert res.status_code == 200
+    assert fails(res, None)
     survey = await sve.fetch(username, 'simple')
     e = await survey.submissions.find_one()
     assert e['verified']
@@ -966,7 +962,7 @@ async def test_verifying_invalid_verification_token(
         url=f'/users/{username}/surveys/simple/verification',
         json={'verification_token': conftest.invalid_token()},
     )
-    assert check_error(res, errors.InvalidVerificationTokenError)
+    assert fails(res, errors.InvalidVerificationTokenError)
     survey = await sve.fetch(username, 'simple')
     e = await survey.submissions.find_one()
     assert not e['verified']
@@ -1000,17 +996,17 @@ async def test_reading_results_with_submissions(
     for submission in submissionss[0]:
         await setup_submission(client, username, 'complex', submission)
     res = await client.get(url=f'{base}/results', headers=headers)
-    assert res.status_code == 200
+    assert fails(res, None)
     assert res.json() == resultss[0]
 
     # aggregations with intermediate updates
     for i, configuration in enumerate(configurations[1:]):
         res = await client.put(url=base, headers=headers, json=configuration)
-        assert res.status_code == 200
+        assert fails(res, None)
         for submission in submissionss[i+1]:
             await setup_submission(client, username, 'complex', submission)
         res = await client.get(url=f'{base}/results', headers=headers)
-        assert res.status_code == 200
+        assert fails(res, None)
         assert res.json() == resultss[i+1]
 
 
@@ -1034,7 +1030,7 @@ async def test_reading_results_without_submissions(
         url=f'/users/{username}/surveys/simple/results',
         headers=headers,
     )
-    assert res.status_code == 200
+    assert fails(res, None)
     assert res.json() == default_results
 
 
@@ -1058,7 +1054,7 @@ async def test_logging_in_with_non_verified_account(
         url='/authentication',
         json={'identifier': username, 'password': password},
     )
-    assert check_error(res, errors.AccountNotVerifiedError)
+    assert fails(res, errors.AccountNotVerifiedError)
 
 
 @pytest.mark.asyncio
@@ -1081,7 +1077,7 @@ async def test_logging_in_with_valid_credentials(
             url='/authentication',
             json={'identifier': identifier, 'password': password},
         )
-        assert res.status_code == 200
+        assert fails(res, None)
 
 
 @pytest.mark.asyncio
@@ -1095,7 +1091,7 @@ async def test_logging_in_invalid_username(
         url='/authentication',
         json={'identifier': username, 'password': password},
     )
-    assert check_error(res, errors.UserNotFoundError)
+    assert fails(res, errors.UserNotFoundError)
 
 
 @pytest.mark.asyncio
@@ -1114,7 +1110,7 @@ async def test_logging_in_with_invalid_password(
         url='/authentication',
         json={'identifier': username, 'password': 'kangaroo'},
     )
-    assert check_error(res, errors.InvalidPasswordError)
+    assert fails(res, errors.InvalidPasswordError)
 
 
 ################################################################################
@@ -1136,7 +1132,7 @@ async def test_logging_out_existing_access_token(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     res = await client.delete(url='/authentication', headers=headers)
-    assert res.status_code == 200
+    assert fails(res, None)
     assert await database.database['access_token'].find_one() is None
     # try changing account data with old access token
     res = await client.put(
@@ -1144,7 +1140,7 @@ async def test_logging_out_existing_access_token(
         headers=headers,
         json=account_data,
     )
-    assert check_error(res, errors.InvalidAccessTokenError)
+    assert fails(res, errors.InvalidAccessTokenError)
 
 
 ################################################################################
@@ -1164,7 +1160,7 @@ async def test_verifying_email_address_with_valid_verification_token(
     """Test that email verification succeeds given valid verification token."""
     await setup_account(client, username, account_data)
     res = await setup_account_verification(client)
-    assert res.status_code == 200
+    assert fails(res, None)
     e = await database.database['accounts'].find_one({'username': username})
     assert e['verified']
 
@@ -1184,7 +1180,7 @@ async def test_verifying_email_address_with_invalid_verification_token(
         url=f'/verification',
         json={'verification_token': conftest.invalid_token()},
     )
-    assert check_error(res, errors.InvalidVerificationTokenError)
+    assert fails(res, errors.InvalidVerificationTokenError)
     e = await database.database['accounts'].find_one({'username': username})
     assert not e['verified']
 
@@ -1202,6 +1198,6 @@ async def test_verifying_previously_verified_email_address(
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     res = await setup_account_verification(client)
-    assert res.status_code == 200
+    assert fails(res, None)
     e = await database.database['accounts'].find_one({'username': username})
     assert e['verified']
