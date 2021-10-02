@@ -2,6 +2,7 @@ import fastapi
 import fastapi.middleware.cors
 import fastapi.exceptions
 import pydantic
+import logging
 
 import app.account as account
 import app.survey as survey
@@ -33,6 +34,7 @@ app.add_middleware(
 # add pydantic ValidationError exception handler
 @app.exception_handler(pydantic.ValidationError)
 async def validation_error_exception_handler(request, exc):
+    logging.debug(f'invalid syntax\n{exc}')
     return fastapi.responses.JSONResponse(
         status_code=errors.InvalidSyntaxError.STATUS_CODE,
         content={'detail': errors.InvalidSyntaxError.DETAIL},
@@ -41,6 +43,7 @@ async def validation_error_exception_handler(request, exc):
 # add fastapi RequestValidationError exception handler
 @app.exception_handler(fastapi.exceptions.RequestValidationError)
 async def request_validation_error_exception_handler(request, exc):
+    logging.debug(f'invalid syntax\n{exc}')
     return fastapi.responses.JSONResponse(
         status_code=errors.InvalidSyntaxError.STATUS_CODE,
         content={'detail': errors.InvalidSyntaxError.DETAIL},
