@@ -171,18 +171,23 @@ async def login(identifier, password):
         raise errors.UserNotFoundError()
     if account_data['verified'] is False:
         raise errors.AccountNotVerifiedError()
-    if not auth.verify_password(password, account_data['password_hash']):
+    correct, update = auth.verify_update_password(
+        password=password,
+        password_hash=account_data['password_hash'],
+    )
+    if not correct:
         raise errors.InvalidPasswordError()
     access_token = auth.generate_token()
     while True:
         try:
-            await database.database['access_tokens'].insert_one(
-                document={
-                    'username': account_data['username'],
-                    'access_token_hash': auth.hash_token(access_token),
-                    'issuance_time': utils.now(),
-                },
-            )
+            document = {
+                'username': account_data['username'],
+                'access_token_hash': auth.hash_token(access_token),
+                'issuance_time': utils.now(),
+            }
+            if update is not None:
+                document['password_hash'] = update
+            await database.database['access_tokens'].insert_one(document)
             break
         except pymongo.errors.DuplicateKeyError as error:
             index = str(error).split()[7]
