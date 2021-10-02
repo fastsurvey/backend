@@ -3,12 +3,13 @@ import fastapi.middleware.cors
 import fastapi.exceptions
 import pydantic
 
-import app.account as acn
-import app.survey as sve
+import app.account as account
+import app.survey as survey
+import app.submission as submission
 import app.documentation as docs
 import app.settings as settings
 import app.validation as validation
-import app.authentication as auth
+import app.auth as auth
 import app.utils as utils
 import app.errors as errors
 
@@ -68,7 +69,7 @@ async def read_user(
         data: validation.ReadUserRequest = fastapi.Depends(),
     ):
     """Fetch the given user's account data."""
-    return await acn.read(data.username)
+    return await account.read(data.username)
 
 
 @app.post(**docs.SPECIFICATIONS['create_user'])
@@ -76,7 +77,7 @@ async def create_user(
         data: validation.CreateUserRequest = fastapi.Depends(),
     ):
     """Create a new user based on the given account data."""
-    await acn.create(data.account_data.dict())
+    await account.create(data.account_data.dict())
 
 
 @app.put(**docs.SPECIFICATIONS['update_user'])
@@ -85,7 +86,7 @@ async def update_user(
         data: validation.UpdateUserRequest = fastapi.Depends(),
     ):
     """Update the given user's account data."""
-    await acn.update(data.username, data.account_data.dict())
+    await account.update(data.username, data.account_data.dict())
 
 
 @app.delete(**docs.SPECIFICATIONS['delete_user'])
@@ -94,7 +95,7 @@ async def delete_user(
         data: validation.DeleteUserRequest = fastapi.Depends(),
     ):
     """Delete the user and all their surveys from the database."""
-    await acn.delete(data.username)
+    await account.delete(data.username)
 
 
 @app.get(**docs.SPECIFICATIONS['read_surveys'])
@@ -108,7 +109,7 @@ async def read_surveys(
     draft mode **are** returned.
 
     """
-    return await acn.read_configurations(data.username)
+    return await account.read_configurations(data.username)
 
 
 @app.get(**docs.SPECIFICATIONS['read_survey'])
@@ -122,18 +123,15 @@ async def read_survey(
     survey, only some meta information are returned.
 
     """
-    configuration = await sve.read(
-        data.username,
-        data.survey_name,
-        return_drafts=False,
-    )
+    configuration = await survey.read(data.username, data.survey_name)
+    if configuration['draft']:
+        raise errors.SurveyNotFoundError()
     timestamp = utils.now()
+    start, end = configuration['start'], configuration['end']
     exclude = ['_id']
     if (
-        configuration['start'] is not None
-        and timestamp < configuration['start']
-        or configuration['end'] is not None
-        and timestamp >= configuration['end']
+        start is not None and timestamp < start
+        or end is not None and timestamp >= end
     ):
         exclude += ['fields', 'max_identifier']
     return {k: v for k, v in configuration.items() if k not in exclude}
@@ -145,7 +143,7 @@ async def create_survey(
         data: validation.CreateSurveyRequest = fastapi.Depends(),
     ):
     """Create new survey with given configuration."""
-    await sve.create(data.username, data.configuration.dict(by_alias=True))
+    await survey.create(data.username, data.configuration.dict(by_alias=True))
 
 
 @app.put(**docs.SPECIFICATIONS['update_survey'])
@@ -154,7 +152,7 @@ async def update_survey(
         data: validation.UpdateSurveyRequest = fastapi.Depends(),
     ):
     """Update survey with given configuration."""
-    await sve.update(
+    await survey.update(
         data.username,
         data.survey_name,
         data.configuration.dict(by_alias=True),
@@ -167,7 +165,7 @@ async def delete_survey(
         data: validation.DeleteSurveyRequest = fastapi.Depends(),
     ):
     """Delete given survey including all its submissions and other data."""
-    await sve.delete(data.username, data.survey_name)
+    await survey.delete(data.username, data.survey_name)
 
 
 @app.get(**docs.SPECIFICATIONS['export_submissions'])
@@ -176,8 +174,7 @@ async def export_submissions(
         data: validation.ReadSubmissionsRequest = fastapi.Depends(),
     ):
     """Export the submissions of a survey in a consistent format."""
-    survey = await sve.fetch(data.username, data.survey_name)
-    return await survey.export_submissions()
+    return await survey.export(data.username, data.survey_name)
 
 
 @app.post(**docs.SPECIFICATIONS['create_submission'])
@@ -185,13 +182,11 @@ async def create_submission(
         data: validation.CreateSubmissionRequest = fastapi.Depends(),
     ):
     """Validate submission and store it under pending submissions."""
-    survey = await sve.fetch(
+    return await submission.submit(
         data.username,
         data.survey_name,
-        return_drafts=False,
+        data.submission,
     )
-    survey.Submission(**data.submission)
-    return await survey.submit(data.submission)
 
 
 @app.delete(**docs.SPECIFICATIONS['reset_survey'])
@@ -200,7 +195,7 @@ async def reset_survey(
         data: validation.ResetSurveyRequest = fastapi.Depends(),
     ):
     """Reset a survey by deleting all submission data including any results."""
-    await sve.reset(data.username, data.survey_name)
+    await survey.reset(data.username, data.survey_name)
 
 
 @app.post(**docs.SPECIFICATIONS['verify_submission'])
@@ -208,12 +203,11 @@ async def verify_submission(
         data: validation.VerifySubmissionRequest = fastapi.Depends(),
     ):
     """Verify a submission given the verification token sent via email."""
-    survey = await sve.fetch(
+    return await submission.verify(
         data.username,
         data.survey_name,
-        return_drafts=False,
+        data.verification_credentials.verification_token,
     )
-    return await survey.verify(data.verification_credentials.verification_token)
 
 
 @app.get(**docs.SPECIFICATIONS['read_results'])
@@ -222,8 +216,7 @@ async def read_results(
         data: validation.ReadResultsRequest = fastapi.Depends(),
     ):
     """Fetch the results of the given survey."""
-    survey = await sve.fetch(data.username, data.survey_name)
-    return await survey.aggregate()
+    return await survey.aggregate(data.username, data.survey_name)
 
 
 @app.post(**docs.SPECIFICATIONS['login'])
@@ -231,7 +224,7 @@ async def login(
         data: validation.LoginRequest = fastapi.Depends(),
     ):
     """Generate an access token used to authenticate to protected routes."""
-    return await acn.login(
+    return await account.login(
         data.authentication_credentials.identifier,
         data.authentication_credentials.password,
     )
@@ -242,7 +235,7 @@ async def logout(
         data: validation.LogoutRequest = fastapi.Depends(),
     ):
     """Logout a user by rendering their access token useless."""
-    return await acn.logout(data.access_token)
+    return await account.logout(data.access_token)
 
 
 @app.post(**docs.SPECIFICATIONS['verify_account_email_address'])
@@ -250,4 +243,6 @@ async def verify_account_email_address(
         data: validation.VerifyAccountEmailAddressRequest = fastapi.Depends(),
     ):
     """Verify an email address given the verification token sent via email."""
-    return await acn.verify(data.verification_credentials.verification_token)
+    return await account.verify(
+        data.verification_credentials.verification_token,
+    )

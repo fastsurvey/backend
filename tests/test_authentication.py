@@ -1,4 +1,4 @@
-import app.authentication as auth
+import app.auth as auth
 
 
 def test_password_flow():

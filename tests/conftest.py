@@ -2,10 +2,10 @@ import pytest
 import asyncio
 import json
 
-import app.survey as sve
-import app.authentication as auth
+import app.auth as auth
 import app.resources.database as database
 import app.email as email
+
 import tests.data as data
 
 

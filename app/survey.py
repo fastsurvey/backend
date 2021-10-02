@@ -1,142 +1,24 @@
 import pymongo.errors
-import fastapi.responses
 
 import app.aggregation as aggregation
-import app.export as export
-import app.utils as utils
-import app.email as email
-import app.settings as settings
+import app.exportation as exportation
 import app.resources.database as database
 import app.errors as errors
-import app.models as models
-import app.authentication as auth
 
 
-################################################################################
-# Survey Class
-################################################################################
+def submissions_from_configuration(configuration):
+    """Build link to submission collection from survey configuration."""
+    identifier = configuration['_id']
+    return database.database[f'surveys.{identifier}.submissions']
 
 
-class Survey:
-    """The survey class that all surveys instantiate."""
-
-    def __init__(self, survey_id, username, configuration):
-        """Create a survey from the given json configuration file."""
-        self.survey_id = survey_id
-        self.username = username
-        self.max_identifier = configuration.pop('max_identifier')
-        self.configuration = configuration
-        self.survey_name = self.configuration['survey_name']
-        self.start = self.configuration['start']
-        self.end = self.configuration['end']
-        self.email_id = Survey._find_email_field_to_verify(self.configuration)
-        self.submissions = database.database[
-            f'surveys.{str(self.survey_id)}.submissions'
-        ]
-        self.Submission = models.build_submission_model(configuration)
-
-    @staticmethod
-    def _find_email_field_to_verify(configuration):
-        """Find field identifier of potential email field to verify."""
-        for field in configuration['fields']:
-            if field['type'] == 'email' and field['verify']:
-                return field['identifier']
-        return None
-
-    async def submit(self, submission):
-        """Save a user's submission in the submissions collection."""
-        timestamp = utils.now()
-        if self.start is not None and timestamp < self.start:
-            raise errors.InvalidTimingError()
-        if self.end is not None and timestamp >= self.end:
-            raise errors.InvalidTimingError()
-        if self.email_id is None:
-            await self.submissions.insert_one(
-                document={
-                    'submission_time': timestamp,
-                    'submission': submission,
-                }
-            )
-        else:
-            verification_token = auth.generate_token()
-            while True:
-                try:
-                    await self.submissions.insert_one(
-                        document={
-                            '_id': auth.hash_token(verification_token),
-                            'submission_time': timestamp,
-                            'verified': False,
-                            'submission': submission,
-                        }
-                    )
-                    break
-                except pymongo.errors.DuplicateKeyError:
-                    verification_token = auth.generate_token()
-
-            # Sending the submission verification email can fail (e.g. because
-            # of an invalid email address). Nevertheless, we don't react to this
-            # happening here. Maybe the author will be able to request a new
-            # verification email in the future. In the case of an invalid email
-            # address the submission will simply remain as a valid unverified
-            # submission.
-
-            await email.send_submission_verification(
-                submission[str(self.email_id)],
-                self.username,
-                self.survey_name,
-                self.configuration['title'],
-                verification_token,
-            )
-
-    async def verify(self, verification_token):
-        """Verify the user's email address and save submission as verified."""
-        timestamp = utils.now()
-        if self.start is not None and timestamp < self.start:
-            raise errors.InvalidTimingError()
-        if self.end is not None and timestamp >= self.end:
-            raise errors.InvalidTimingError()
-        res = await self.submissions.update_one(
-            filter={'_id': auth.hash_token(verification_token)},
-            update={
-                '$set': {
-                    'verification_time': timestamp,
-                    'verified': True,
-                },
-            },
-        )
-        if res.matched_count == 0:
-            raise errors.InvalidVerificationTokenError()
-
-    async def aggregate(self):
-        """Query the survey submissions and return aggregated results."""
-        return await aggregation.aggregate(self.submissions, self.configuration)
-
-
-    async def export_submissions(self):
-        """Export the submissions of a survey in a consistent format."""
-        return await export.export(self.submissions, self.configuration)
-
-
-################################################################################
-# Functions To Manage Surveys
-################################################################################
-
-
-async def fetch(username, survey_name, return_drafts=True):
-    configuration = await read(username, survey_name, return_drafts)
-    survey_id = configuration.pop('_id')
-    return Survey(survey_id, username, configuration)
-
-
-async def read(username, survey_name, return_drafts=True):
+async def read(username, survey_name):
     """Return the survey configuration corresponding to the user's survey."""
     configuration = await database.database['configurations'].find_one(
         filter={'username': username, 'survey_name': survey_name},
         projection={'username': False},
     )
     if configuration is None:
-        raise errors.SurveyNotFoundError()
-    if configuration['draft'] and not return_drafts:
         raise errors.SurveyNotFoundError()
     return configuration
 
@@ -220,18 +102,32 @@ async def update(username, survey_name, update):
 
 async def reset(username, survey_name):
     """Delete all submission data but keep the survey configuration."""
-    identifier = (await read(username, survey_name))['_id']
-    submissions = database.database[f'surveys.{identifier}.submissions']
+    configuration = await read(username, survey_name)
+    submissions = submissions_from_configuration(configuration)
     await submissions.drop()
 
 
 async def delete(username, survey_name):
     """Delete the survey and all its data from the database."""
-    identifier = (await read(username, survey_name))['_id']
-    submissions = database.database[f'surveys.{identifier}.submissions']
+    configuration = await read(username, survey_name)
+    submissions = submissions_from_configuration(configuration)
     async with await database.client.start_session() as session:
         async with session.start_transaction():
             await database.database['configurations'].delete_one(
-                filter={'_id': identifier},
+                filter={'_id': configuration['_id']},
             )
             await submissions.drop()
+
+
+async def aggregate(username, survey_name):
+    """Query the survey submissions and return aggregated results."""
+    configuration = await read(username, survey_name)
+    submissions = submissions_from_configuration(configuration)
+    return await aggregation.aggregate(submissions, configuration)
+
+
+async def export(username, survey_name):
+    """Export the submissions of a survey in a consistent format."""
+    configuration = await read(username, survey_name)
+    submissions = submissions_from_configuration(configuration)
+    return await exportation.export(submissions, configuration)
