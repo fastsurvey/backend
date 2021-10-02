@@ -339,7 +339,11 @@ async def test_updating_existing_user_with_valid_password(
     )
     assert fails(res, None)
     e = await database.database['accounts'].find_one()
-    assert auth.verify_password(account_data['password'], e['password_hash'])
+    correct, _ = auth.verify_update_password(
+        account_data['password'],
+        e['password_hash'],
+    )
+    assert correct
 
 
 @pytest.mark.skip(reason='todo')
