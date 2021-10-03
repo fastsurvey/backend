@@ -133,7 +133,7 @@ class SelectionField(Field):
         max_items=Length.A,
     )
     min_select: pydantic.conint(strict=True, ge=0)
-    max_select: pydantic.conint(strict=True, ge=0)
+    max_select: pydantic.conint(strict=True, ge=1)
 
     @pydantic.validator('options')
     def validate_options(cls, v):
