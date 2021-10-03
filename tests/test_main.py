@@ -504,6 +504,7 @@ async def test_reading_existing_survey_in_draft_mode(
     assert fails(res, errors.SurveyNotFoundError)
 
 
+@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_reading_existing_survey_outside_time_limits(
         mock_email_sending,

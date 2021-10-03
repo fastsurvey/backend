@@ -129,14 +129,14 @@ async def read_survey(
     configuration = await survey.read(data.username, data.survey_name)
     if configuration['draft']:
         raise errors.SurveyNotFoundError()
-    timestamp = utils.now()
-    start, end = configuration['start'], configuration['end']
+    # timestamp = utils.now()
+    # start, end = configuration['start'], configuration['end']
     exclude = ['_id']
-    if (
-        start is not None and timestamp < start
-        or end is not None and timestamp >= end
-    ):
-        exclude += ['fields', 'max_identifier']
+    # if (
+    #     start is not None and timestamp < start
+    #     or end is not None and timestamp >= end
+    # ):
+    #     exclude += ['fields', 'max_identifier']
     return {k: v for k, v in configuration.items() if k not in exclude}
 
 
