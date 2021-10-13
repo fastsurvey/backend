@@ -1,6 +1,6 @@
 # Fastsurvey Backend
 
-[![Maintainability](https://api.codeclimate.com/v1/badges/0886890b76260c1eb047/maintainability)](https://codeclimate.com/github/fastsurvey/backend/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/0886890b76260c1eb047/test_coverage)](https://codeclimate.com/github/fastsurvey/backend/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/5bf56497eaca37fe1635/maintainability)](https://codeclimate.com/repos/61675e535da22f01b70008b4/maintainability) [![Test Coverage](https://api.codeclimate.com/v1/badges/5bf56497eaca37fe1635/test_coverage)](https://codeclimate.com/repos/61675e535da22f01b70008b4/test_coverage)
 
 **Landing Page:** [fastsurvey.de](https://fastsurvey.de/)</br>
 **Project Documentation:** [docs.fastsurvey.de](https://docs.fastsurvey.de/)</br>

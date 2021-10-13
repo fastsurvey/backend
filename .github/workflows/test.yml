@@ -25,6 +25,6 @@ jobs:
     - name: Push Coverage Report to CodeClimate
       uses: paambaati/codeclimate-action@v2.3.0
       env:
-        CC_TEST_REPORTER_ID: 3298667b78909cd0b6566313fce031e23d17c5efc5aa6d1cc8d3c10ce2ef2e9a
+        CC_TEST_REPORTER_ID: 75fa0e5f1732473ae15cbfd2cd58e9c109990133038e68565f72ddbb87f0ec1c
       with:
         coverageCommand: true
