@@ -1,12 +1,16 @@
-FROM python:3.8
+FROM python:3.8.5-slim
 
 LABEL maintainer="Felix Böhm <felix@felixboehm.dev>"
 LABEL source="https://github.com/fastsurvey/backend"
 
-RUN pip install --upgrade pip && pip install poetry==1.1.6
+# install poetry
+ENV POETRY_VERSION=1.1.11
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
+ENV PATH="/root/.local/bin:$PATH"
 
-COPY pyproject.toml pyproject.toml
-COPY poetry.lock poetry.lock
+COPY pyproject.toml poetry.lock /
 
 # install dependencies and remove poetry afterwards
 RUN poetry config virtualenvs.create false && \
@@ -17,14 +21,9 @@ RUN poetry config virtualenvs.create false && \
 EXPOSE 8000
 
 # read commit hash and branch name as build arguments
-ARG commit_sha
-ARG branch_name
-
-LABEL commit_sha=${commit_sha}
-LABEL branch_name=${branch_name}
-
-ENV COMMIT_SHA=${commit_sha}
-ENV BRANCH_NAME=${branch_name}
+ARG commit_sha branch_name
+LABEL commit_sha=${commit_sha} branch_name=${branch_name}
+ENV COMMIT_SHA=${commit_sha} BRANCH_NAME=${branch_name}
 
 COPY /app /app
 

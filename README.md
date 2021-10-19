@@ -19,7 +19,9 @@ We take security very seriously. If you believe you have discovered a vulnerabil
 
 ## Development
 
-- specify your environment variables in a `.env` file
+- install the python version noted in `.python-version` via `pyenv`
+- install the poetry version noted in the `Dockerfile`
 - install dependencies via `poetry install --remove-untracked`
+- specify your environment variables in a `.env` file
 - run tests via `./scripts/test`
 - run in development mode via `./scripts/develop`
