@@ -163,9 +163,9 @@ class TextField(Field):
 
 
 class Configuration(BaseModel):
+    survey_name: SurveyName
     title: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
     description: pydantic.StrictStr
-    survey_name: SurveyName
     start: typing.Optional[Timestamp] = pydantic.Field(...)
     end: typing.Optional[Timestamp] = pydantic.Field(...)
     draft: pydantic.StrictBool
@@ -179,7 +179,7 @@ class Configuration(BaseModel):
         ],
         min_items=1,
         max_items=Length.A,
-     ) = pydantic.Field(alias='fields')
+    ) = pydantic.Field(alias='fields')
 
     @pydantic.validator('end')
     def validate_end(cls, v, values):

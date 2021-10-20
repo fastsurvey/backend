@@ -11,12 +11,19 @@ def _build_aggregation_pipeline(configuration):
         identifier = str(field['identifier'])
         if field['type'] == 'email':
             pipeline[1]['$project'][identifier] = {
-                'email_address': {
-                    '$ifNull': [f'$submission.{identifier}', None],
+                '$cond': {
+                    'if': f'$submission.{identifier}',
+                    'then': {
+                        'email_address': f'$submission.{identifier}',
+                        'verified': {
+                            '$ifNull': ['$verified', None],
+                        },
+                    },
+                    'else': {
+                        'email_address': None,
+                        'verified': None,
+                    },
                 },
-                'verified': {
-                    '$ifNull': [f'$verified', None],
-                }
             }
         else:
             pipeline[1]['$project'][identifier] = {
