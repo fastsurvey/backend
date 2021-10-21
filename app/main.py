@@ -129,7 +129,7 @@ async def read_survey(
     configuration = await survey.read(data.username, data.survey_name)
     if configuration['draft']:
         raise errors.SurveyNotFoundError()
-    # timestamp = utils.now()
+    # timestamp = utils.timestamp()
     # start, end = configuration['start'], configuration['end']
     exclude = ['_id']
     # if (

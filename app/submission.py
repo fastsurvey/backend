@@ -13,7 +13,7 @@ async def submit(username, survey_name, submission):
     configuration = await survey.read(username, survey_name)
     if configuration['draft']:
         raise errors.SurveyNotFoundError()
-    timestamp = utils.now()
+    timestamp = utils.timestamp()
     start, end = configuration['start'], configuration['end']
     if start is not None and timestamp < start:
         raise errors.InvalidTimingError()
@@ -72,7 +72,7 @@ async def verify(username, survey_name, verification_token):
     configuration = await survey.read(username, survey_name)
     if configuration['draft']:
         raise errors.SurveyNotFoundError()
-    timestamp = utils.now()
+    timestamp = utils.timestamp()
     start, end = configuration['start'], configuration['end']
     if start is not None and timestamp < start:
         raise errors.InvalidTimingError()

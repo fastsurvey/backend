@@ -36,4 +36,4 @@ COMMIT_SHA = os.getenv('COMMIT_SHA')
 # git branch name
 BRANCH_NAME = os.getenv('BRANCH_NAME')
 # timestamp of when the server was started
-START_TIME = utils.now()
+START_TIME = utils.timestamp()

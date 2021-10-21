@@ -51,7 +51,7 @@ database['access_tokens'].create_indexes([
     pymongo.IndexModel(
         keys='issuance_time',
         name='issuance_time_index',
-        expireAfterSeconds=14*24*60*60,  # 14 days
+        expireAfterSeconds=4*7*24*60*60,  # 4 weeks
     ),
 ])
 # connect to mongodb via motor

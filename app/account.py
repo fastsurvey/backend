@@ -34,7 +34,7 @@ async def create(account_data):
                     'email_address': account_data['email_address'],
                     'password_hash': password_hash,
                     'creation_time': timestamp,
-                    'modification_time': timestamp,
+                    'modification_time': int(timestamp.timestamp()),
                     'verified': False,
                     'verification_token_hash': verification_token_hash,
                 },
@@ -84,7 +84,7 @@ async def update(username, account_data):
     if x is None:
         raise errors.UserNotFoundError()
     # determine update steps
-    update = {'modification_time': utils.now()}
+    update = {'modification_time': utils.timestamp()}
     if account_data['username'] != username:
         update['username'] = account_data['username']
     if account_data['email_address'] != x['email_address']:
