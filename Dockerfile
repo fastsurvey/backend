@@ -12,10 +12,9 @@ ENV PATH="/root/.local/bin:$PATH"
 
 COPY pyproject.toml poetry.lock /
 
-# install dependencies and remove poetry afterwards
+# install dependencies
 RUN poetry config virtualenvs.create false && \
     poetry install --no-dev --no-ansi --no-interaction && \
-    pip uninstall --yes poetry && \
     rm pyproject.toml poetry.lock
 
 EXPOSE 8000
