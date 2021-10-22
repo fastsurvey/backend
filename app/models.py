@@ -17,8 +17,8 @@ class Length(int, enum.Enum):
 
 
 class Pattern(str, enum.Enum):
-    USERNAME = r'^[a-z0-9-]{1,32}$'
-    SURVEY_NAME = r'^[a-z0-9-]{1,32}$'
+    USERNAME = r'^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$'
+    SURVEY_NAME = r'^(?!-)(?!.*--)[a-z0-9-]{1,32}(?<!-)$'
     EMAIL_ADDRESS = r'^.+@.+$'
 
 

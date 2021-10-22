@@ -34,9 +34,29 @@ def _build_invalid_account_datas(account_data):
     x = copy.deepcopy(account_data)
     x['username'] = ''
     invalid_account_datas.append(x)
+    # username parameter has invalid value
+    x = copy.deepcopy(account_data)
+    x['username'] = 'test-'
+    invalid_account_datas.append(x)
+    # username parameter has invalid value
+    x = copy.deepcopy(account_data)
+    x['username'] = '-'
+    invalid_account_datas.append(x)
+    # username parameter has invalid value
+    x = copy.deepcopy(account_data)
+    x['username'] = '---------------'
+    invalid_account_datas.append(x)
+    # username parameter has invalid value
+    x = copy.deepcopy(account_data)
+    x['username'] = 'test--test'
+    invalid_account_datas.append(x)
+    # username parameter has invalid value
+    x = copy.deepcopy(account_data)
+    x['username'] = 'a' * (models.Length.A + 1)
+    invalid_account_datas.append(x)
     # password parameter has invalid value
     x = copy.deepcopy(account_data)
-    x['password'] = '1234'
+    x['password'] = '1234567'
     invalid_account_datas.append(x)
     # password parameter has invalid value
     x = copy.deepcopy(account_data)
@@ -100,6 +120,22 @@ def _build_invalid_configurations(configuration):
     # survey_name parameter has invalid value
     x = copy.deepcopy(configuration)
     x['survey_name'] = '$' * 8
+    invalid_configurations.append(x)
+    # survey_name parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['survey_name'] = 'simple----apple'
+    invalid_configurations.append(x)
+    # survey_name parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['survey_name'] = ''
+    invalid_configurations.append(x)
+    # survey_name parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['survey_name'] = '-orange'
+    invalid_configurations.append(x)
+    # survey_name parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x['survey_name'] = 'n' * (models.Length.A + 1)
     invalid_configurations.append(x)
     # title parameter has invalid value
     x = copy.deepcopy(configuration)
