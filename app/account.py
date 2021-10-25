@@ -5,7 +5,7 @@ import fastapi
 import app.email as email
 import app.auth as auth
 import app.utils as utils
-import app.resources.database as database
+import app.database as database
 import app.errors as errors
 
 

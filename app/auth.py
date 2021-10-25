@@ -3,7 +3,7 @@ import passlib.context as context
 import hashlib
 import functools
 
-import app.resources.database as database
+import app.database as database
 import app.utils as utils
 import app.errors as errors
 

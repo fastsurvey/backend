@@ -4,7 +4,7 @@ import copy
 
 import app.main as main
 import app.survey as survey
-import app.resources.database as database
+import app.database as database
 import app.auth as auth
 import app.errors as errors
 

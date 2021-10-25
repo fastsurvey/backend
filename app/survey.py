@@ -2,7 +2,7 @@ import pymongo.errors
 
 import app.aggregation as aggregation
 import app.exportation as exportation
-import app.resources.database as database
+import app.database as database
 import app.errors as errors
 
 

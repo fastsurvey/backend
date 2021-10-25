@@ -3,7 +3,7 @@ import asyncio
 import json
 
 import app.auth as auth
-import app.resources.database as database
+import app.database as database
 import app.email as email
 
 import tests.data as data

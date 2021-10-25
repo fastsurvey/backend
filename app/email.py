@@ -1,8 +1,8 @@
 import os
 import os.path
+import httpx
 
 import app.settings as settings
-import app.resources.http as http
 
 
 def _read_templates():
@@ -16,8 +16,13 @@ def _read_templates():
     return templates
 
 
-# html email templates
+# HTML email templates
 _TEMPLATES = _read_templates()
+# email HTTP client
+_CLIENT = httpx.AsyncClient(
+    base_url=settings.MAILGUN_ENDPOINT,
+    auth=('api', settings.MAILGUN_API_KEY),
+)
 
 
 async def _send(email_address, subject, content):
@@ -30,7 +35,7 @@ async def _send(email_address, subject, content):
         'o:testmode': 'true' if settings.ENVIRONMENT == 'test' else 'false',
         'o:tag': [f'{settings.ENVIRONMENT} transactional'],
     }
-    response = await http.client.post('/messages', data=data)
+    response = await _CLIENT.post('/messages', data=data)
     return response.status_code
 
 
