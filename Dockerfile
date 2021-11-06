@@ -10,6 +10,10 @@ RUN apt-get update && \
     curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
 ENV PATH="/root/.local/bin:$PATH"
 
+# update pip; usually don't need this, but otherwise cryptography package install fails
+RUN python -m pip install pip==21.3.1
+
+# copy dependency information
 COPY pyproject.toml poetry.lock /
 
 # install dependencies
