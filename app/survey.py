@@ -8,15 +8,15 @@ import app.errors as errors
 
 def submissions_from_configuration(configuration):
     """Build link to submission collection from survey configuration."""
-    identifier = configuration['_id']
-    return database.database[f'surveys.{identifier}.submissions']
+    identifier = configuration["_id"]
+    return database.database[f"surveys.{identifier}.submissions"]
 
 
 async def read(username, survey_name):
     """Return the survey configuration corresponding to the user's survey."""
-    configuration = await database.database['configurations'].find_one(
-        filter={'username': username, 'survey_name': survey_name},
-        projection={'username': False},
+    configuration = await database.database["configurations"].find_one(
+        filter={"username": username, "survey_name": survey_name},
+        projection={"username": False},
     )
     if configuration is None:
         raise errors.SurveyNotFoundError()
@@ -25,20 +25,20 @@ async def read(username, survey_name):
 
 async def create(username, configuration):
     """Create a new survey configuration in the database."""
-    identifiers = {field['identifier'] for field in configuration['fields']}
-    if identifiers != set(range(len(configuration['fields']))):
+    identifiers = {field["identifier"] for field in configuration["fields"]}
+    if identifiers != set(range(len(configuration["fields"]))):
         raise errors.InvalidSyntaxError()
     try:
-        await database.database['configurations'].insert_one(
+        await database.database["configurations"].insert_one(
             document={
-                'username': username,
-                'max_identifier': configuration['fields'][-1]['identifier'],
+                "username": username,
+                "max_identifier": configuration["fields"][-1]["identifier"],
                 **configuration,
             },
         )
     except pymongo.errors.DuplicateKeyError as error:
         index = str(error).split()[7]
-        if index == 'username_survey_name_index':
+        if index == "username_survey_name_index":
             raise errors.SurveyNameAlreadyTakenError()
         else:
             raise errors.InternalServerError()
@@ -61,38 +61,38 @@ async def update(username, survey_name, update):
     configuration = await read(username, survey_name)
 
     def identifiers(configuration):
-        return {field['identifier'] for field in configuration['fields']}
+        return {field["identifier"] for field in configuration["fields"]}
 
     # check that fields with unchanged identifier have the same field type
-    for x in update['fields']:
-        for y in configuration['fields']:
-            if x['identifier'] == y['identifier'] and x['type'] != y['type']:
+    for x in update["fields"]:
+        for y in configuration["fields"]:
+            if x["identifier"] == y["identifier"] and x["type"] != y["type"]:
                 raise errors.InvalidSyntaxError()
 
     # check that new fields are numbered in ascending order
     new = identifiers(update) - identifiers(configuration)
     for i, e in enumerate(sorted(new)):
-        if e != configuration['max_identifier'] + i + 1:
+        if e != configuration["max_identifier"] + i + 1:
             raise errors.InvalidSyntaxError()
 
     # write changes to database
     try:
-        res = await database.database['configurations'].replace_one(
+        res = await database.database["configurations"].replace_one(
             filter={
-                '_id': configuration['_id'],
+                "_id": configuration["_id"],
                 # this ensures that even when the configuration changed
                 # between read and write, that only valid updates are written
-                'max_identifier': configuration['max_identifier'],
+                "max_identifier": configuration["max_identifier"],
             },
             replacement={
-                'username': username,
-                'max_identifier': max(identifiers(update)),
+                "username": username,
+                "max_identifier": max(identifiers(update)),
                 **update,
             },
         )
     except pymongo.errors.DuplicateKeyError as error:
         index = str(error).split()[7]
-        if index == 'username_survey_name_index':
+        if index == "username_survey_name_index":
             raise errors.SurveyNameAlreadyTakenError()
         else:
             raise errors.InternalServerError()
@@ -113,8 +113,8 @@ async def delete(username, survey_name):
     submissions = submissions_from_configuration(configuration)
     async with await database.client.start_session() as session:
         async with session.start_transaction():
-            await database.database['configurations'].delete_one(
-                filter={'_id': configuration['_id']},
+            await database.database["configurations"].delete_one(
+                filter={"_id": configuration["_id"]},
             )
             await submissions.drop()
 

@@ -8,12 +8,12 @@ import app.utils as utils
 import app.errors as errors
 
 
-_CONTEXT = context.CryptContext(schemes=['argon2'], deprecated='auto')
+_CONTEXT = context.CryptContext(schemes=["argon2"], deprecated="auto")
 
 
-################################################################################
+########################################################################################
 # Password Flow
-################################################################################
+########################################################################################
 
 
 def hash_password(password):
@@ -26,9 +26,9 @@ def verify_update_password(password, password_hash):
     return _CONTEXT.verify_and_update(password, password_hash)
 
 
-################################################################################
+########################################################################################
 # Token Flow
-################################################################################
+########################################################################################
 
 
 def generate_token():
@@ -38,22 +38,24 @@ def generate_token():
 
 def hash_token(token):
     """Hash the given token and return the hash as string."""
-    return hashlib.sha512(token.encode('utf-8')).hexdigest()
+    return hashlib.sha512(token.encode("utf-8")).hexdigest()
 
 
 def authorize(func):
     """Enforce proper authorization for the given fastapi route."""
+
     @functools.wraps(func)
     async def wrapper(**kwargs):
-        access_token = kwargs['data'].access_token
-        res = await database.database['access_tokens'].find_one_and_update(
-            filter={'access_token_hash': hash_token(access_token)},
-            update={'$set': {'issuance_time': utils.now()}},
-            projection={'_id': False, 'username': True},
+        access_token = kwargs["data"].access_token
+        res = await database.database["access_tokens"].find_one_and_update(
+            filter={"access_token_hash": hash_token(access_token)},
+            update={"$set": {"issuance_time": utils.now()}},
+            projection={"_id": False, "username": True},
         )
         if res is None:
             raise errors.InvalidAccessTokenError()
-        if kwargs['data'].username != res['username']:
+        if kwargs["data"].username != res["username"]:
             raise errors.AccessForbiddenError()
         return await func(**kwargs)
+
     return wrapper

@@ -11,10 +11,10 @@ import app.models as models
 async def submit(username, survey_name, submission):
     """Save a user's submission in the submissions collection."""
     configuration = await survey.read(username, survey_name)
-    if configuration['draft']:
+    if configuration["draft"]:
         raise errors.SurveyNotFoundError()
     timestamp = utils.timestamp()
-    start, end = configuration['start'], configuration['end']
+    start, end = configuration["start"], configuration["end"]
     if start is not None and timestamp < start:
         raise errors.InvalidTimingError()
     if end is not None and timestamp >= end:
@@ -26,17 +26,17 @@ async def submit(username, survey_name, submission):
 
     # save submission and send verification email if email is to be verified
     submissions = survey.submissions_from_configuration(configuration)
-    for field in configuration['fields']:
-        if field['type'] == 'email' and field['verify']:
+    for field in configuration["fields"]:
+        if field["type"] == "email" and field["verify"]:
             verification_token = auth.generate_token()
             while True:
                 try:
                     await submissions.insert_one(
                         document={
-                            '_id': auth.hash_token(verification_token),
-                            'submission_time': timestamp,
-                            'verified': False,
-                            'submission': submission,
+                            "_id": auth.hash_token(verification_token),
+                            "submission_time": timestamp,
+                            "verified": False,
+                            "submission": submission,
                         }
                     )
                     break
@@ -51,18 +51,18 @@ async def submit(username, survey_name, submission):
             # submission.
 
             await email.send_submission_verification(
-                submission[str(field['identifier'])],
+                submission[str(field["identifier"])],
                 username,
                 survey_name,
-                configuration['title'],
+                configuration["title"],
                 verification_token,
             )
             break
     else:
         await submissions.insert_one(
             document={
-                'submission_time': timestamp,
-                'submission': submission,
+                "submission_time": timestamp,
+                "submission": submission,
             }
         )
 
@@ -70,10 +70,10 @@ async def submit(username, survey_name, submission):
 async def verify(username, survey_name, verification_token):
     """Verify the user's email address and save the submission as verified."""
     configuration = await survey.read(username, survey_name)
-    if configuration['draft']:
+    if configuration["draft"]:
         raise errors.SurveyNotFoundError()
     timestamp = utils.timestamp()
-    start, end = configuration['start'], configuration['end']
+    start, end = configuration["start"], configuration["end"]
     if start is not None and timestamp < start:
         raise errors.InvalidTimingError()
     if end is not None and timestamp >= end:
@@ -82,11 +82,11 @@ async def verify(username, survey_name, verification_token):
     # find submission by its verification token and mark it as verified
     submissions = survey.submissions_from_configuration(configuration)
     res = await submissions.update_one(
-        filter={'_id': auth.hash_token(verification_token)},
+        filter={"_id": auth.hash_token(verification_token)},
         update={
-            '$set': {
-                'verification_time': timestamp,
-                'verified': True,
+            "$set": {
+                "verification_time": timestamp,
+                "verified": True,
             },
         },
     )
