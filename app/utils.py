@@ -9,4 +9,4 @@ def timestamp():
 
 def now():
     """Return current UTC time as datetime object."""
-    return dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+    return dt.datetime.now(dt.timezone.utc)

@@ -159,7 +159,7 @@ SPECIFICATIONS = {
         ],
     ),
     "create_user": _generate_responses_documentation(
-        path="/users/{username}",
+        path="/users",
         error_classes=[
             errors.UsernameAlreadyTakenError,
             errors.EmailAddressAlreadyTakenError,
@@ -198,7 +198,7 @@ SPECIFICATIONS = {
         ],
     ),
     "create_survey": _generate_responses_documentation(
-        path="/users/{username}/surveys/{survey_name}",
+        path="/users/{username}/surveys",
         error_classes=[
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,

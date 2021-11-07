@@ -26,7 +26,7 @@ async def client():
 
 async def setup_account(client, username, account_data):
     """Create a test account."""
-    return await client.post(f"/users/{username}", json=account_data)
+    return await client.post(f"/users", json=account_data)
 
 
 async def setup_account_verification(client):
@@ -53,7 +53,7 @@ async def setup_headers(client, account_data):
 async def setup_survey(client, headers, username, configuration):
     """Create a survey on the given account."""
     return await client.post(
-        url=f'/users/{username}/surveys/{configuration["survey_name"]}',
+        url=f"/users/{username}/surveys",
         headers=headers,
         json=configuration,
     )
@@ -165,18 +165,6 @@ async def test_creating_user_with_invalid_account_data(
     res = await setup_account(client, account_data["username"], account_data)
     assert fails(res, errors.InvalidSyntaxError)
     e = await database.database["accounts"].find_one()
-    assert e is None
-
-
-@pytest.mark.asyncio
-async def test_creating_user_with_username_mismatch_in_route_and_body(
-    client,
-    account_data,
-):
-    """Test that account creation fails when given invalid account data."""
-    res = await setup_account(client, "kangaroo", account_data)
-    assert fails(res, errors.InvalidSyntaxError)
-    e = await database.database["accounts"].find_one({})
     assert e is None
 
 
