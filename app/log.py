@@ -12,7 +12,7 @@ def format_pydantic_error(exc):
 
 
 formatter = logging.Formatter(
-    fmt="{asctime} | {levelname:8} | {module}:{funcName}:{lineno} -- {msg}",
+    fmt="{asctime} | {levelname:8} | {msg}",
     datefmt="%a %Y-%m-%d %H:%M:%S %z",
     style="{",
 )
@@ -21,6 +21,6 @@ handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
 handler.setFormatter(formatter)
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("main")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
