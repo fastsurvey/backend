@@ -12,7 +12,7 @@ import app.validation as validation
 import app.auth as auth
 import app.utils as utils
 import app.errors as errors
-import app.logging as logging
+import app.log as log
 
 
 # create fastapi app
@@ -34,7 +34,7 @@ app.add_middleware(
 # add pydantic ValidationError exception handler
 @app.exception_handler(pydantic.ValidationError)
 async def validation_error_exception_handler(request, exc):
-    logging.LOGGER.warning(f"InvalidSyntaxError: {logging.format_pydantic_error(exc)}")
+    log.logger.warning(f"InvalidSyntaxError: {log.format_pydantic_error(exc)}")
     return fastapi.responses.JSONResponse(
         status_code=errors.InvalidSyntaxError.STATUS_CODE,
         content={"detail": errors.InvalidSyntaxError.DETAIL},
@@ -44,7 +44,7 @@ async def validation_error_exception_handler(request, exc):
 # add fastapi RequestValidationError exception handler
 @app.exception_handler(fastapi.exceptions.RequestValidationError)
 async def request_validation_error_exception_handler(request, exc):
-    logging.LOGGER.warning(f"InvalidSyntaxError: {logging.format_pydantic_error(exc)}")
+    log.logger.warning(f"InvalidSyntaxError: {log.format_pydantic_error(exc)}")
     return fastapi.responses.JSONResponse(
         status_code=errors.InvalidSyntaxError.STATUS_CODE,
         content={"detail": errors.InvalidSyntaxError.DETAIL},

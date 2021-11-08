@@ -572,21 +572,6 @@ requests = "*"
 test = ["codecov", "ipykernel", "pytest (>=5.3.2)", "pytest-cov", "jupyter-server", "openapi-core (>=0.14.0,<0.15.0)", "pytest-console-scripts", "strict-rfc3339", "ruamel.yaml", "wheel"]
 
 [[package]]
-name = "loguru"
-version = "0.5.3"
-description = "Python logging made (stupidly) simple"
-category = "main"
-optional = false
-python-versions = ">=3.5"
-
-[package.dependencies]
-colorama = {version = ">=0.3.4", markers = "sys_platform == \"win32\""}
-win32-setctime = {version = ">=1.0.0", markers = "sys_platform == \"win32\""}
-
-[package.extras]
-dev = ["codecov (>=2.0.15)", "colorama (>=0.3.4)", "flake8 (>=3.7.7)", "tox (>=3.9.0)", "tox-travis (>=0.12)", "pytest (>=4.6.2)", "pytest-cov (>=2.7.1)", "Sphinx (>=2.2.1)", "sphinx-autobuild (>=0.7.1)", "sphinx-rtd-theme (>=0.4.3)", "black (>=19.10b0)", "isort (>=5.1.1)"]
-
-[[package]]
 name = "markupsafe"
 version = "2.0.1"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -1323,17 +1308,6 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
-name = "win32-setctime"
-version = "1.0.3"
-description = "A small Python utility to set file creation time on Windows"
-category = "main"
-optional = false
-python-versions = ">=3.5"
-
-[package.extras]
-dev = ["pytest (>=4.6.2)", "black (>=19.3b0)"]
-
-[[package]]
 name = "zipp"
 version = "3.6.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -1348,7 +1322,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "64703e5df840eea59184b79cc62527709d503f0c91f86e6a1d6874a0e1c25e0f"
+content-hash = "e47c8e13d7e1d4f95b0143323ec5a61f5361ff28d4e586e90f277555e3145993"
 
 [metadata.files]
 anyio = [
@@ -1651,10 +1625,6 @@ jupyterlab-pygments = [
 jupyterlab-server = [
     {file = "jupyterlab_server-2.8.2-py3-none-any.whl", hash = "sha256:9507f059ddb3d088674ed76fd3d751cedd940f8a74055e2250bf44babcc2ea1f"},
     {file = "jupyterlab_server-2.8.2.tar.gz", hash = "sha256:26d813c8162c83d466df7d155865987dabe70aa452f9187dfb79fd88afc8fa0b"},
-]
-loguru = [
-    {file = "loguru-0.5.3-py3-none-any.whl", hash = "sha256:f8087ac396b5ee5f67c963b495d615ebbceac2796379599820e324419d53667c"},
-    {file = "loguru-0.5.3.tar.gz", hash = "sha256:b28e72ac7a98be3d28ad28570299a393dfcd32e5e3f6a353dec94675767b6319"},
 ]
 markupsafe = [
     {file = "MarkupSafe-2.0.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:f9081981fe268bd86831e5c75f7de206ef275defcb82bc70740ae6dc507aee51"},
@@ -2280,10 +2250,6 @@ websockets = [
     {file = "websockets-10.0-cp39-cp39-win32.whl", hash = "sha256:e42a1f1e03437b017af341e9bbfdc09252cd48ef32a8c3c3ead769eab3b17368"},
     {file = "websockets-10.0-cp39-cp39-win_amd64.whl", hash = "sha256:c5880442f5fc268f1ef6d37b2c152c114deccca73f48e3a8c48004d2f16f4567"},
     {file = "websockets-10.0.tar.gz", hash = "sha256:c4fc9a1d242317892590abe5b61a9127f1a61740477bfb121743f290b8054002"},
-]
-win32-setctime = [
-    {file = "win32_setctime-1.0.3-py3-none-any.whl", hash = "sha256:dc925662de0a6eb987f0b01f599c01a8236cb8c62831c22d9cada09ad958243e"},
-    {file = "win32_setctime-1.0.3.tar.gz", hash = "sha256:4e88556c32fdf47f64165a2180ba4552f8bb32c1103a2fafd05723a0bd42bd4b"},
 ]
 zipp = [
     {file = "zipp-3.6.0-py3-none-any.whl", hash = "sha256:9fe5ea21568a0a70e50f273397638d39b03353731e6cbbb3fd8502a33fec40bc"},
