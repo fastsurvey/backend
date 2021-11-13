@@ -151,13 +151,15 @@ async def delete(username):
                 await database.database[f"{base}.unverified-submissions"].drop()
 
 
-async def login(identifier, password):
-    """Authenticate user by their username or email and their password."""
-    expression = (
-        {"email_address": identifier} if "@" in identifier else {"username": identifier}
-    )
+async def login(identifier, password=None):
+    """Authenticate user by their username or email address and their password."""
+    magic = password is None
     account_data = await database.database["accounts"].find_one(
-        filter=expression,
+        filter=(
+            {"email_address": identifier}
+            if "@" in identifier
+            else {"username": identifier}
+        ),
         projection={
             "_id": False,
             "username": True,
@@ -169,13 +171,11 @@ async def login(identifier, password):
         raise errors.UserNotFoundError()
     if account_data["verified"] is False:
         raise errors.AccountNotVerifiedError()
-    correct, update = auth.verify_update_password(
-        password=password,
-        password_hash=account_data["password_hash"],
-    )
-    if not correct:
+    if not magic and not auth.verify_password(password, account_data["password_hash"]):
         raise errors.InvalidPasswordError()
     access_token = auth.generate_token()
+    if magic:
+        verification_token = auth.generate_token()
     while True:
         try:
             document = {
@@ -183,20 +183,22 @@ async def login(identifier, password):
                 "access_token_hash": auth.hash_token(access_token),
                 "issuance_time": utils.now(),
             }
-            if update is not None:
-                document["password_hash"] = update
+            if magic:
+                document |= {
+                    "valid": False,
+                    "verification_token_hash": auth.hash_token(verification_token),
+                }
             await database.database["access_tokens"].insert_one(document)
             break
         except pymongo.errors.DuplicateKeyError as error:
             index = str(error).split()[7]
             if index == "access_token_hash_index":
                 access_token = auth.generate_token()
+            elif magic and index == "verification_token_hash_index":
+                verification_token = auth.generate_token()
             else:
                 raise errors.InternalServerError()
-    return {
-        "username": account_data["username"],
-        "access_token": access_token,
-    }
+    return {"username": account_data["username"], "access_token": access_token}
 
 
 async def logout(access_token):

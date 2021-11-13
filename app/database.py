@@ -12,10 +12,7 @@ database = client[settings.ENVIRONMENT]
 database["configurations"].create_indexes(
     [
         pymongo.IndexModel(
-            keys=[
-                ("username", pymongo.ASCENDING),
-                ("survey_name", pymongo.ASCENDING),
-            ],
+            keys=[("username", pymongo.ASCENDING), ("survey_name", pymongo.ASCENDING)],
             name="username_survey_name_index",
             unique=True,
         ),
@@ -52,6 +49,12 @@ database["access_tokens"].create_indexes(
             keys="access_token_hash",
             name="access_token_hash_index",
             unique=True,
+        ),
+        pymongo.IndexModel(
+            keys="verification_token_hash",
+            name="verification_token_hash_index",
+            unique=True,
+            partialFilterExpression={"verification_token_hash": {"$exists": True}},
         ),
         pymongo.IndexModel(
             keys="issuance_time",

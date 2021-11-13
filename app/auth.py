@@ -21,9 +21,9 @@ def hash_password(password):
     return _CONTEXT.hash(password)
 
 
-def verify_update_password(password, password_hash):
+def verify_password(password, password_hash):
     """Return true if the password results in the hash, else False."""
-    return _CONTEXT.verify_and_update(password, password_hash)
+    return _CONTEXT.verify(password, password_hash)
 
 
 ########################################################################################
