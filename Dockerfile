@@ -1,4 +1,4 @@
-FROM python:3.8.5-slim
+FROM python:3.9.7-slim
 
 LABEL maintainer="Felix Böhm <felix@felixboehm.dev>"
 LABEL source="https://github.com/fastsurvey/backend"
