@@ -131,12 +131,8 @@ async def delete(username):
     """Delete the user including all their surveys from the database."""
     async with await database.client.start_session() as session:
         async with session.start_transaction():
-            await database.database["accounts"].delete_one(
-                filter={"username": username},
-            )
-            await database.database["access_tokens"].delete_many(
-                filter={"username": username},
-            )
+            await database.database["accounts"].delete_one({"username": username})
+            await database.database["access_tokens"].delete_many({"username": username})
             cursor = database.database["configurations"].find(
                 filter={"username": username},
                 projection={"_id": True},
@@ -151,8 +147,15 @@ async def delete(username):
                 await database.database[f"{base}.unverified-submissions"].drop()
 
 
-async def login(identifier, password=None):
-    """Authenticate user by their username or email address and their password."""
+async def create_access_token(identifier, password=None):
+    """
+    Authenticate user via username or email address and optionally a password.
+
+    When no password is passed, we perform a magic login via email. We create and
+    return an invalid access token that will be marked verified once the user sends
+    us the verification token they received via email.
+
+    """
     magic = password is None
     account_data = await database.database["accounts"].find_one(
         filter=(
@@ -201,8 +204,11 @@ async def login(identifier, password=None):
     return {"username": account_data["username"], "access_token": access_token}
 
 
-async def logout(access_token):
+async def delete_access_token(access_token):
     """Logout a user by rendering their access token useless."""
+
+    # TODO check that it's verified
+
     res = await database.database["access_tokens"].delete_one(
         filter={"access_token_hash": auth.hash_token(access_token)},
     )

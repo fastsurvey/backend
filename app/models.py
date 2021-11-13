@@ -308,7 +308,7 @@ def build_submission_model(configuration):
 
 class AuthenticationCredentials(BaseModel):
     identifier: typing.Union[Username, EmailAddress]
-    password: Password
+    password: Password = None
 
 
 class VerificationCredentials(BaseModel):
