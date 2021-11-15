@@ -30,7 +30,7 @@ MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY")
 # Mailgun email endpoint
 MAILGUN_ENDPOINT = "https://api.eu.mailgun.net/v3/email.fastsurvey.de"
 # sender email address
-SENDER = "FastSurvey <noreply@fastsurvey.de>"
+SENDER = "FastSurvey <contact@fastsurvey.de>"
 # git commit hash
 COMMIT_SHA = os.getenv("COMMIT_SHA")
 # git branch name

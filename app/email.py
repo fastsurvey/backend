@@ -66,3 +66,13 @@ async def send_submission_verification(
         ),
     )
     return await _send(email_address, subject, content)
+
+
+async def send_magic_login(email_address, username, verification_token):
+    """Send an email that allows a user to authenticate without their password."""
+    subject = "Your FastSurvey Access"
+    content = _TEMPLATES["magic_login"].format(
+        username=username,
+        link=f"{settings.CONSOLE_URL}/magic?token={verification_token}",
+    )
+    return await _send(email_address, subject, content)

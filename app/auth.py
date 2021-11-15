@@ -7,6 +7,7 @@ import pymongo.errors
 import app.database as database
 import app.utils as utils
 import app.errors as errors
+import app.email as email
 
 
 _CONTEXT = context.CryptContext(schemes=["argon2"], deprecated="auto")
@@ -76,7 +77,6 @@ async def create_access_token(identifier, password=None):
     us the verification token they received via email.
 
     """
-    magic = password is None
     account_data = await database.database["accounts"].find_one(
         filter=(
             {"email_address": identifier}
@@ -86,6 +86,7 @@ async def create_access_token(identifier, password=None):
         projection={
             "_id": False,
             "username": True,
+            "email_address": True,
             "password_hash": True,
             "verified": True,
         },
@@ -94,39 +95,69 @@ async def create_access_token(identifier, password=None):
         raise errors.UserNotFoundError()
     if account_data["verified"] is False:
         raise errors.AccountNotVerifiedError()
-    if not magic and not verify_password(password, account_data["password_hash"]):
+    if password is None:
+        return await _create_magic_access_token(
+            username=account_data["username"],
+            email_address=account_data["email_address"],
+        )
+    if not verify_password(password, account_data["password_hash"]):
         raise errors.InvalidPasswordError()
-    return await _create_access_token(account_data["username"], magic=magic)
+    return await _create_standard_access_token(account_data["username"])
 
 
-async def _create_access_token(username, magic=False):
-    """Write a new (standard or magic) access token to the database."""
+async def _create_standard_access_token(username):
+    """Write new standard access token to the database."""
     access_token = generate_token()
-    if magic:
-        verification_token = generate_token()
     while True:
         try:
-            document = {
-                "username": username,
-                "access_token_hash": hash_token(access_token),
-                "issuance_time": utils.now(),
-                "active": True,
-            }
-            if magic:
-                document |= {
-                    "active": False,
-                    "verification_token_hash": hash_token(verification_token),
+            await database.database["access_tokens"].insert_one(
+                {
+                    "username": username,
+                    "access_token_hash": hash_token(access_token),
+                    "issuance_time": utils.now(),
+                    "active": True,
                 }
-            await database.database["access_tokens"].insert_one(document)
+            )
             break
         except pymongo.errors.DuplicateKeyError as error:
             index = str(error).split()[7]
             if index == "access_token_hash_unique_index":
                 access_token = generate_token()
-            elif magic and index == "verification_token_hash_partial_unique_index":
+            else:
+                raise errors.InternalServerError()
+    return {"username": username, "access_token": access_token}
+
+
+async def _create_magic_access_token(username, email_address):
+    """Write new magic access token to the database and send magic link via email."""
+    access_token = generate_token()
+    verification_token = generate_token()
+    while True:
+        try:
+            await database.database["access_tokens"].insert_one(
+                {
+                    "username": username,
+                    "access_token_hash": hash_token(access_token),
+                    "issuance_time": utils.now(),
+                    "active": False,
+                    "verification_token_hash": hash_token(verification_token),
+                }
+            )
+            break
+        except pymongo.errors.DuplicateKeyError as error:
+            index = str(error).split()[7]
+            if index == "access_token_hash_unique_index":
+                access_token = generate_token()
+            elif index == "verification_token_hash_partial_unique_index":
                 verification_token = generate_token()
             else:
                 raise errors.InternalServerError()
+
+    # Sending the magic login email can fail (e.g. because of an invalid email
+    # address). Nevertheless, we don't react to this happening here as the user can
+    # simply request a new verification email.
+
+    await email.send_magic_login(email_address, username, verification_token)
     return {"username": username, "access_token": access_token}
 
 
@@ -158,7 +189,7 @@ async def verify_access_token(verification_token):
     )
     if res is None:
         raise errors.InvalidVerificationTokenError()
-    return _create_access_token(res["username"], magic=False)
+    return _create_standard_access_token(res["username"])
 
 
 async def delete_access_token(access_token):
