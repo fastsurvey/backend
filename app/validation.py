@@ -85,13 +85,19 @@ class ReadResultsRequest(models.BaseModel):
     survey_name: models.SurveyName = docs.ARGUMENTS["survey_name"]
 
 
-class LoginRequest(models.BaseModel):
+class CreateAccessTokenRequest(models.BaseModel):
     authentication_credentials: models.AuthenticationCredentials = docs.ARGUMENTS[
         "authentication_credentials"
     ]
 
 
-class LogoutRequest(models.BaseModel):
+class VerifyAccessTokenRequest(models.BaseModel):
+    verification_credentials: models.VerificationCredentials = docs.ARGUMENTS[
+        "verification_credentials"
+    ]
+
+
+class DeleteAccessTokenRequest(models.BaseModel):
     access_token: models.Token = docs.ARGUMENTS["access_token"]
 
 

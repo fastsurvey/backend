@@ -383,7 +383,7 @@ async def test_deleting_existing_user(
     assert await database.database["accounts"].find_one() is None
     assert await database.database["access_tokens"].find_one() is None
     assert await database.database["configurations"].find_one() is None
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e is None
 
 
@@ -732,7 +732,7 @@ async def test_deleting_existing_survey_with_existing_submissions(
     )
     assert fails(res, None)
     assert await database.database["configurations"].find_one() is None
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e is None
 
 
@@ -836,7 +836,7 @@ async def test_creating_submission(
     res = await setup_submission(client, username, "simple", submissions[0])
     assert fails(res, None)
     configuration = await survey.read(username, "simple")
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e["submission"] == submissions[0]
 
 
@@ -860,7 +860,7 @@ async def test_creating_invalid_submission(
     res = await setup_submission(client, username, "simple", submission)
     assert fails(res, errors.InvalidSyntaxError)
     configuration = await survey.read(username, "simple")
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e is None
 
 
@@ -893,7 +893,7 @@ async def test_resetting_survey_with_existing_submissions(
     )
     assert fails(res, None)
     assert await database.database["configurations"].find_one() is not None
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e is None
 
 
@@ -925,7 +925,7 @@ async def test_verifying_valid_verification_token(
     )
     assert fails(res, None)
     configuration = await survey.read(username, "simple")
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e["verified"]
 
 
@@ -952,7 +952,7 @@ async def test_verifying_invalid_verification_token(
     )
     assert fails(res, errors.InvalidVerificationTokenError)
     configuration = await survey.read(username, "simple")
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert not e["verified"]
 
 
@@ -1025,6 +1025,10 @@ async def test_reading_results_without_submissions(
 ########################################################################################
 # Route: Login
 ########################################################################################
+
+
+# TODO successful magic login
+# TODO magic access token fails without verification
 
 
 @pytest.mark.asyncio

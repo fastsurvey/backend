@@ -1,5 +1,4 @@
 import pymongo.errors
-import pymongo
 import fastapi
 
 import app.email as email
@@ -42,11 +41,11 @@ async def create(account_data):
             break
         except pymongo.errors.DuplicateKeyError as error:
             index = str(error).split()[7]
-            if index == "username_index":
+            if index == "username_unique_index":
                 raise errors.UsernameAlreadyTakenError()
-            if index == "email_address_index":
+            if index == "email_address_unique_index":
                 raise errors.EmailAddressAlreadyTakenError()
-            if index == "verification_token_hash_index":
+            if index == "verification_token_hash_unique_index":
                 verification_token = auth.generate_token()
                 verification_token_hash = auth.hash_token(verification_token)
             else:
@@ -117,9 +116,9 @@ async def update(username, account_data):
             )
     except pymongo.errors.DuplicateKeyError as error:
         index = str(error).split()[7]
-        if index == "username_index":
+        if index == "username_unique_index":
             raise errors.UsernameAlreadyTakenError()
-        if index == "email_address_index":
+        if index == "email_address_unique_index":
             raise errors.EmailAddressAlreadyTakenError()
         else:
             raise errors.InternalServerError()
@@ -145,81 +144,3 @@ async def delete(username):
                 base = f"surveys.{str(survey_id)}"
                 await database.database[f"{base}.submissions"].drop()
                 await database.database[f"{base}.unverified-submissions"].drop()
-
-
-async def create_access_token(identifier, password=None):
-    """
-    Authenticate user via username or email address and optionally a password.
-
-    When no password is passed, we perform a magic login via email. We create and
-    return an invalid access token that will be marked verified once the user sends
-    us the verification token they received via email.
-
-    """
-    magic = password is None
-    account_data = await database.database["accounts"].find_one(
-        filter=(
-            {"email_address": identifier}
-            if "@" in identifier
-            else {"username": identifier}
-        ),
-        projection={
-            "_id": False,
-            "username": True,
-            "password_hash": True,
-            "verified": True,
-        },
-    )
-    if account_data is None:
-        raise errors.UserNotFoundError()
-    if account_data["verified"] is False:
-        raise errors.AccountNotVerifiedError()
-    if not magic and not auth.verify_password(password, account_data["password_hash"]):
-        raise errors.InvalidPasswordError()
-    access_token = auth.generate_token()
-    if magic:
-        verification_token = auth.generate_token()
-    while True:
-        try:
-            document = {
-                "username": account_data["username"],
-                "access_token_hash": auth.hash_token(access_token),
-                "issuance_time": utils.now(),
-            }
-            if magic:
-                document |= {
-                    "valid": False,
-                    "verification_token_hash": auth.hash_token(verification_token),
-                }
-            await database.database["access_tokens"].insert_one(document)
-            break
-        except pymongo.errors.DuplicateKeyError as error:
-            index = str(error).split()[7]
-            if index == "access_token_hash_index":
-                access_token = auth.generate_token()
-            elif magic and index == "verification_token_hash_index":
-                verification_token = auth.generate_token()
-            else:
-                raise errors.InternalServerError()
-    return {"username": account_data["username"], "access_token": access_token}
-
-
-async def delete_access_token(access_token):
-    """Logout a user by rendering their access token useless."""
-
-    # TODO check that it's verified
-
-    res = await database.database["access_tokens"].delete_one(
-        filter={"access_token_hash": auth.hash_token(access_token)},
-    )
-    if res.deleted_count == 0:
-        raise errors.InvalidAccessTokenError()
-
-
-async def read_configurations(username):
-    """Return a list of the user's survey configurations."""
-    cursor = database.database["configurations"].find(
-        filter={"username": username},
-        projection={"_id": False, "username": False},
-    )
-    return await cursor.to_list(None)

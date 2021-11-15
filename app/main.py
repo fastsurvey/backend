@@ -113,7 +113,7 @@ async def read_surveys(
     draft mode **are** returned.
 
     """
-    return await account.read_configurations(data.username)
+    return await survey.read_multiple(data.username)
 
 
 @app.get(**docs.SPECIFICATIONS["read_survey"])
@@ -225,27 +225,31 @@ async def read_results(
 
 @app.post(**docs.SPECIFICATIONS["create_access_token"])
 async def create_access_token(
-    data: validation.LoginRequest = fastapi.Depends(),
+    data: validation.CreateAccessTokenRequest = fastapi.Depends(),
 ):
     """Generate an access token used to authenticate to protected routes."""
-    return await account.create_access_token(
+    return await auth.create_access_token(
         data.authentication_credentials.identifier,
         data.authentication_credentials.password,
     )
 
 
 @app.put(**docs.SPECIFICATIONS["verify_access_token"])
-async def verify_access_token():
+async def verify_access_token(
+    data: validation.VerifyAccessTokenRequest = fastapi.Depends(),
+):
     """Verify an access token with the verification token sent via email."""
-    raise errors.NotImplementedError()
+    return await auth.verify_access_token(
+        data.verification_credentials.verification_token
+    )
 
 
 @app.delete(**docs.SPECIFICATIONS["delete_access_token"])
 async def delete_access_token(
-    data: validation.LogoutRequest = fastapi.Depends(),
+    data: validation.DeleteAccessTokenRequest = fastapi.Depends(),
 ):
     """Logout a user by rendering their access token useless."""
-    return await account.delete_access_token(data.access_token)
+    return await auth.delete_access_token(data.access_token)
 
 
 @app.post(**docs.SPECIFICATIONS["verify_account_email_address"])
