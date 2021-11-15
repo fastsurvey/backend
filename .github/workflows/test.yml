@@ -6,12 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.8
+    - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: 3.9.7
     - name: Install poetry
-      uses: snok/install-poetry@v1.1.6
+      uses: snok/install-poetry@v1
+      with:
+        version: 1.1.11
     - name: Install Python Dependencies
       run: poetry install --no-ansi --no-interaction
     - name: Test with pytest
