@@ -179,7 +179,7 @@ async def verify_access_token(verification_token):
     token somehow, so the frontend knows what can be authenticated with it.
 
     """
-    res = await database.database["access_token"].find_one_and_update(
+    res = await database.database["access_tokens"].find_one_and_update(
         filter={
             "verification_token_hash": hash_token(verification_token),
             "active": False,
@@ -189,7 +189,7 @@ async def verify_access_token(verification_token):
     )
     if res is None:
         raise errors.InvalidVerificationTokenError()
-    return _create_standard_access_token(res["username"])
+    return await _create_standard_access_token(res["username"])
 
 
 async def delete_access_token(access_token):
