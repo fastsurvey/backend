@@ -262,7 +262,7 @@ SPECIFICATIONS = {
             errors.SurveyNotFoundError,
         ],
     ),
-    "login": _generate_responses_documentation(
+    "create_access_token": _generate_responses_documentation(
         path="/authentication",
         response={
             "username": "blueberry",
@@ -276,7 +276,19 @@ SPECIFICATIONS = {
             errors.UserNotFoundError,
         ],
     ),
-    "logout": _generate_responses_documentation(
+    "verify_access_token": _generate_responses_documentation(
+        path="/authentication",
+        response={
+            "username": "blueberry",
+            "access_token": (
+                "6Ca1j7b5P3D8fO6WpsUHsE_eN3Fqq8V_sp_sV4RB2ubw9mtwRUM2cQh26jS_r65v"
+            ),
+        },
+        error_classes=[
+            errors.InvalidVerificationTokenError,
+        ],
+    ),
+    "delete_access_token": _generate_responses_documentation(
         path="/authentication",
         error_classes=[
             errors.InvalidAccessTokenError,

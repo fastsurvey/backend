@@ -6,7 +6,7 @@ import app.database as database
 import app.errors as errors
 
 
-def submissions_from_configuration(configuration):
+def submissions_collection(configuration):
     """Build link to submission collection from survey configuration."""
     identifier = configuration["_id"]
     return database.database[f"surveys.{identifier}.submissions"]
@@ -21,6 +21,15 @@ async def read(username, survey_name):
     if configuration is None:
         raise errors.SurveyNotFoundError()
     return configuration
+
+
+async def read_multiple(username):
+    """Return a list of the user's survey configurations."""
+    cursor = database.database["configurations"].find(
+        filter={"username": username},
+        projection={"_id": False, "username": False},
+    )
+    return await cursor.to_list(None)
 
 
 async def create(username, configuration):
@@ -38,7 +47,7 @@ async def create(username, configuration):
         )
     except pymongo.errors.DuplicateKeyError as error:
         index = str(error).split()[7]
-        if index == "username_survey_name_index":
+        if index == "username_survey_name_unique_index":
             raise errors.SurveyNameAlreadyTakenError()
         else:
             raise errors.InternalServerError()
@@ -92,7 +101,7 @@ async def update(username, survey_name, update):
         )
     except pymongo.errors.DuplicateKeyError as error:
         index = str(error).split()[7]
-        if index == "username_survey_name_index":
+        if index == "username_survey_name_unique_index":
             raise errors.SurveyNameAlreadyTakenError()
         else:
             raise errors.InternalServerError()
@@ -103,14 +112,14 @@ async def update(username, survey_name, update):
 async def reset(username, survey_name):
     """Delete all submission data but keep the survey configuration."""
     configuration = await read(username, survey_name)
-    submissions = submissions_from_configuration(configuration)
+    submissions = submissions_collection(configuration)
     await submissions.drop()
 
 
 async def delete(username, survey_name):
     """Delete the survey and all its data from the database."""
     configuration = await read(username, survey_name)
-    submissions = submissions_from_configuration(configuration)
+    submissions = submissions_collection(configuration)
     async with await database.client.start_session() as session:
         async with session.start_transaction():
             await database.database["configurations"].delete_one(
@@ -122,12 +131,12 @@ async def delete(username, survey_name):
 async def aggregate(username, survey_name):
     """Query the survey submissions and return aggregated results."""
     configuration = await read(username, survey_name)
-    submissions = submissions_from_configuration(configuration)
+    submissions = submissions_collection(configuration)
     return await aggregation.aggregate(submissions, configuration)
 
 
 async def export(username, survey_name):
     """Export the submissions of a survey in a consistent format."""
     configuration = await read(username, survey_name)
-    submissions = submissions_from_configuration(configuration)
+    submissions = submissions_collection(configuration)
     return await exportation.export(submissions, configuration)

@@ -326,11 +326,7 @@ async def test_updating_existing_user_with_valid_password(
     )
     assert fails(res, None)
     e = await database.database["accounts"].find_one()
-    correct, _ = auth.verify_update_password(
-        account_data["password"],
-        e["password_hash"],
-    )
-    assert correct
+    assert auth.verify_password(account_data["password"], e["password_hash"])
 
 
 @pytest.mark.skip(reason="todo")
@@ -387,7 +383,7 @@ async def test_deleting_existing_user(
     assert await database.database["accounts"].find_one() is None
     assert await database.database["access_tokens"].find_one() is None
     assert await database.database["configurations"].find_one() is None
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e is None
 
 
@@ -736,7 +732,7 @@ async def test_deleting_existing_survey_with_existing_submissions(
     )
     assert fails(res, None)
     assert await database.database["configurations"].find_one() is None
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e is None
 
 
@@ -840,7 +836,7 @@ async def test_creating_submission(
     res = await setup_submission(client, username, "simple", submissions[0])
     assert fails(res, None)
     configuration = await survey.read(username, "simple")
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e["submission"] == submissions[0]
 
 
@@ -864,7 +860,7 @@ async def test_creating_invalid_submission(
     res = await setup_submission(client, username, "simple", submission)
     assert fails(res, errors.InvalidSyntaxError)
     configuration = await survey.read(username, "simple")
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e is None
 
 
@@ -897,7 +893,7 @@ async def test_resetting_survey_with_existing_submissions(
     )
     assert fails(res, None)
     assert await database.database["configurations"].find_one() is not None
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e is None
 
 
@@ -929,7 +925,7 @@ async def test_verifying_valid_verification_token(
     )
     assert fails(res, None)
     configuration = await survey.read(username, "simple")
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert e["verified"]
 
 
@@ -956,7 +952,7 @@ async def test_verifying_invalid_verification_token(
     )
     assert fails(res, errors.InvalidVerificationTokenError)
     configuration = await survey.read(username, "simple")
-    e = await survey.submissions_from_configuration(configuration).find_one()
+    e = await survey.submissions_collection(configuration).find_one()
     assert not e["verified"]
 
 
@@ -1027,12 +1023,12 @@ async def test_reading_results_without_submissions(
 
 
 ########################################################################################
-# Route: Login
+# Route: Create Access Token
 ########################################################################################
 
 
 @pytest.mark.asyncio
-async def test_logging_in_with_non_verified_account(
+async def test_creating_access_token_with_non_verified_account(
     mock_email_sending,
     client,
     username,
@@ -1050,7 +1046,7 @@ async def test_logging_in_with_non_verified_account(
 
 
 @pytest.mark.asyncio
-async def test_logging_in_with_valid_credentials(
+async def test_creating_access_token_with_valid_identifier_and_password(
     mock_email_sending,
     mock_token_generation,
     client,
@@ -1070,14 +1066,33 @@ async def test_logging_in_with_valid_credentials(
             json={"identifier": identifier, "password": password},
         )
         assert fails(res, None)
+        assert res.json().keys() == {"username", "access_token"}
+        assert res.json()["username"] == username
 
 
 @pytest.mark.asyncio
-async def test_logging_in_invalid_username(
+async def test_creating_access_token_with_valid_identifier(
+    mock_email_sending,
+    mock_token_generation,
     client,
     username,
-    password,
+    email_address,
+    account_data,
+    cleanup,
 ):
+    """Test that password-less magic authentication works with valid identifier."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    # test with username as well as email address as identifier
+    for identifier in [username, email_address]:
+        res = await client.post(url="/authentication", json={"identifier": identifier})
+        assert fails(res, None)
+        assert res.json().keys() == {"username", "access_token"}
+        assert res.json()["username"] == username
+
+
+@pytest.mark.asyncio
+async def test_creating_access_token_with_invalid_username(client, username, password):
     """Test that authentication fails for a user that does not exist."""
     res = await client.post(
         url="/authentication",
@@ -1087,7 +1102,7 @@ async def test_logging_in_invalid_username(
 
 
 @pytest.mark.asyncio
-async def test_logging_in_with_invalid_password(
+async def test_creating_access_token_with_invalid_password(
     mock_email_sending,
     mock_token_generation,
     client,
@@ -1106,12 +1121,70 @@ async def test_logging_in_with_invalid_password(
 
 
 ########################################################################################
-# Route: Logout
+# Route: Verify Access Token
 ########################################################################################
 
 
 @pytest.mark.asyncio
-async def test_logging_out_existing_access_token(
+async def test_verifying_access_token_with_valid_verification_token(
+    mock_email_sending,
+    mock_token_generation,
+    client,
+    username,
+    account_data,
+    cleanup,
+):
+    """Test that magic login access token is only valid after email verification."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    res = await client.post(url="/authentication", json={"identifier": username})
+    # check that first token is not activated yet
+    headers = {"Authorization": f"Bearer {res.json()['access_token']}"}
+    res = await client.get(f"/users/{username}", headers=headers)
+    assert fails(res, errors.InvalidAccessTokenError)
+    # check that first token works after email verification
+    res = await client.put(
+        url="/authentication",
+        json={"verification_token": conftest.valid_token()},
+    )
+    assert fails(res, None)
+    assert fails(await client.get(f"/users/{username}", headers=headers), None)
+    # check that second token works after email verification
+    headers = {"Authorization": f"Bearer {res.json()['access_token']}"}
+    assert fails(await client.get(f"/users/{username}", headers=headers), None)
+
+
+@pytest.mark.asyncio
+async def test_verifying_access_token_with_invalid_verification_token(
+    mock_email_sending,
+    mock_token_generation,
+    client,
+    username,
+    account_data,
+    cleanup,
+):
+    """Test that access token verification fails with invalid verification token."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    res = await client.post(url="/authentication", json={"identifier": username})
+    headers = {"Authorization": f"Bearer {res.json()['access_token']}"}
+    res = await client.put(
+        url="/authentication",
+        json={"verification_token": conftest.invalid_token()},
+    )
+    assert fails(res, errors.InvalidVerificationTokenError())
+    # check that access token is still not activated
+    res = await client.get(f"/users/{username}", headers=headers)
+    assert fails(res, errors.InvalidAccessTokenError)
+
+
+########################################################################################
+# Route: Delete Access Token
+########################################################################################
+
+
+@pytest.mark.asyncio
+async def test_deleting_existing_access_token(
     mock_email_sending,
     mock_token_generation,
     client,

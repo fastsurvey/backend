@@ -25,7 +25,7 @@ async def submit(username, survey_name, submission):
     Submission(**submission)
 
     # save submission and send verification email if email is to be verified
-    submissions = survey.submissions_from_configuration(configuration)
+    submissions = survey.submissions_collection(configuration)
     for field in configuration["fields"]:
         if field["type"] == "email" and field["verify"]:
             verification_token = auth.generate_token()
@@ -80,7 +80,7 @@ async def verify(username, survey_name, verification_token):
         raise errors.InvalidTimingError()
 
     # find submission by its verification token and mark it as verified
-    submissions = survey.submissions_from_configuration(configuration)
+    submissions = survey.submissions_collection(configuration)
     res = await submissions.update_one(
         filter={"_id": auth.hash_token(verification_token)},
         update={
