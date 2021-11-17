@@ -18,7 +18,7 @@ import app.log as log
 # create fastapi app
 app = fastapi.FastAPI(
     title="FastSurvey",
-    version="0.4.0",
+    version="0.5.0",
     docs_url="/documentation/swagger",
     redoc_url="/documentation/redoc",
 )
