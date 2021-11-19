@@ -165,7 +165,7 @@ def _build_invalid_configurations(configuration):
     invalid_configurations.append(x)
     # fields have duplicate identifiers
     x = copy.deepcopy(configuration)
-    x["fields"][-1]["identifier"] = 2
+    x["fields"][-1]["identifier"] = 0
     invalid_configurations.append(x)
 
     ####################################
@@ -202,73 +202,40 @@ def _build_invalid_configurations(configuration):
     invalid_configurations.append(x)
 
     ####################################
-    # Option Field
-    ####################################
-
-    # required parameter has invalid type
-    x = copy.deepcopy(configuration)
-    x["fields"][1]["required"] = 1
-    invalid_configurations.append(x)
-    # type parameter is missing
-    x = copy.deepcopy(configuration)
-    x["fields"][1].pop("type")
-    invalid_configurations.append(x)
-
-    ####################################
-    # Radio Field
-    ####################################
-
-    x = copy.deepcopy(configuration)
-    x["fields"][2]["options"] = None
-    invalid_configurations.append(x)
-    # options parameter is missing
-    x = copy.deepcopy(configuration)
-    x["fields"][2].pop("options")
-    invalid_configurations.append(x)
-    # options are not unique
-    x = copy.deepcopy(configuration)
-    x["fields"][2]["options"] += x["fields"][2]["options"][0]
-    invalid_configurations.append(x)
-    # options list is empty
-    x = copy.deepcopy(configuration)
-    x["fields"][2]["options"] = []
-    invalid_configurations.append(x)
-
-    ####################################
     # Selection Field
     ####################################
 
     # options parameter has invalid type
     x = copy.deepcopy(configuration)
-    x["fields"][3]["options"] = None
+    x["fields"][1]["options"] = None
     invalid_configurations.append(x)
     # min_select parameter has invalid type
     x = copy.deepcopy(configuration)
-    x["fields"][3]["min_select"] = float(x["fields"][3]["min_select"])
+    x["fields"][1]["min_select"] = float(x["fields"][1]["min_select"])
     invalid_configurations.append(x)
     # max_select parameter is missing
     x = copy.deepcopy(configuration)
-    x["fields"][3].pop("max_select")
+    x["fields"][1].pop("max_select")
     invalid_configurations.append(x)
     # options are not unique
     x = copy.deepcopy(configuration)
-    x["fields"][3]["options"] += x["fields"][3]["options"][0]
+    x["fields"][1]["options"] += x["fields"][1]["options"][0]
     invalid_configurations.append(x)
     # options list is empty
     x = copy.deepcopy(configuration)
-    x["fields"][3]["options"] = []
+    x["fields"][1]["options"] = []
     invalid_configurations.append(x)
     # min_select is greater than max_select
     x = copy.deepcopy(configuration)
-    x["fields"][3]["min_select"] = x["fields"][3]["max_select"] + 1
+    x["fields"][1]["min_select"] = x["fields"][1]["max_select"] + 1
     invalid_configurations.append(x)
     # min_select is less than zero
     x = copy.deepcopy(configuration)
-    x["fields"][3]["min_select"] = -1
+    x["fields"][1]["min_select"] = -1
     invalid_configurations.append(x)
     # max_select is greater than number of options
     x = copy.deepcopy(configuration)
-    x["fields"][3]["max_select"] = len(x["fields"][3]["options"]) + 1
+    x["fields"][1]["max_select"] = len(x["fields"][1]["options"]) + 1
     invalid_configurations.append(x)
 
     ####################################
@@ -277,23 +244,23 @@ def _build_invalid_configurations(configuration):
 
     # min_chars parameter has invalid type
     x = copy.deepcopy(configuration)
-    x["fields"][4]["min_chars"] = float(x["fields"][4]["min_chars"])
+    x["fields"][3]["min_chars"] = float(x["fields"][3]["min_chars"])
     invalid_configurations.append(x)
     # max_chars parameter is missing
     x = copy.deepcopy(configuration)
-    x["fields"][4].pop("max_chars")
+    x["fields"][3].pop("max_chars")
     invalid_configurations.append(x)
     # min_chars is greater than max_chars
     x = copy.deepcopy(configuration)
-    x["fields"][4]["min_chars"] = x["fields"][4]["max_chars"] + 1
+    x["fields"][3]["min_chars"] = x["fields"][3]["max_chars"] + 1
     invalid_configurations.append(x)
     # min_chars is less than zero
     x = copy.deepcopy(configuration)
-    x["fields"][4]["min_chars"] = -1
+    x["fields"][3]["min_chars"] = -1
     invalid_configurations.append(x)
     # max_chars is greater than character limit
     x = copy.deepcopy(configuration)
-    x["fields"][4]["max_chars"] = models.Length.C + 1
+    x["fields"][3]["max_chars"] = models.Length.C + 1
     invalid_configurations.append(x)
 
     return invalid_configurations
@@ -349,82 +316,28 @@ def _build_invalid_submissions(submission):
     invalid_submissions.append(x)
 
     ####################################
-    # Option Field
-    ####################################
-
-    # input has invalid type
-    x = copy.deepcopy(submission)
-    x["1"] = 1
-    invalid_submissions.append(x)
-    # input has invalid type
-    x = copy.deepcopy(submission)
-    x["1"] = None
-    invalid_submissions.append(x)
-    # input has invalid value
-    x = copy.deepcopy(submission)
-    x["1"] = ""
-    invalid_submissions.append(x)
-    # input has invalid value
-    x = copy.deepcopy(submission)
-    x["1"] = False
-    invalid_submissions.append(x)
-
-    ####################################
-    # Radio Field
-    ####################################
-
-    # input has invalid type
-    x = copy.deepcopy(submission)
-    x["2"] = True
-    invalid_submissions.append(x)
-    # input has invalid type
-    x = copy.deepcopy(submission)
-    x["2"] = 1
-    invalid_submissions.append(x)
-    # input has invalid type
-    x = copy.deepcopy(submission)
-    x["2"] = dict()
-    invalid_submissions.append(x)
-    # input has invalid type
-    x = copy.deepcopy(submission)
-    x["2"] = None
-    invalid_submissions.append(x)
-    # input has invalid type
-    x = copy.deepcopy(submission)
-    x["2"] = []
-    invalid_submissions.append(x)
-    # input has invalid value
-    x = copy.deepcopy(submission)
-    x["2"] = ""
-    invalid_submissions.append(x)
-    # input has invalid value
-    x = copy.deepcopy(submission)
-    x["2"] = "Hello World!"
-    invalid_submissions.append(x)
-
-    ####################################
     # Selection Field
     ####################################
 
     # input has invalid type
     x = copy.deepcopy(submission)
-    x["3"] = None
+    x["1"] = None
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x["3"] = True
+    x["1"] = True
     invalid_submissions.append(x)
     # input has too many selected options
     x = copy.deepcopy(submission)
-    x["3"] = ["Strawberry", "Vanilla", "Chocolate"]
+    x["1"] = ["Asparagus", "Artichoke"]
     invalid_submissions.append(x)
     # input has not enough selected options
     x = copy.deepcopy(submission)
-    x["3"] = []
+    x["1"] = []
     invalid_submissions.append(x)
     # input has duplicate selected options
     x = copy.deepcopy(submission)
-    x["3"] = ["Strawberry", "Strawberry"]
+    x["1"] = ["Asparagus", "Asparagus"]
     invalid_submissions.append(x)
 
     ####################################
@@ -433,27 +346,27 @@ def _build_invalid_submissions(submission):
 
     # input has invalid type
     x = copy.deepcopy(submission)
-    x["4"] = 42
+    x["3"] = 42
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x["4"] = None
+    x["3"] = None
     invalid_submissions.append(x)
     # input has invalid type
     x = copy.deepcopy(submission)
-    x["4"] = ["Hello", "World"]
+    x["3"] = ["Hello", "World"]
     invalid_submissions.append(x)
     # input has invalid value
     x = copy.deepcopy(submission)
-    x["4"] = "tomato"
+    x["3"] = "tomato"
     invalid_submissions.append(x)
     # text field input has invalid value
     x = copy.deepcopy(submission)
-    x["4"] = ""
+    x["3"] = ""
     invalid_submissions.append(x)
     # input has invalid value (more chars than allowed by max_chars)
     x = copy.deepcopy(submission)
-    x["4"] = "+" * 1001
+    x["3"] = "+" * 1001
     invalid_submissions.append(x)
 
     return invalid_submissions

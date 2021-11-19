@@ -36,10 +36,12 @@
         "fields": [
             {
                 "identifier": 2,
-                "type": "radio",
+                "type": "selection",
                 "title": "What's your favorite letter of the alphabet?",
                 "description": "",
-                "options": ["A", "B", "C"]
+                "options": ["A", "B", "C"],
+                "min_select": 1,
+                "max_select": 1
             },
             {
                 "identifier": 0,
@@ -55,7 +57,7 @@
                 "type": "text",
                 "title": "How do you feel about apples?",
                 "description": "",
-                "min_chars": 0,
+                "min_chars": 10,
                 "max_chars": 100
             }
         ]
@@ -87,10 +89,12 @@
             },
             {
                 "identifier": 2,
-                "type": "radio",
+                "type": "selection",
                 "title": "In all honesty, what's your favorite letter of the alphabet?",
                 "description": "",
-                "options": ["E", "M", "P", "I", "C", "A", "N", "O"]
+                "options": ["E", "M", "P", "I", "C", "A", "N", "O"],
+                "min_select": 1,
+                "max_select": 1
             }
         ]
     },
@@ -105,15 +109,15 @@
             {
                 "identifier": 1,
                 "type": "text",
-                "title": "How do you feel about apples?",
+                "title": "How do you feel about penguins?",
                 "description": "",
-                "min_chars": 10,
+                "min_chars": 0,
                 "max_chars": 1000
             },
             {
                 "identifier": 4,
                 "type": "selection",
-                "title": "What are your favorite pizza toppings?",
+                "title": "What are your favorite pizza styles?",
                 "description": "",
                 "options": ["Margherita", "Hawaiian", "Capricciosa", "Quattro Formaggi"],
                 "min_select": 1,
@@ -130,10 +134,12 @@
             },
             {
                 "identifier": 2,
-                "type": "radio",
+                "type": "selection",
                 "title": "In all honesty, what's your favorite letter of the alphabet?",
                 "description": "",
-                "options": ["E", "M", "P", "I", "C", "A", "N", "O"]
+                "options": ["E", "M", "P", "I", "C", "A", "N", "O"],
+                "min_select": 1,
+                "max_select": 1
             }
         ]
     },
@@ -148,7 +154,7 @@
             {
                 "identifier": 1,
                 "type": "text",
-                "title": "How do you feel about apples?",
+                "title": "How do you feel about penguins?",
                 "description": "",
                 "min_chars": 10,
                 "max_chars": 1000
@@ -156,7 +162,7 @@
             {
                 "identifier": 4,
                 "type": "selection",
-                "title": "What are your favorite pizza toppings?",
+                "title": "What are your favorite pizza styles?",
                 "description": "",
                 "options": ["Quattro Stagioni", "Margherita", "Capricciosa", "Prosciutto", "Quattro Formaggi"],
                 "min_select": 3,
@@ -173,13 +179,6 @@
             },
             {
                 "identifier": 5,
-                "type": "option",
-                "title": "I am a big fan of carrots.",
-                "description": "",
-                "required": false
-            },
-            {
-                "identifier": 6,
                 "type": "email",
                 "title": "What's your second email address?",
                 "description": "",
@@ -200,7 +199,7 @@
             {
                 "identifier": 1,
                 "type": "text",
-                "title": "How do you feel about apples?",
+                "title": "How do you feel about penguins?",
                 "description": "",
                 "min_chars": 10,
                 "max_chars": 1000
@@ -210,32 +209,27 @@
                 "type": "email",
                 "title": "What's your email address?",
                 "description": "",
-                "hint": "YOUR EMAIL ADDRESS HERE",
+                "hint": "username@example.com",
                 "regex": ".*",
                 "verify": true
             },
             {
                 "identifier": 4,
                 "type": "selection",
-                "title": "What are your favorite pizza toppings?",
+                "title": "What are your favorite pizza styles?",
                 "description": "",
                 "options": ["Quattro Stagioni", "Prosciutto", "Margherita", "Quattro Formaggi", "Capricciosa"],
                 "min_select": 2,
                 "max_select": 5
             },
             {
-                "identifier": 7,
-                "type": "radio",
+                "identifier": 6,
+                "type": "selection",
                 "title": "What's your favorite letter of the alphabet?",
                 "description": "",
-                "options": ["A", "B", "C"]
-            },
-            {
-                "identifier": 5,
-                "type": "option",
-                "title": "I am a big fan of carrots.",
-                "description": "",
-                "required": true
+                "options": ["A", "B", "C"],
+                "min_select": 1,
+                "max_select": 1
             }
         ]
     }

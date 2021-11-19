@@ -1,37 +1,32 @@
 [
     {
         "0": "test+0@fastsurvey.de",
-        "1": true,
-        "2": "None of these is a fruit",
-        "3": ["Strawberry"],
-        "4": "What do you want from me?"
+        "1": ["Asparagus"],
+        "2": ["Prosciutto"],
+        "3": "What do you want from me?"
     },
     {
         "0": "test+1@fastsurvey.de",
-        "1": true,
-        "2": "Artichoke",
-        "3": ["Chocolate", "Strawberry"],
-        "4": "Erm, good I guess."
+        "1": ["Artichoke"],
+        "2": ["Capricciosa", "Quattro Stagioni"],
+        "3": "Erm, good I guess?"
     },
     {
         "0": "test+2@fastsurvey.de",
-        "1": true,
-        "2": "Asparagus",
-        "3": ["Chocolate"],
-        "4": "Frankly, I don't know."
+        "1": ["Asparagus"],
+        "2": [],
+        "3": "Frankly, I don't know."
     },
     {
         "0": "test+3@fastsurvey.de",
-        "1": true,
-        "2": "Artichoke",
-        "3": ["Strawberry", "Chocolate"],
-        "4": "How do you feel about me asking you how you feel about surveys asking me how I feel about them?"
+        "1": ["Artichoke"],
+        "2": ["Quattro Stagioni", "Prosciutto"],
+        "3": "Excellent animals."
     },
     {
         "0": "test+4@fastsurvey.de",
-        "1": true,
-        "2": "Artichoke",
-        "3": ["Vanilla", "Chocolate"],
-        "4": "I'm Batman."
+        "1": ["Artichoke"],
+        "2": ["Prosciutto"],
+        "3": "I'm Batman!"
     }
 ]

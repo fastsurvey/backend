@@ -6,26 +6,23 @@
     },
     "1": {
         "count": 0,
-        "value": 0
+        "value": {
+            "Asparagus": 0,
+            "Spinach": 0,
+            "Artichoke": 0
+        }
     },
     "2": {
         "count": 0,
         "value": {
-            "Asparagus": 0,
-            "Spinach": 0,
-            "Artichoke": 0,
-            "None of these is a fruit": 0
+            "Quattro Stagioni": 0,
+            "Prosciutto": 0,
+            "Margherita": 0,
+            "Hawaiian": 0,
+            "Capricciosa": 0
         }
     },
     "3": {
-        "count": 0,
-        "value": {
-            "Strawberry": 0,
-            "Vanilla": 0,
-            "Chocolate": 0
-        }
-    },
-    "4": {
         "count": 0,
         "value": null
     }
