@@ -1,18 +1,18 @@
 import fastapi
-import fastapi.middleware.cors
 import fastapi.exceptions
+import fastapi.middleware.cors
 import pydantic
 
 import app.account as account
-import app.survey as survey
-import app.submission as submission
-import app.documentation as docs
-import app.settings as settings
-import app.validation as validation
 import app.auth as auth
-import app.utils as utils
+import app.documentation as docs
 import app.errors as errors
 import app.log as log
+import app.settings as settings
+import app.submission as submission
+import app.survey as survey
+import app.utils as utils
+import app.validation as validation
 
 
 # create fastapi app

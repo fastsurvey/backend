@@ -1,5 +1,5 @@
-import pytest
 import pydantic
+import pytest
 
 import app.models as models
 

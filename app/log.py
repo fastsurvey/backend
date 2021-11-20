@@ -1,6 +1,6 @@
-import sys
-import logging
 import datetime as dt
+import logging
+import sys
 
 
 def format_pydantic_error(exc):

@@ -1,13 +1,14 @@
-import secrets
-import passlib.context as context
-import hashlib
 import functools
+import hashlib
+import secrets
+
+import passlib.context as context
 import pymongo.errors
 
 import app.database as database
-import app.utils as utils
-import app.errors as errors
 import app.email as email
+import app.errors as errors
+import app.utils as utils
 
 
 _CONTEXT = context.CryptContext(schemes=["argon2"], deprecated="auto")

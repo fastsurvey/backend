@@ -1,6 +1,6 @@
-import os
-import json
 import copy
+import json
+import os
 
 import app.models as models
 

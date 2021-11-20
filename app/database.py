@@ -1,5 +1,5 @@
-import pymongo
 import motor.motor_asyncio
+import pymongo
 
 import app.settings as settings
 

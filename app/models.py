@@ -1,7 +1,8 @@
-import pydantic
-import typing
-import re
 import enum
+import re
+import typing
+
+import pydantic
 
 
 ########################################################################################

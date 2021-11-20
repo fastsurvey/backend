@@ -1,11 +1,11 @@
-import pytest
 import asyncio
 import json
+
+import pytest
 
 import app.auth as auth
 import app.database as database
 import app.email as email
-
 import tests.data as data
 
 

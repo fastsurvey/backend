@@ -1,5 +1,5 @@
-import pydantic
 import fastapi
+import pydantic
 
 import app.errors as errors
 

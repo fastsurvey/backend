@@ -1,13 +1,13 @@
-import pytest
-import httpx
 import copy
 
+import httpx
+import pytest
+
+import app.auth as auth
+import app.database as database
+import app.errors as errors
 import app.main as main
 import app.survey as survey
-import app.database as database
-import app.auth as auth
-import app.errors as errors
-
 import tests.conftest as conftest
 
 

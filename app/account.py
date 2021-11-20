@@ -1,11 +1,11 @@
-import pymongo.errors
 import fastapi
+import pymongo.errors
 
-import app.email as email
 import app.auth as auth
-import app.utils as utils
 import app.database as database
+import app.email as email
 import app.errors as errors
+import app.utils as utils
 
 
 async def read(username):

@@ -1,3 +1,4 @@
 #!/bin/sh
 
-poetry run black "$@"
+poetry run black --experimental-string-processing ./
+poetry run isort ./
