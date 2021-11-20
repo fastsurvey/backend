@@ -41,7 +41,7 @@ async def create(username, configuration):
         await database.database["configurations"].insert_one(
             document={
                 "username": username,
-                "max_identifier": configuration["fields"][-1]["identifier"],
+                "next_identifier": configuration["fields"][-1]["identifier"] + 1,
                 **configuration,
             },
         )
@@ -81,7 +81,7 @@ async def update(username, survey_name, update):
     # check that new fields are numbered in ascending order
     new = identifiers(update) - identifiers(configuration)
     for i, e in enumerate(sorted(new)):
-        if e != configuration["max_identifier"] + i + 1:
+        if e != configuration["next_identifier"] + i:
             raise errors.InvalidSyntaxError()
 
     # write changes to database
@@ -91,11 +91,11 @@ async def update(username, survey_name, update):
                 "_id": configuration["_id"],
                 # this ensures that even when the configuration changed
                 # between read and write, that only valid updates are written
-                "max_identifier": configuration["max_identifier"],
+                "next_identifier": configuration["next_identifier"],
             },
             replacement={
                 "username": username,
-                "max_identifier": max(identifiers(update)),
+                "next_identifier": max(identifiers(update)) + 1,
                 **update,
             },
         )

@@ -137,7 +137,7 @@ async def read_survey(
     #     start is not None and timestamp < start
     #     or end is not None and timestamp >= end
     # ):
-    #     exclude += ['fields', 'max_identifier']
+    #     exclude += ['fields', 'next_identifier']
     return {k: v for k, v in configuration.items() if k not in exclude}
 
 

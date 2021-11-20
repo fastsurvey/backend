@@ -412,8 +412,8 @@ async def test_reading_existing_surveys(
     res = await client.get(url=f"/users/{username}/surveys", headers=headers)
     assert fails(res, None)
     assert len(res.json()) == 2
-    assert {"max_identifier": 3, **configuration} in res.json()
-    assert {"max_identifier": 1, **configurations[0]} in res.json()
+    assert {"next_identifier": 4, **configuration} in res.json()
+    assert {"next_identifier": 2, **configurations[0]} in res.json()
 
 
 @pytest.mark.asyncio
@@ -456,7 +456,7 @@ async def test_reading_existing_survey(
     await setup_survey(client, headers, username, configuration)
     res = await client.get(f"/users/{username}/surveys/simple")
     assert fails(res, None)
-    assert res.json() == {"max_identifier": 3, **configuration}
+    assert res.json() == {"next_identifier": 4, **configuration}
 
 
 @pytest.mark.asyncio
@@ -508,7 +508,7 @@ async def test_reading_existing_survey_outside_time_limits(
     res = await client.get(f"/users/{username}/surveys/simple")
     assert fails(res, None)
     assert res.json() == {
-        k: v for k, v in configuration.items() if k not in ["max_identifier", "fields"]
+        k: v for k, v in configuration.items() if k not in ["next_identifier", "fields"]
     }
 
 
