@@ -99,30 +99,6 @@ class EmailField(Field):
             raise ValueError("invalid regular expression")
 
 
-class OptionField(Field):
-    type: typing.Literal["option"]
-    required: pydantic.StrictBool
-
-
-class RadioField(Field):
-    type: typing.Literal["radio"]
-    options: pydantic.conlist(
-        item_type=pydantic.constr(
-            strict=True,
-            min_length=1,
-            max_length=Length.B,
-        ),
-        min_items=1,
-        max_items=Length.A,
-    )
-
-    @pydantic.validator("options")
-    def validate_options(cls, v):
-        if len(set(v)) < len(v):
-            raise ValueError("options must be unique")
-        return v
-
-
 class SelectionField(Field):
     type: typing.Literal["selection"]
     options: pydantic.conlist(
@@ -174,8 +150,6 @@ class Configuration(BaseModel):
     fields_: pydantic.conlist(
         item_type=typing.Union[
             EmailField,
-            OptionField,
-            RadioField,
             SelectionField,
             TextField,
         ],
@@ -210,12 +184,6 @@ class Configuration(BaseModel):
 ########################################################################################
 
 
-def validate_option_field_submission(cls, v):
-    if not v:
-        raise ValueError("option is required")
-    return v
-
-
 def validate_selection_field_submission(cls, v):
     if len(set(v)) < len(v):
         raise ValueError("no duplicate selections allowed")
@@ -235,23 +203,6 @@ def build_email_field_validation(identifier, field, schema, validators):
     )
 
 
-def build_option_field_validation(identifier, field, schema, validators):
-    schema[identifier] = (pydantic.StrictBool, ...)
-    if field["required"]:
-        validators[f"validate-{identifier}"] = pydantic.validator(
-            identifier, allow_reuse=True
-        )(
-            validate_option_field_submission,
-        )
-
-
-def build_radio_field_validation(identifier, field, schema, validators):
-    schema[identifier] = (
-        typing.Literal[tuple(field["options"])],
-        ...,
-    )
-
-
 def build_selection_field_validation(identifier, field, schema, validators):
     schema[identifier] = (
         pydantic.conlist(
@@ -262,10 +213,9 @@ def build_selection_field_validation(identifier, field, schema, validators):
         ...,
     )
     validators[f"validate-{identifier}"] = pydantic.validator(
-        identifier, allow_reuse=True
-    )(
-        validate_selection_field_submission,
-    )
+        identifier,
+        allow_reuse=True,
+    )(validate_selection_field_submission)
 
 
 def build_text_field_validation(identifier, field, schema, validators):
@@ -285,8 +235,6 @@ def build_submission_model(configuration):
     validators = dict()
     mapping = dict(
         email=build_email_field_validation,
-        option=build_option_field_validation,
-        radio=build_radio_field_validation,
         selection=build_selection_field_validation,
         text=build_text_field_validation,
     )

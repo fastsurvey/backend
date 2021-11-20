@@ -17,31 +17,26 @@
         },
         {
             "identifier": 1,
-            "type": "option",
-            "title": "I am a big fan of carrots.",
+            "type": "selection",
+            "title": "What is your favorite fruit?",
             "description": "",
-            "required": true
+            "options": ["Asparagus", "Spinach", "Artichoke"],
+            "min_select": 1,
+            "max_select": 1
         },
         {
             "identifier": 2,
-            "type": "radio",
-            "title": "What is your favorite fruit?",
-            "description": "",
-            "options": ["Asparagus", "Spinach", "Artichoke", "None of these is a fruit"]
-        },
-        {
-            "identifier": 3,
             "type": "selection",
-            "title": "What are your favorite ice cream flavors?",
+            "title": "What are your favorite pizza styles?",
             "description": "",
-            "options": ["Strawberry", "Vanilla", "Chocolate"],
-            "min_select": 1,
+            "options": ["Quattro Stagioni", "Prosciutto", "Margherita", "Hawaiian", "Capricciosa"],
+            "min_select": 0,
             "max_select": 2
         },
         {
-            "identifier": 4,
+            "identifier": 3,
             "type": "text",
-            "title": "How do you feel about surveys asking you how you feel about them?",
+            "title": "How do you feel about penguins?",
             "description": "",
             "min_chars": 10,
             "max_chars": 1000

@@ -32,11 +32,6 @@
                                 }
                             }
                         },
-                        "1+value": {
-                            "$sum": {
-                                "$toInt": "$submission.1"
-                            }
-                        },
                         "2+count": {
                             "$sum": {
                                 "$toInt": {
@@ -60,33 +55,19 @@
                                     ]
                                 }
                             }
-                        },
-                        "4+count": {
-                            "$sum": {
-                                "$toInt": {
-                                    "$ne": [
-                                        {
-                                            "$type": "$submission.4"
-                                        },
-                                        "missing"
-                                    ]
-                                }
-                            }
                         }
                     }
                 }
             ],
-            "a2": [
+            "a1": [
                 {
-                    "$match": {
-                        "submission.2": {
-                            "$exists": true
-                        }
+                    "$unwind": {
+                        "path": "$submission.1"
                     }
                 },
                 {
                     "$group": {
-                        "_id": "$submission.2",
+                        "_id": "$submission.1",
                         "count": {
                             "$sum": 1
                         }
@@ -111,15 +92,15 @@
                     }
                 }
             ],
-            "a3": [
+            "a2": [
                 {
                     "$unwind": {
-                        "path": "$submission.3"
+                        "path": "$submission.2"
                     }
                 },
                 {
                     "$group": {
-                        "_id": "$submission.3",
+                        "_id": "$submission.2",
                         "count": {
                             "$sum": 1
                         }
@@ -162,7 +143,7 @@
                     "$first": "$main.1+count"
                 },
                 "value": {
-                    "$first": "$main.1+value"
+                    "$first": "$a1.value"
                 }
             },
             "2": {
@@ -176,14 +157,6 @@
             "3": {
                 "count": {
                     "$first": "$main.3+count"
-                },
-                "value": {
-                    "$first": "$a3.value"
-                }
-            },
-            "4": {
-                "count": {
-                    "$first": "$main.4+count"
                 },
                 "value": null
             }

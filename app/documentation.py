@@ -4,38 +4,37 @@ import fastapi
 import app.errors as errors
 
 
-_SAMPLE_SURVEY_NAME = "option"
+_SAMPLE_SURVEY_NAME = "simple"
 
 _SAMPLE_CONFIGURATION = {
-    "survey_name": "option",
-    "title": "Option Test",
+    "survey_name": "simple",
+    "title": "Simple Test Survey",
     "description": "",
-    "start": 1000000000,
-    "end": 2000000000,
+    "start": 0,
+    "end": 4102444800,
     "draft": False,
-    "authentication": "open",
-    "limit": 0,
     "fields": [
         {
-            "type": "option",
-            "title": "I have read and agree to the terms and conditions",
+            "identifier": 0,
+            "type": "selection",
+            "title": "What is your favorite fruit?",
             "description": "",
-            "required": True,
+            "options": ["Asparagus", "Spinach", "Artichoke"],
+            "min_select": 1,
+            "max_select": 1,
         }
     ],
 }
 
 _SAMPLE_SUBMISSION = (
     {
-        "1": True,
+        "0": ["Asparagus"],
     },
 )
 
 _SAMPLE_RESULTS = {
     "count": 1,
-    "aggregation": [
-        1,
-    ],
+    "1": {"count": 1, "value": {"Asparagus": 1, "Spinach": 0, "Artichoke": 0}},
 }
 
 
