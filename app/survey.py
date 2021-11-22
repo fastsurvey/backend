@@ -95,7 +95,12 @@ async def update(username, survey_name, update):
             },
             replacement={
                 "username": username,
-                "next_identifier": max(identifiers(update)) + 1,
+                "next_identifier": max(
+                    [
+                        max(identifiers(update)) + 1,
+                        configuration["next_identifier"],
+                    ]
+                ),
                 **update,
             },
         )

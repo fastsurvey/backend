@@ -565,6 +565,34 @@ async def test_creating_survey_with_invalid_configuration(
 
 
 @pytest.mark.asyncio
+async def test_updating_existing_survey_with_duplicate_update_configurations(
+    mock_email_sending,
+    mock_token_generation,
+    client,
+    username,
+    account_data,
+    configuration,
+    cleanup,
+):
+    """Test that survey is correctly updated given an identical configuration."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    await setup_survey(client, headers, username, configuration)
+    res = await client.put(
+        url=f"/users/{username}/surveys/simple",
+        headers=headers,
+        json=configuration,
+    )
+    assert fails(res, None)
+    e = await database.database["configurations"].find_one(
+        filter={},
+        projection={"_id": False, "username": False, "next_identifier": False},
+    )
+    assert e == configuration
+
+
+@pytest.mark.asyncio
 async def test_updating_existing_survey_with_valid_update_configurations(
     mock_email_sending,
     mock_token_generation,

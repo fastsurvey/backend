@@ -190,6 +190,42 @@
     },
     {
         "survey_name": "complex",
+        "title": "Sample Title",
+        "description": "Enneapuses are the new octopuses, and other wisdoms.",
+        "start": 1575724704,
+        "end": 2475965376,
+        "draft": false,
+        "fields": [
+            {
+                "identifier": 1,
+                "type": "text",
+                "title": "How do you feel about penguins?",
+                "description": "",
+                "min_chars": 10,
+                "max_chars": 1000
+            },
+            {
+                "identifier": 4,
+                "type": "selection",
+                "title": "What are your favorite pizza styles?",
+                "description": "",
+                "options": ["Quattro Stagioni", "Margherita", "Capricciosa", "Prosciutto", "Quattro Formaggi"],
+                "min_select": 3,
+                "max_select": 3
+            },
+            {
+                "identifier": 3,
+                "type": "email",
+                "title": "What's your email address?",
+                "description": "",
+                "hint": "YOUR EMAIL ADDRESS HERE",
+                "regex": ".*",
+                "verify": true
+            }
+        ]
+    },
+    {
+        "survey_name": "complex",
         "title": "Very Good Sample Title",
         "description": "Enneapuses are the new octopuses, and other wisdoms.",
         "start": 1575724704,
