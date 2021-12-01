@@ -28,7 +28,7 @@ jobs:
       if: steps.cache.outputs.cache-hit != 'true'
       run: poetry install --no-ansi --no-interaction
     - name: Test with pytest
-      run: poetry run pytest --cov=app --cov-report=term-missing --cov-report=xml tests
+      run: poetry run pytest -vv --cov=app --cov-report=term-missing --cov-report=xml tests
       env:
         ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
         MONGODB_CONNECTION_STRING: ${{ secrets.MONGODB_CONNECTION_STRING }}
