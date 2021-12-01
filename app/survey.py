@@ -41,7 +41,7 @@ async def create(username, configuration):
         await database.database["configurations"].insert_one(
             document={
                 "username": username,
-                "next_identifier": configuration["fields"][-1]["identifier"] + 1,
+                "next_identifier": max(identifiers) + 1,
                 **configuration,
             },
         )
