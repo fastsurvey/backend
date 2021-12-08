@@ -1,32 +1,32 @@
 [
     {
-        "0": "test+0@fastsurvey.de",
-        "1": ["Asparagus"],
-        "2": ["Prosciutto"],
-        "3": "What do you want from me?"
+        "1": "test+0@fastsurvey.de",
+        "2": ["Asparagus"],
+        "3": ["Prosciutto"],
+        "5": "What do you want from me?"
     },
     {
-        "0": "test+1@fastsurvey.de",
-        "1": ["Artichoke"],
-        "2": ["Capricciosa", "Quattro Stagioni"],
-        "3": "Erm, good I guess?"
+        "1": "test+1@fastsurvey.de",
+        "2": ["Artichoke"],
+        "3": ["Capricciosa", "Quattro Stagioni"],
+        "5": "Erm, good I guess?"
     },
     {
-        "0": "test+2@fastsurvey.de",
-        "1": ["Asparagus"],
-        "2": [],
-        "3": "Frankly, I don't know."
+        "1": "test+2@fastsurvey.de",
+        "2": ["Asparagus"],
+        "3": [],
+        "5": "Frankly, I don't know."
     },
     {
-        "0": "test+3@fastsurvey.de",
-        "1": ["Artichoke"],
-        "2": ["Quattro Stagioni", "Prosciutto"],
-        "3": "Excellent animals."
+        "1": "test+3@fastsurvey.de",
+        "2": ["Artichoke"],
+        "3": ["Quattro Stagioni", "Prosciutto"],
+        "5": "Excellent animals."
     },
     {
-        "0": "test+4@fastsurvey.de",
-        "1": ["Artichoke"],
-        "2": ["Prosciutto"],
-        "3": "I'm Batman!"
+        "1": "test+4@fastsurvey.de",
+        "2": ["Artichoke"],
+        "3": ["Prosciutto"],
+        "5": "I'm Batman!"
     }
 ]

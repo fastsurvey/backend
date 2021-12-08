@@ -8,18 +8,6 @@
                         "count": {
                             "$sum": 1
                         },
-                        "0+count": {
-                            "$sum": {
-                                "$toInt": {
-                                    "$ne": [
-                                        {
-                                            "$type": "$submission.0"
-                                        },
-                                        "missing"
-                                    ]
-                                }
-                            }
-                        },
                         "1+count": {
                             "$sum": {
                                 "$toInt": {
@@ -55,39 +43,18 @@
                                     ]
                                 }
                             }
-                        }
-                    }
-                }
-            ],
-            "a1": [
-                {
-                    "$unwind": {
-                        "path": "$submission.1"
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": "$submission.1",
-                        "count": {
-                            "$sum": 1
-                        }
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": null,
-                        "value": {
-                            "$push": {
-                                "k": "$_id",
-                                "v": "$count"
+                        },
+                        "5+count": {
+                            "$sum": {
+                                "$toInt": {
+                                    "$ne": [
+                                        {
+                                            "$type": "$submission.5"
+                                        },
+                                        "missing"
+                                    ]
+                                }
                             }
-                        }
-                    }
-                },
-                {
-                    "$project": {
-                        "value": {
-                            "$arrayToObject": "$value"
                         }
                     }
                 }
@@ -124,6 +91,39 @@
                         }
                     }
                 }
+            ],
+            "a3": [
+                {
+                    "$unwind": {
+                        "path": "$submission.3"
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$submission.3",
+                        "count": {
+                            "$sum": 1
+                        }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": null,
+                        "value": {
+                            "$push": {
+                                "k": "$_id",
+                                "v": "$count"
+                            }
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "value": {
+                            "$arrayToObject": "$value"
+                        }
+                    }
+                }
             ]
         }
     },
@@ -132,19 +132,11 @@
             "count": {
                 "$first": "$main.count"
             },
-            "0": {
-                "count": {
-                    "$first": "$main.0+count"
-                },
-                "value": null
-            },
             "1": {
                 "count": {
                     "$first": "$main.1+count"
                 },
-                "value": {
-                    "$first": "$a1.value"
-                }
+                "value": null
             },
             "2": {
                 "count": {
@@ -157,6 +149,14 @@
             "3": {
                 "count": {
                     "$first": "$main.3+count"
+                },
+                "value": {
+                    "$first": "$a3.value"
+                }
+            },
+            "5": {
+                "count": {
+                    "$first": "$main.5+count"
                 },
                 "value": null
             }
