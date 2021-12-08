@@ -159,8 +159,10 @@ class Configuration(BaseModel):
     draft: pydantic.StrictBool
     fields_: pydantic.conlist(
         item_type=typing.Union[
+            MarkdownField,
             EmailField,
             SelectionField,
+            PageBreakField,
             TextField,
         ],
         min_items=1,
@@ -200,6 +202,10 @@ def validate_selection_field_submission(cls, v):
     return v
 
 
+def build_markdown_field_validation(identifier, field, schema, validators):
+    pass
+
+
 def build_email_field_validation(identifier, field, schema, validators):
     schema[identifier] = (
         pydantic.constr(
@@ -228,6 +234,10 @@ def build_selection_field_validation(identifier, field, schema, validators):
     )(validate_selection_field_submission)
 
 
+def build_page_break_field_validation(identifier, field, schema, validators):
+    pass
+
+
 def build_text_field_validation(identifier, field, schema, validators):
     schema[identifier] = (
         pydantic.constr(
@@ -243,11 +253,13 @@ def build_submission_model(configuration):
     """Build pydantic submission model based on the survey configuration."""
     schema = dict()
     validators = dict()
-    mapping = dict(
-        email=build_email_field_validation,
-        selection=build_selection_field_validation,
-        text=build_text_field_validation,
-    )
+    mapping = {
+        "markdown": build_markdown_field_validation,
+        "email": build_email_field_validation,
+        "selection": build_selection_field_validation,
+        "break": build_page_break_field_validation,
+        "text": build_text_field_validation,
+    }
     for field in configuration["fields"]:
         identifier = str(field["identifier"])
         mapping[field["type"]](identifier, field, schema, validators)
