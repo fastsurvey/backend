@@ -25,7 +25,7 @@ def _build_aggregation_pipeline(configuration):
                     },
                 },
             }
-        else:
+        elif field["type"] in ["selection", "text"]:
             pipeline[1]["$project"][identifier] = {
                 "$ifNull": [f"$submission.{identifier}", None],
             }

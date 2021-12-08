@@ -19,6 +19,11 @@ AGGREGATION_PIPELINE_BASE = [
 ]
 
 
+def _add_markdown_field_aggregation_commands(pipeline, identifier):
+    """Add pipeline commands to aggregate markdown field submissions."""
+    pass
+
+
 def _add_email_field_aggregation_commands(pipeline, identifier):
     """Add pipeline commands to aggregate email field submissions."""
     pipeline[0]["$facet"]["main"][0]["$group"][f"{identifier}+count"] = {
@@ -69,6 +74,11 @@ def _add_selection_field_aggregation_commands(pipeline, identifier):
     }
 
 
+def _add_page_break_field_aggregation_commands(pipeline, identifier):
+    """Add pipeline commands to aggregate page break field submissions."""
+    pass
+
+
 def _add_text_field_aggregation_commands(pipeline, identifier):
     """Add pipeline commands to aggregate text field submissions."""
     _add_email_field_aggregation_commands(pipeline, identifier)
@@ -78,8 +88,10 @@ def _build_aggregation_pipeline(configuration):
     """Build MongoDB aggregation pipeline to aggregate survey submissions."""
     pipeline = copy.deepcopy(AGGREGATION_PIPELINE_BASE)
     functions = {
+        "markdown": _add_markdown_field_aggregation_commands,
         "email": _add_email_field_aggregation_commands,
         "selection": _add_selection_field_aggregation_commands,
+        "break": _add_page_break_field_aggregation_commands,
         "text": _add_text_field_aggregation_commands,
     }
     for field in configuration["fields"]:
@@ -92,12 +104,13 @@ def _format_results(results, configuration):
     results.setdefault("count", 0)
     for field in configuration["fields"]:
         identifier = str(field["identifier"])
-        results[identifier].setdefault("count", 0)
         if field["type"] in ["email", "text"]:
+            results[identifier].setdefault("count", 0)
             results[identifier].setdefault("value", None)
         # add options that received no submissions and sort options as
         # specified in the configuration
-        if field["type"] == "selection":
+        elif field["type"] == "selection":
+            results[identifier].setdefault("count", 0)
             results[identifier].setdefault("value", {})
             out = dict()
             for option in field["options"]:
