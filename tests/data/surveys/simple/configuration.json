@@ -1,43 +1,47 @@
 {
     "survey_name": "simple",
     "title": "Simple Test Survey",
-    "description": "",
     "start": 0,
     "end": 4102444800,
     "draft": false,
     "fields": [
         {
             "identifier": 0,
+            "type": "markdown",
+            "description": "We're always thinking of eternity as an idea that cannot be understood, something immense. But why must it be? What if, instead of all this, you suddenly find just a little room there, something like a village bath-house, grimy, and spiders in every corner, and that's all eternity is. Sometimes, you know, I can't help feeling that that's what it is."
+        },
+        {
+            "identifier": 1,
             "type": "email",
-            "title": "What's your email address?",
-            "description": "",
+            "description": "What's your email address?",
             "hint": "Your email address ...",
             "regex": ".*",
             "verify": true
         },
         {
-            "identifier": 1,
+            "identifier": 2,
             "type": "selection",
-            "title": "What is your favorite fruit?",
-            "description": "",
+            "description": "What is your favorite fruit?",
             "options": ["Asparagus", "Spinach", "Artichoke"],
             "min_select": 1,
             "max_select": 1
         },
         {
-            "identifier": 2,
+            "identifier": 3,
             "type": "selection",
-            "title": "What are your favorite pizza styles?",
-            "description": "",
+            "description": "What are your favorite pizza styles?",
             "options": ["Quattro Stagioni", "Prosciutto", "Margherita", "Hawaiian", "Capricciosa"],
             "min_select": 0,
             "max_select": 2
         },
         {
-            "identifier": 3,
+            "identifier": 4,
+            "type": "break"
+        },
+        {
+            "identifier": 5,
             "type": "text",
-            "title": "How do you feel about penguins?",
-            "description": "",
+            "description": "How do you feel about penguins?",
             "min_chars": 10,
             "max_chars": 1000
         }
