@@ -81,12 +81,11 @@ class AccountDataUpdate(BaseModel):
 
 class Field(BaseModel):
     identifier: pydantic.conint(strict=True, ge=0, le=Length.D)
-    title: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
-    description: pydantic.StrictStr
 
 
 class EmailField(Field):
     type: typing.Literal["email"]
+    description: pydantic.constr(strict=True, min_length=1)
     hint: pydantic.constr(strict=True, max_length=Length.B)
     regex: pydantic.constr(strict=True, max_length=Length.B)
     verify: pydantic.StrictBool
@@ -102,6 +101,7 @@ class EmailField(Field):
 
 class SelectionField(Field):
     type: typing.Literal["selection"]
+    description: pydantic.constr(strict=True, min_length=1)
     options: pydantic.conlist(
         item_type=pydantic.constr(
             strict=True,
@@ -131,6 +131,7 @@ class SelectionField(Field):
 
 class TextField(Field):
     type: typing.Literal["text"]
+    description: pydantic.constr(strict=True, min_length=1)
     min_chars: pydantic.conint(strict=True, ge=0, le=Length.C)
     max_chars: pydantic.conint(strict=True, ge=0, le=Length.C)
 
@@ -141,10 +142,18 @@ class TextField(Field):
         return v
 
 
+class MarkdownField(Field):
+    type: typing.Literal["markdown"]
+    description: pydantic.constr(strict=True, min_length=1)
+
+
+class PageBreakField(Field):
+    type: typing.Literal["break"]
+
+
 class Configuration(BaseModel):
     survey_name: SurveyName
     title: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
-    description: pydantic.StrictStr
     start: typing.Optional[Timestamp] = pydantic.Field(...)
     end: typing.Optional[Timestamp] = pydantic.Field(...)
     draft: pydantic.StrictBool
