@@ -165,7 +165,7 @@ class Configuration(BaseModel):
             PageBreakField,
             TextField,
         ],
-        min_items=1,
+        min_items=0,
         max_items=Length.A,
     ) = pydantic.Field(alias="fields")
 
