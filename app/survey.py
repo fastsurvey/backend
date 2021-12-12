@@ -41,7 +41,7 @@ async def create(username, configuration):
         await database.database["configurations"].insert_one(
             document={
                 "username": username,
-                "next_identifier": max(identifiers) + 1,
+                "next_identifier": max(identifiers) + 1 if identifiers else 0,
                 **configuration,
             },
         )
@@ -97,7 +97,7 @@ async def update(username, survey_name, update):
                 "username": username,
                 "next_identifier": max(
                     [
-                        max(identifiers(update)) + 1,
+                        max(identifiers(update)) + 1 if identifiers(update) else 0,
                         configuration["next_identifier"],
                     ]
                 ),

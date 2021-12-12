@@ -107,8 +107,10 @@ def _format_results(results, configuration):
         if field["type"] in ["email", "text"]:
             results[identifier].setdefault("count", 0)
             results[identifier].setdefault("value", None)
-        # add options that received no submissions and sort options as
-        # specified in the configuration
+        # add options that received no submissions and sort options as specified in the
+        # configuration; options that were previously selected, but have been removed
+        # from the configuration are not returned; this makes results less transparent
+        # in favor of making the results of updated surveys less confusing
         elif field["type"] == "selection":
             results[identifier].setdefault("count", 0)
             results[identifier].setdefault("value", {})
