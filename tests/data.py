@@ -147,10 +147,6 @@ def _build_invalid_configurations(configuration):
     x = copy.deepcopy(configuration)
     x.pop("start")
     invalid_configurations.append(x)
-    # field list is empty
-    x = copy.deepcopy(configuration)
-    x["fields"] = []
-    invalid_configurations.append(x)
     # field item is empty
     x = copy.deepcopy(configuration)
     x["fields"][2] = {}
@@ -407,48 +403,39 @@ def _build_invalid_submissions(submission):
 ########################################################################################
 
 
-def _load_test_accounts_data():
+def _load_test_account_data():
     """Load some valid and invalid test examples of account data."""
     data = {}
-    with open("tests/data/account_datas.json", "r") as e:
+    with open("tests/account_datas.json", "r") as e:
         data["account_datas"] = json.load(e)
     data["invalid_account_datas"] = _build_invalid_account_datas(
-        account_data=data["account_datas"][0],
+        account_data=data["account_datas"][0]
     )
     return data
 
 
-def _load_simple_test_survey_data():
-    """Load test data of simple survey (configuration, submissions, ...)."""
+def _load_test_survey_data():
+    """Load test data of example survey (configurations, submissionss, ...)."""
     data = dict()
     parameters = [
-        "configuration",
-        "submissions",
+        "configurations",
+        "submissionss",
         "aggregation_pipeline",
-        "results",
+        "resultss",
         "default_results",
     ]
     for parameter in parameters:
-        with open(f"tests/data/surveys/simple/{parameter}.json", "r") as x:
+        with open(f"tests/survey/{parameter}.json", "r") as x:
             data[parameter] = json.load(x)
+
     data["invalid_configurations"] = _build_invalid_configurations(
-        configuration=data["configuration"],
+        configuration=data["configurations"][0]
     )
     data["invalid_submissions"] = _build_invalid_submissions(
-        submission=data["submissions"][0],
+        submission=data["submissionss"][0][0]
     )
     return data
 
 
-def _load_complex_test_survey_data():
-    """Load test data of complex survey, including some survey updates."""
-    data = dict()
-    for parameter in ["configurations", "submissionss", "resultss"]:
-        with open(f"tests/data/surveys/complex/{parameter}.json", "r") as x:
-            data[parameter] = json.load(x)
-    return data
-
-
-TEST_ACCOUNTS_DATA = _load_test_accounts_data()
-SIMPLE_TEST_SURVEY_DATA = _load_simple_test_survey_data()
-COMPLEX_TEST_SURVEY_DATA = _load_complex_test_survey_data()
+TEST_ACCOUNT_DATA = _load_test_account_data()
+TEST_SURVEY_DATA = _load_test_survey_data()

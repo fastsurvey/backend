@@ -329,7 +329,7 @@ async def test_updating_existing_user_with_valid_password(
     assert auth.verify_password(account_data["password"], e["password_hash"])
 
 
-@pytest.mark.skip(reason="todo")
+@pytest.mark.skip(reason="skip until email address update is implemented")
 @pytest.mark.asyncio
 async def test_updating_existing_user_with_valid_email_address_in_use(
     mock_email_sending,
@@ -367,6 +367,7 @@ async def test_deleting_existing_user(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     submissions,
     cleanup,
@@ -376,8 +377,8 @@ async def test_deleting_existing_user(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, "simple", submissions[0])
-    configuration = await survey.read(username, "simple")
+    await setup_submission(client, username, survey_name, submissions[0])
+    configuration = await survey.read(username, survey_name)
     res = await client.delete(url=f"/users/{username}", headers=headers)
     assert fails(res, None)
     assert await database.database["accounts"].find_one() is None
@@ -400,20 +401,20 @@ async def test_reading_existing_surveys(
     username,
     account_data,
     configuration,
-    configurations,
     cleanup,
 ):
     """Test that correct configurations of a specific user are returned."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
-    await setup_survey(client, headers, username, configuration)
-    await setup_survey(client, headers, username, configurations[0])
+    for i in range(4):
+        res = await setup_survey(
+            client, headers, username, configuration | {"survey_name": str(i)}
+        )
+        assert fails(res, None)
     res = await client.get(url=f"/users/{username}/surveys", headers=headers)
     assert fails(res, None)
-    assert len(res.json()) == 2
-    assert {"next_identifier": 4, **configuration} in res.json()
-    assert {"next_identifier": 2, **configurations[0]} in res.json()
+    assert len(res.json()) == 4
 
 
 @pytest.mark.asyncio
@@ -446,6 +447,7 @@ async def test_reading_existing_survey(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     cleanup,
 ):
@@ -454,9 +456,9 @@ async def test_reading_existing_survey(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    res = await client.get(f"/users/{username}/surveys/simple")
+    res = await client.get(f"/users/{username}/surveys/{survey_name}")
     assert fails(res, None)
-    assert res.json() == {"next_identifier": 4, **configuration}
+    assert res.json() == configuration | {"next_identifier": 6}
 
 
 @pytest.mark.asyncio
@@ -487,7 +489,7 @@ async def test_reading_existing_survey_in_draft_mode(
     assert fails(res, errors.SurveyNotFoundError)
 
 
-@pytest.mark.skip
+@pytest.mark.skip(reason="whole survey is returned for the moment")
 @pytest.mark.asyncio
 async def test_reading_existing_survey_outside_time_limits(
     mock_email_sending,
@@ -513,7 +515,7 @@ async def test_reading_existing_survey_outside_time_limits(
 
 
 ########################################################################################
-# route: create survey
+# Route: Create Survey
 ########################################################################################
 
 
@@ -524,6 +526,7 @@ async def test_creating_survey_with_valid_configuration(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     cleanup,
 ):
@@ -533,9 +536,9 @@ async def test_creating_survey_with_valid_configuration(
     headers = await setup_headers(client, account_data)
     res = await setup_survey(client, headers, username, configuration)
     assert fails(res, None)
-    e = await database.database["configurations"].find_one()
-    assert e["username"] == username
-    assert e["survey_name"] == "simple"
+    x = await database.database["configurations"].find_one()
+    assert x["username"] == username
+    assert x["survey_name"] == survey_name
 
 
 @pytest.mark.asyncio
@@ -555,8 +558,8 @@ async def test_creating_survey_with_invalid_configuration(
     configuration = invalid_configurations[0]
     res = await setup_survey(client, headers, username, configuration)
     assert fails(res, errors.InvalidSyntaxError)
-    e = await database.database["configurations"].find_one()
-    assert e is None
+    x = await database.database["configurations"].find_one()
+    assert x is None
 
 
 ########################################################################################
@@ -571,6 +574,7 @@ async def test_updating_existing_survey_with_duplicate_update_configurations(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     cleanup,
 ):
@@ -580,16 +584,16 @@ async def test_updating_existing_survey_with_duplicate_update_configurations(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     res = await client.put(
-        url=f"/users/{username}/surveys/simple",
+        url=f"/users/{username}/surveys/{survey_name}",
         headers=headers,
         json=configuration,
     )
     assert fails(res, None)
-    e = await database.database["configurations"].find_one(
+    x = await database.database["configurations"].find_one(
         filter={},
         projection={"_id": False, "username": False, "next_identifier": False},
     )
-    assert e == configuration
+    assert x == configuration
 
 
 @pytest.mark.asyncio
@@ -607,16 +611,19 @@ async def test_updating_existing_survey_with_valid_update_configurations(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configurations[0])
-    for configuration in configurations[1:]:
+    next_identifiers = [6, 12, 12, 12, 12, 12]
+    for i, configuration in enumerate(configurations[1:]):
         res = await client.put(
-            url=f"/users/{username}/surveys/complex",
+            url=f"/users/{username}/surveys/{configurations[i]['survey_name']}",
             headers=headers,
             json=configuration,
         )
         assert fails(res, None)
-        e = await database.database["configurations"].find_one()
-        assert e["title"] == configuration["title"]
-        assert e["description"] == configuration["description"]
+        x = await database.database["configurations"].find_one(
+            filter={},
+            projection={"_id": False, "username": False},
+        )
+        assert x == configuration | {"next_identifier": next_identifiers[i]}
 
 
 @pytest.mark.asyncio
@@ -626,6 +633,7 @@ async def test_updating_existing_survey_with_invalid_update_configuration(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     cleanup,
 ):
@@ -643,7 +651,7 @@ async def test_updating_existing_survey_with_invalid_update_configuration(
     # check for errors
     for x in [c1, c2]:
         res = await client.put(
-            url=f"/users/{username}/surveys/simple",
+            url=f"/users/{username}/surveys/{survey_name}",
             headers=headers,
             json=x,
         )
@@ -657,6 +665,7 @@ async def test_updating_nonexistent_survey_with_valid_update_configuration(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     cleanup,
 ):
@@ -665,13 +674,13 @@ async def test_updating_nonexistent_survey_with_valid_update_configuration(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     res = await client.put(
-        url=f"/users/{username}/surveys/simple",
+        url=f"/users/{username}/surveys/{survey_name}",
         headers=headers,
         json=configuration,
     )
     assert fails(res, errors.SurveyNotFoundError)
-    e = await database.database["configurations"].find_one()
-    assert e is None
+    x = await database.database["configurations"].find_one()
+    assert x is None
 
 
 @pytest.mark.asyncio
@@ -681,6 +690,7 @@ async def test_updating_survey_name_to_survey_name_not_in_use(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     cleanup,
 ):
@@ -692,13 +702,13 @@ async def test_updating_survey_name_to_survey_name_not_in_use(
     configuration = copy.deepcopy(configuration)
     configuration["survey_name"] = "kangaroo"
     res = await client.put(
-        url=f"/users/{username}/surveys/simple",
+        url=f"/users/{username}/surveys/{survey_name}",
         headers=headers,
         json=configuration,
     )
     assert fails(res, None)
-    e = await database.database["configurations"].find_one()
-    assert e["survey_name"] == "kangaroo"
+    x = await database.database["configurations"].find_one()
+    assert x["survey_name"] == "kangaroo"
 
 
 @pytest.mark.asyncio
@@ -708,6 +718,7 @@ async def test_updating_survey_name_to_survey_name_in_use(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     cleanup,
 ):
@@ -720,15 +731,15 @@ async def test_updating_survey_name_to_survey_name_in_use(
     configuration["survey_name"] = "kangaroo"
     await setup_survey(client, headers, username, configuration)
     res = await client.put(
-        url=f"/users/{username}/surveys/simple",
+        url=f"/users/{username}/surveys/{survey_name}",
         headers=headers,
         json=configuration,
     )
     assert fails(res, errors.SurveyNameAlreadyTakenError)
-    e = await database.database["configurations"].find_one(
-        filter={"survey_name": "simple"},
+    x = await database.database["configurations"].find_one(
+        filter={"survey_name": survey_name},
     )
-    assert e is not None
+    assert x is not None
 
 
 ########################################################################################
@@ -743,6 +754,7 @@ async def test_deleting_existing_survey_with_existing_submissions(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     submissions,
     cleanup,
@@ -752,16 +764,16 @@ async def test_deleting_existing_survey_with_existing_submissions(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, "simple", submissions[0])
-    configuration = await survey.read(username, "simple")
+    await setup_submission(client, username, survey_name, submissions[0])
+    configuration = await survey.read(username, survey_name)
     res = await client.delete(
-        url=f"/users/{username}/surveys/simple",
+        url=f"/users/{username}/surveys/{survey_name}",
         headers=headers,
     )
     assert fails(res, None)
     assert await database.database["configurations"].find_one() is None
-    e = await survey.submissions_collection(configuration).find_one()
-    assert e is None
+    x = await survey.submissions_collection(configuration).find_one()
+    assert x is None
 
 
 ########################################################################################
@@ -769,6 +781,7 @@ async def test_deleting_existing_survey_with_existing_submissions(
 ########################################################################################
 
 
+@pytest.mark.skip(reason="what to export if there are no fields?")
 @pytest.mark.asyncio
 async def test_exporting_submissions_with_submissions(
     mock_email_sending,
@@ -776,6 +789,7 @@ async def test_exporting_submissions_with_submissions(
     client,
     username,
     account_data,
+    survey_name,
     configurations,
     submissionss,
     cleanup,
@@ -784,16 +798,25 @@ async def test_exporting_submissions_with_submissions(
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
-    base = f"/users/{username}/surveys/complex"
 
     def extract_identifiers(configuration):
-        return {str(field["identifier"]) for field in configuration["fields"]}
+        return {
+            str(field["identifier"])
+            for field in configuration["fields"]
+            if field["type"] not in ["markdown", "break"]
+        }
 
     # initial creation and first export without update
-    await setup_survey(client, headers, username, configurations[0])
+    res = await setup_survey(client, headers, username, configurations[0])
     for submission in submissionss[0]:
-        await setup_submission(client, username, "complex", submission)
-    res = await client.get(url=f"{base}/submissions", headers=headers)
+        await setup_submission(client, username, survey_name, submission)
+    res = await client.get(
+        url=f"/users/{username}/surveys/{survey_name}/submissions",
+        headers=headers,
+    )
+
+    print(res.json())
+
     assert fails(res, None)
     assert len(res.json()) == len(submissionss[0])
     identifiers = extract_identifiers(configurations[0])
@@ -802,11 +825,22 @@ async def test_exporting_submissions_with_submissions(
     # exports with intermediate updates
     counter = len(submissionss[0])
     for configuration, submissions in zip(configurations[1:], submissionss[1:]):
-        res = await client.put(url=base, headers=headers, json=configuration)
+        res = await client.put(
+            url=f"/users/{username}/surveys/{survey_name}",
+            headers=headers,
+            json=configuration,
+        )
         assert fails(res, None)
+        survey_name = configuration["survey_name"]
         for submission in submissions:
-            await setup_submission(client, username, "complex", submission)
-        res = await client.get(url=f"{base}/submissions", headers=headers)
+            await setup_submission(client, username, survey_name, submission)
+        res = await client.get(
+            url=f"/users/{username}/surveys/{survey_name}/submissions",
+            headers=headers,
+        )
+
+        print(res.json())
+
         assert fails(res, None)
         counter += len(submissions)
         assert len(res.json()) == counter
@@ -821,6 +855,7 @@ async def test_exporting_submissions_without_submissions(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     cleanup,
 ):
@@ -830,7 +865,7 @@ async def test_exporting_submissions_without_submissions(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     res = await client.get(
-        url=f"/users/{username}/surveys/simple/submissions",
+        url=f"/users/{username}/surveys/{survey_name}/submissions",
         headers=headers,
     )
     assert fails(res, None)
@@ -852,6 +887,7 @@ async def test_creating_submission(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     submissions,
     cleanup,
@@ -861,11 +897,11 @@ async def test_creating_submission(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    res = await setup_submission(client, username, "simple", submissions[0])
+    res = await setup_submission(client, username, survey_name, submissions[0])
     assert fails(res, None)
-    configuration = await survey.read(username, "simple")
-    e = await survey.submissions_collection(configuration).find_one()
-    assert e["submission"] == submissions[0]
+    configuration = await survey.read(username, survey_name)
+    x = await survey.submissions_collection(configuration).find_one()
+    assert x["submission"] == submissions[0]
 
 
 @pytest.mark.asyncio
@@ -875,6 +911,7 @@ async def test_creating_invalid_submission(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     invalid_submissions,
     cleanup,
@@ -885,11 +922,11 @@ async def test_creating_invalid_submission(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     submission = invalid_submissions[0]
-    res = await setup_submission(client, username, "simple", submission)
+    res = await setup_submission(client, username, survey_name, submission)
     assert fails(res, errors.InvalidSyntaxError)
-    configuration = await survey.read(username, "simple")
-    e = await survey.submissions_collection(configuration).find_one()
-    assert e is None
+    configuration = await survey.read(username, survey_name)
+    x = await survey.submissions_collection(configuration).find_one()
+    assert x is None
 
 
 ########################################################################################
@@ -904,6 +941,7 @@ async def test_resetting_survey_with_existing_submissions(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     submissions,
     cleanup,
@@ -913,16 +951,16 @@ async def test_resetting_survey_with_existing_submissions(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, "simple", submissions[0])
-    configuration = await survey.read(username, "simple")
+    await setup_submission(client, username, survey_name, submissions[0])
+    configuration = await survey.read(username, survey_name)
     res = await client.delete(
-        url=f"/users/{username}/surveys/simple/submissions",
+        url=f"/users/{username}/surveys/{survey_name}/submissions",
         headers=headers,
     )
     assert fails(res, None)
     assert await database.database["configurations"].find_one() is not None
-    e = await survey.submissions_collection(configuration).find_one()
-    assert e is None
+    x = await survey.submissions_collection(configuration).find_one()
+    assert x is None
 
 
 ########################################################################################
@@ -937,6 +975,7 @@ async def test_verifying_valid_verification_token(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     submissions,
     cleanup,
@@ -945,16 +984,18 @@ async def test_verifying_valid_verification_token(
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
+    configuration = copy.deepcopy(configuration)
+    configuration["fields"][1]["verify"] = True
     await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, "simple", submissions[0])
+    await setup_submission(client, username, survey_name, submissions[0])
     res = await client.post(
-        url=f"/users/{username}/surveys/simple/verification",
+        url=f"/users/{username}/surveys/{survey_name}/verification",
         json={"verification_token": conftest.valid_token()},
     )
     assert fails(res, None)
-    configuration = await survey.read(username, "simple")
-    e = await survey.submissions_collection(configuration).find_one()
-    assert e["verified"]
+    configuration = await survey.read(username, survey_name)
+    x = await survey.submissions_collection(configuration).find_one()
+    assert x["verified"]
 
 
 @pytest.mark.asyncio
@@ -964,6 +1005,7 @@ async def test_verifying_invalid_verification_token(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     submissions,
     cleanup,
@@ -972,16 +1014,18 @@ async def test_verifying_invalid_verification_token(
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
+    configuration = copy.deepcopy(configuration)
+    configuration["fields"][1]["verify"] = True
     await setup_survey(client, headers, username, configuration)
-    await setup_submission(client, username, "simple", submissions[0])
+    await setup_submission(client, username, survey_name, submissions[0])
     res = await client.post(
-        url=f"/users/{username}/surveys/simple/verification",
+        url=f"/users/{username}/surveys/{survey_name}/verification",
         json={"verification_token": conftest.invalid_token()},
     )
     assert fails(res, errors.InvalidVerificationTokenError)
-    configuration = await survey.read(username, "simple")
-    e = await survey.submissions_collection(configuration).find_one()
-    assert not e["verified"]
+    configuration = await survey.read(username, survey_name)
+    x = await survey.submissions_collection(configuration).find_one()
+    assert not x["verified"]
 
 
 ########################################################################################
@@ -996,6 +1040,7 @@ async def test_reading_results_with_submissions(
     client,
     username,
     account_data,
+    survey_name,
     configurations,
     submissionss,
     resultss,
@@ -1005,23 +1050,33 @@ async def test_reading_results_with_submissions(
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
-    base = f"/users/{username}/surveys/complex"
 
     # initial creation and first aggregation without update
     await setup_survey(client, headers, username, configurations[0])
     for submission in submissionss[0]:
-        await setup_submission(client, username, "complex", submission)
-    res = await client.get(url=f"{base}/results", headers=headers)
+        await setup_submission(client, username, survey_name, submission)
+    res = await client.get(
+        url=f"/users/{username}/surveys/{survey_name}/results",
+        headers=headers,
+    )
     assert fails(res, None)
     assert res.json() == resultss[0]
 
     # aggregations with intermediate updates
     for i, configuration in enumerate(configurations[1:]):
-        res = await client.put(url=base, headers=headers, json=configuration)
+        res = await client.put(
+            url=f"/users/{username}/surveys/{survey_name}",
+            headers=headers,
+            json=configuration,
+        )
         assert fails(res, None)
+        survey_name = configuration["survey_name"]
         for submission in submissionss[i + 1]:
-            await setup_submission(client, username, "complex", submission)
-        res = await client.get(url=f"{base}/results", headers=headers)
+            await setup_submission(client, username, survey_name, submission)
+        res = await client.get(
+            url=f"/users/{username}/surveys/{survey_name}/results",
+            headers=headers,
+        )
         assert fails(res, None)
         assert res.json() == resultss[i + 1]
 
@@ -1033,6 +1088,7 @@ async def test_reading_results_without_submissions(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     default_results,
     cleanup,
@@ -1043,7 +1099,7 @@ async def test_reading_results_without_submissions(
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configuration)
     res = await client.get(
-        url=f"/users/{username}/surveys/simple/results",
+        url=f"/users/{username}/surveys/{survey_name}/results",
         headers=headers,
     )
     assert fails(res, None)
@@ -1254,8 +1310,8 @@ async def test_verifying_email_address_with_valid_verification_token(
     await setup_account(client, username, account_data)
     res = await setup_account_verification(client)
     assert fails(res, None)
-    e = await database.database["accounts"].find_one({"username": username})
-    assert e["verified"]
+    x = await database.database["accounts"].find_one({"username": username})
+    assert x["verified"]
 
 
 @pytest.mark.asyncio
@@ -1274,8 +1330,8 @@ async def test_verifying_email_address_with_invalid_verification_token(
         json={"verification_token": conftest.invalid_token()},
     )
     assert fails(res, errors.InvalidVerificationTokenError)
-    e = await database.database["accounts"].find_one({"username": username})
-    assert not e["verified"]
+    x = await database.database["accounts"].find_one({"username": username})
+    assert not x["verified"]
 
 
 @pytest.mark.asyncio
@@ -1292,5 +1348,5 @@ async def test_verifying_previously_verified_email_address(
     await setup_account_verification(client)
     res = await setup_account_verification(client)
     assert fails(res, None)
-    e = await database.database["accounts"].find_one({"username": username})
-    assert e["verified"]
+    x = await database.database["accounts"].find_one({"username": username})
+    assert x["verified"]
