@@ -170,9 +170,13 @@ class Configuration(BaseModel):
 
     @pydantic.validator("end")
     def validate_end(cls, v, values):
-        if "start" in values and values["start"] is not None:
-            if v is not None and v < values["start"]:
-                raise ValueError("end must be >= start")
+        if "start" in values:
+            if values["start"] is None:
+                if v is not None:
+                    raise ValueError("end must equal None if start=None")
+            else:
+                if v is not None and v < values["start"]:
+                    raise ValueError("end must be >= start")
         return v
 
     @pydantic.validator("fields_")

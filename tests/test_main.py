@@ -484,7 +484,7 @@ async def test_reading_existing_private_survey(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     configuration = copy.deepcopy(configuration)
-    configuration["start"] = None
+    configuration |= {"start": None, "end": None}
     res = await setup_survey(client, headers, username, configuration)
     assert fails(res, None)
     res = await client.get(f"/users/{username}/surveys/{survey_name}")

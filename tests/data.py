@@ -111,6 +111,10 @@ def _build_invalid_configurations(configuration):
     x = copy.deepcopy(configuration)
     x["end"] = 4102444801
     invalid_configurations.append(x)
+    # end [sic] parameter has invalid value
+    x = copy.deepcopy(configuration)
+    x["start"] = None
+    invalid_configurations.append(x)
     # survey_name parameter has invalid value
     x = copy.deepcopy(configuration)
     x["survey_name"] = "$" * 8
