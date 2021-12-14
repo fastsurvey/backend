@@ -293,5 +293,141 @@
                 "max_chars": 1000
             }
         ]
+    },
+    {
+        "survey_name": "havana",
+        "title": "Havana",
+        "start": 0,
+        "end": 4102444800,
+        "fields": [
+            {
+                "identifier": 14,
+                "type": "selection",
+                "description": "What are your favorite pizza styles?",
+                "options": ["Quattro Stagioni", "Hawaiian"],
+                "min_select": 2,
+                "max_select": 2
+            },
+            {
+                "identifier": 13,
+                "type": "text",
+                "description": "What do you think about apples?",
+                "min_chars": 0,
+                "max_chars": 100
+            },
+            {
+                "identifier": 6,
+                "type": "markdown",
+                "description": "We're always thinking of eternity as an idea that cannot be understood, something immense. But why must it be? What if, instead of all this, you suddenly find just a little room there, something like a village bath-house, grimy, and spiders in every corner, and that's all eternity is. Sometimes, you know, I can't help feeling that that's what it is."
+            },
+            {
+                "identifier": 7,
+                "type": "email",
+                "description": "What's your email address?",
+                "hint": "something@example.com",
+                "regex": ".*",
+                "verify": false
+            },
+            {
+                "identifier": 8,
+                "type": "selection",
+                "description": "What's your favorite fruit?",
+                "options": ["Asparagus", "Spinach", "Artichoke"],
+                "min_select": 1,
+                "max_select": 1
+            },
+            {
+                "identifier": 9,
+                "type": "selection",
+                "description": "What are your favorite pizza styles?",
+                "options": ["Quattro Stagioni", "Prosciutto", "Margherita", "Hawaiian", "Capricciosa"],
+                "min_select": 0,
+                "max_select": 3
+            },
+            {
+                "identifier": 10,
+                "type": "break"
+            },
+            {
+                "identifier": 15,
+                "type": "break"
+            },
+            {
+                "identifier": 16,
+                "type": "selection",
+                "description": "What's your least favorite fruit?",
+                "options": ["Artichoke", "Spinach", "Calabash", "Eggplant"],
+                "min_select": 0,
+                "max_select": 4
+            },
+            {
+                "identifier": 11,
+                "type": "text",
+                "description": "How do you feel about penguins?",
+                "min_chars": 10,
+                "max_chars": 1000
+            },
+            {
+                "identifier": 17,
+                "type": "markdown",
+                "description": "Tom gave up the brush with reluctance in his face, but alacrity in his heart. And while the late steamer Big Missouri worked and sweated in the sun, the retired artist sat on a barrel in the shade close by, dangled his legs, munched his apple, and planned the slaughter of more innocents. There was no lack of material; boys happened along every little while; they came to jeer, but remained to whitewash. By the time Ben was fagged out, Tom had traded the next chance to Billy Fisher for a kite, in good repair; and when _he_ played out, Johnny Miller bought in for a dead rat and a string to swing it with -- and so on, and so on, hour after hour. And when the middle of the afternoon came, from being a poor poverty-stricken boy in the morning, Tom was literally rolling in wealth. He had besides the things before mentioned, twelve marbles, part of a jews-harp, a piece of blue bottle-glass to look through, a spool cannon, a key that wouldn't unlock anything, a fragment of chalk, a glass stopper of a decanter, a tin soldier, a couple of tadpoles, six fire-crackers, a kitten with only one eye, a brass door-knob, a dog-collar -- but no dog -- the handle of a knife, four pieces of orange-peel, and a dilapidated old window sash."
+            },
+            {
+                "identifier": 12,
+                "type": "email",
+                "description": "Where can we reach you?",
+                "hint": "username@company.com",
+                "regex": ".+@fastsurvey.de",
+                "verify": true
+            }
+        ]
+    },
+    {
+        "survey_name": "islamabad",
+        "title": "Islamabad",
+        "start": 0,
+        "end": 4102444800,
+        "fields": [
+            {
+                "identifier": 6,
+                "type": "markdown",
+                "description": "We're always thinking of eternity as an idea that cannot be understood, something immense. But why must it be? What if, instead of all this, you suddenly find just a little room there, something like a village bath-house, grimy, and spiders in every corner, and that's all eternity is. Sometimes, you know, I can't help feeling that that's what it is."
+            },
+            {
+                "identifier": 7,
+                "type": "email",
+                "description": "What's your email address?",
+                "hint": "something@example.com",
+                "regex": ".*",
+                "verify": false
+            },
+            {
+                "identifier": 8,
+                "type": "selection",
+                "description": "What's your favorite fruit?",
+                "options": ["Asparagus", "Spinach", "Artichoke"],
+                "min_select": 1,
+                "max_select": 1
+            },
+            {
+                "identifier": 9,
+                "type": "selection",
+                "description": "What are your favorite pizza styles?",
+                "options": ["Quattro Stagioni", "Prosciutto", "Margherita", "Hawaiian", "Capricciosa"],
+                "min_select": 0,
+                "max_select": 3
+            },
+            {
+                "identifier": 10,
+                "type": "break"
+            },
+            {
+                "identifier": 11,
+                "type": "text",
+                "description": "How do you feel about penguins?",
+                "min_chars": 10,
+                "max_chars": 1000
+            }
+        ]
     }
 ]

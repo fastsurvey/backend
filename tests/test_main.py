@@ -612,7 +612,7 @@ async def test_updating_existing_survey_with_valid_update_configurations(
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     await setup_survey(client, headers, username, configurations[0])
-    next_identifiers = [6, 12, 12, 12, 12, 12]
+    next_identifiers = [6, 12, 12, 12, 12, 12, 18, 18]
     for i, configuration in enumerate(configurations[1:]):
         res = await client.put(
             url=f"/users/{username}/surveys/{configurations[i]['survey_name']}",
