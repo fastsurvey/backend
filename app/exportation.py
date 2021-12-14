@@ -5,12 +5,12 @@ def _build_aggregation_pipeline(configuration):
     """Build aggregation pipeline to uniformly export survey submissions."""
     pipeline = [
         {"$sort": {"submission_time": pymongo.ASCENDING}},
-        {"$project": {"_id": False}},
+        {"$project": {"_id": False, "submission_time": True}},
     ]
     for field in configuration["fields"]:
         identifier = str(field["identifier"])
         if field["type"] == "email":
-            pipeline[1]["$project"][identifier] = {
+            pipeline[1]["$project"][f"submission.{identifier}"] = {
                 "$cond": {
                     "if": f"$submission.{identifier}",
                     "then": {
@@ -26,9 +26,12 @@ def _build_aggregation_pipeline(configuration):
                 },
             }
         elif field["type"] in ["selection", "text"]:
-            pipeline[1]["$project"][identifier] = {
+            pipeline[1]["$project"][f"submission.{identifier}"] = {
                 "$ifNull": [f"$submission.{identifier}", None],
             }
+    # return empty submissions when survey has no fields
+    if not configuration["fields"]:
+        pipeline[1]["$project"]["submission"] = {"$literal": {}}
     return pipeline
 
 

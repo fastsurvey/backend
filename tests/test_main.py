@@ -783,7 +783,6 @@ async def test_deleting_existing_survey_with_existing_submissions(
 ########################################################################################
 
 
-@pytest.mark.skip(reason="what to export if there are no fields?")
 @pytest.mark.asyncio
 async def test_exporting_submissions_with_submissions(
     mock_email_sending,
@@ -816,15 +815,14 @@ async def test_exporting_submissions_with_submissions(
         url=f"/users/{username}/surveys/{survey_name}/submissions",
         headers=headers,
     )
-
-    print(res.json())
-
     assert fails(res, None)
     assert len(res.json()) == len(submissionss[0])
+    keys = {"submission_time", "submission"}
+    assert all([set(x.keys() == keys for x in res.json())])
     identifiers = extract_identifiers(configurations[0])
-    assert all([set(x.keys()) == identifiers for x in res.json()])
+    assert all([set(x["submission"].keys()) == identifiers for x in res.json()])
 
-    # exports with intermediate updates
+    # exports with intermediate configuration updates
     counter = len(submissionss[0])
     for configuration, submissions in zip(configurations[1:], submissionss[1:]):
         res = await client.put(
@@ -840,14 +838,13 @@ async def test_exporting_submissions_with_submissions(
             url=f"/users/{username}/surveys/{survey_name}/submissions",
             headers=headers,
         )
-
-        print(res.json())
-
         assert fails(res, None)
         counter += len(submissions)
         assert len(res.json()) == counter
+        keys = {"submission_time", "submission"}
+        assert all([set(x.keys() == keys for x in res.json())])
         identifiers = extract_identifiers(configuration)
-        assert all([set(x.keys()) == identifiers for x in res.json()])
+        assert all([set(x["submission"].keys()) == identifiers for x in res.json()])
 
 
 @pytest.mark.asyncio
