@@ -18,7 +18,7 @@ import app.validation as validation
 # create fastapi app
 app = fastapi.FastAPI(
     title="FastSurvey",
-    version="0.5.0",
+    version="0.7.0",
     docs_url="/documentation/swagger",
     redoc_url="/documentation/redoc",
 )
@@ -109,8 +109,7 @@ async def read_surveys(
 ):
     """Fetch all of the user's survey configurations.
 
-    As this is a protected route, configurations of surveys that are in
-    draft mode **are** returned.
+    As this is a protected route, configurations of private surveys **are** returned.
 
     """
     return await survey.read_multiple(data.username)
@@ -122,22 +121,19 @@ async def read_survey(
 ):
     """Fetch a survey configuration.
 
-    As this is an unprotected route, configurations of surveys that are in
-    draft mode **are not** returned. When outside the start/end limits of a
-    survey, only some meta information are returned.
+    As this is an unprotected route, configurations of private surveys **are not**
+    returned. When outside the start/end limits of a survey, only some meta information
+    is returned.
 
     """
+    timestamp = utils.timestamp()
     configuration = await survey.read(data.username, data.survey_name)
-    if configuration["draft"]:
+    start, end = configuration["start"], configuration["end"]
+    if start is None:
         raise errors.SurveyNotFoundError()
-    # timestamp = utils.timestamp()
-    # start, end = configuration['start'], configuration['end']
     exclude = ["_id"]
-    # if (
-    #     start is not None and timestamp < start
-    #     or end is not None and timestamp >= end
-    # ):
-    #     exclude += ['fields', 'next_identifier']
+    if timestamp < start or end is not None and timestamp >= end:
+        exclude += ["fields", "next_identifier"]
     return {k: v for k, v in configuration.items() if k not in exclude}
 
 

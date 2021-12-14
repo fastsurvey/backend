@@ -103,10 +103,6 @@ def _build_invalid_configurations(configuration):
     x = copy.deepcopy(configuration)
     x["start"] = 3.14
     invalid_configurations.append(x)
-    # draft parameter has invalid type
-    x = copy.deepcopy(configuration)
-    x["draft"] = None
-    invalid_configurations.append(x)
     # fields parameter has invalid type
     x = copy.deepcopy(configuration)
     x["fields"] = None
@@ -138,10 +134,6 @@ def _build_invalid_configurations(configuration):
     # title parameter has invalid value
     x = copy.deepcopy(configuration)
     x["title"] = "@" * (models.Length.B + 1)
-    invalid_configurations.append(x)
-    # draft parameter is missing
-    x = copy.deepcopy(configuration)
-    x.pop("draft")
     invalid_configurations.append(x)
     # start parameter is missing
     x = copy.deepcopy(configuration)

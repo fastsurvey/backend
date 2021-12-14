@@ -156,7 +156,6 @@ class Configuration(BaseModel):
     title: pydantic.constr(strict=True, min_length=1, max_length=Length.B)
     start: typing.Optional[Timestamp] = pydantic.Field(...)
     end: typing.Optional[Timestamp] = pydantic.Field(...)
-    draft: pydantic.StrictBool
     fields_: pydantic.conlist(
         item_type=typing.Union[
             MarkdownField,

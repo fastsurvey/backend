@@ -462,36 +462,38 @@ async def test_reading_existing_survey(
 
 
 @pytest.mark.asyncio
-async def test_reading_nonexistent_survey(client, username):
+async def test_reading_nonexistent_survey(client, username, survey_name):
     """Test that exception is raised when requesting a nonexistent survey."""
-    res = await client.get(f"/users/{username}/surveys/simple")
+    res = await client.get(f"/users/{username}/surveys/{survey_name}")
     assert fails(res, errors.SurveyNotFoundError)
 
 
 @pytest.mark.asyncio
-async def test_reading_existing_survey_in_draft_mode(
+async def test_reading_existing_private_survey(
     mock_email_sending,
     mock_token_generation,
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     cleanup,
 ):
-    """Test that exception is raised when requesting a survey in draft mode."""
+    """Test that exception is raised when requesting a private survey."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     configuration = copy.deepcopy(configuration)
-    configuration["draft"] = True
-    await setup_survey(client, headers, username, configuration)
-    res = await client.get(f"/users/{username}/surveys/simple")
+    configuration["start"] = None
+    res = await setup_survey(client, headers, username, configuration)
+    assert fails(res, None)
+    res = await client.get(f"/users/{username}/surveys/{survey_name}")
     assert fails(res, errors.SurveyNotFoundError)
 
 
 @pytest.mark.skip(reason="whole survey is returned for the moment")
 @pytest.mark.asyncio
-async def test_reading_existing_survey_outside_time_limits(
+async def test_reading_existing_survey_outside_time_bounds(
     mock_email_sending,
     mock_token_generation,
     client,
@@ -881,7 +883,7 @@ async def test_exporting_submissions_without_submissions(
 
 
 @pytest.mark.asyncio
-async def test_creating_submission(
+async def test_creating_valid_submission(
     mock_email_sending,
     mock_token_generation,
     client,
@@ -927,6 +929,21 @@ async def test_creating_invalid_submission(
     configuration = await survey.read(username, survey_name)
     x = await survey.submissions_collection(configuration).find_one()
     assert x is None
+
+
+@pytest.mark.asyncio
+async def test_creating_valid_submission_to_private_survey():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_creating_valid_submission_to_survey_outside_time_bounds():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_creating_submission_to_nonexistent_survey():
+    pass
 
 
 ########################################################################################

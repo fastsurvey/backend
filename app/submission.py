@@ -10,15 +10,13 @@ import app.utils as utils
 
 async def submit(username, survey_name, submission):
     """Save a user's submission in the submissions collection."""
-    configuration = await survey.read(username, survey_name)
-    if configuration["draft"]:
-        raise errors.SurveyNotFoundError()
     timestamp = utils.timestamp()
+    configuration = await survey.read(username, survey_name)
     start, end = configuration["start"], configuration["end"]
-    if start is not None and timestamp < start:
-        raise errors.InvalidTimingError()
-    if end is not None and timestamp >= end:
-        raise errors.InvalidTimingError()
+    if start is None:
+        raise errors.SurveyNotFoundError()
+    if timestamp < start or end is not None and timestamp >= end:
+        raise InvalidTimingError()
 
     # check submission format
     Submission = models.build_submission_model(configuration)
@@ -69,15 +67,13 @@ async def submit(username, survey_name, submission):
 
 async def verify(username, survey_name, verification_token):
     """Verify the user's email address and save the submission as verified."""
-    configuration = await survey.read(username, survey_name)
-    if configuration["draft"]:
-        raise errors.SurveyNotFoundError()
     timestamp = utils.timestamp()
+    configuration = await survey.read(username, survey_name)
     start, end = configuration["start"], configuration["end"]
-    if start is not None and timestamp < start:
-        raise errors.InvalidTimingError()
-    if end is not None and timestamp >= end:
-        raise errors.InvalidTimingError()
+    if start is None:
+        raise errors.SurveyNotFoundError()
+    if timestamp < start or end is not None and timestamp >= end:
+        raise InvalidTimingError()
 
     # find submission by its verification token and mark it as verified
     submissions = survey.submissions_collection(configuration)
