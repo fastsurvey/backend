@@ -16,7 +16,7 @@ async def submit(username, survey_name, submission):
     if start is None:
         raise errors.SurveyNotFoundError()
     if timestamp < start or end is not None and timestamp >= end:
-        raise InvalidTimingError()
+        raise errors.InvalidTimingError()
 
     # check submission format
     Submission = models.build_submission_model(configuration)

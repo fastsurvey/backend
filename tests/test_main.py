@@ -329,7 +329,7 @@ async def test_updating_existing_user_with_valid_password(
     assert auth.verify_password(account_data["password"], e["password_hash"])
 
 
-@pytest.mark.skip(reason="skip until email address update is implemented")
+@pytest.mark.skip(reason="email address update is not yet implemented")
 @pytest.mark.asyncio
 async def test_updating_existing_user_with_valid_email_address_in_use(
     mock_email_sending,
@@ -491,7 +491,6 @@ async def test_reading_existing_private_survey(
     assert fails(res, errors.SurveyNotFoundError)
 
 
-@pytest.mark.skip(reason="whole survey is returned for the moment")
 @pytest.mark.asyncio
 async def test_reading_existing_survey_outside_time_bounds(
     mock_email_sending,
@@ -499,21 +498,21 @@ async def test_reading_existing_survey_outside_time_bounds(
     client,
     username,
     account_data,
+    survey_name,
     configuration,
     cleanup,
 ):
-    """Test only meta data is returned on request outside time limits."""
+    """Test that only meta data is returned on request outside time bounds."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
     configuration = copy.deepcopy(configuration)
-    configuration["end"] = configuration["start"]
-    await setup_survey(client, headers, username, configuration)
-    res = await client.get(f"/users/{username}/surveys/simple")
+    configuration |= {"start": 0, "end": 0}
+    res = await setup_survey(client, headers, username, configuration)
     assert fails(res, None)
-    assert res.json() == {
-        k: v for k, v in configuration.items() if k not in ["next_identifier", "fields"]
-    }
+    res = await client.get(f"/users/{username}/surveys/{survey_name}")
+    assert fails(res, None)
+    assert res.json().keys() == {"survey_name", "title", "start", "end"}
 
 
 ########################################################################################
@@ -895,7 +894,8 @@ async def test_creating_valid_submission(
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
-    await setup_survey(client, headers, username, configuration)
+    res = await setup_survey(client, headers, username, configuration)
+    assert fails(res, None)
     res = await setup_submission(client, username, survey_name, submissions[0])
     assert fails(res, None)
     configuration = await survey.read(username, survey_name)
@@ -915,11 +915,12 @@ async def test_creating_invalid_submission(
     invalid_submissions,
     cleanup,
 ):
-    """Test that submit correctly fails given an invalid submissions."""
+    """Test that submit process correctly fails given an invalid submissions."""
     await setup_account(client, username, account_data)
     await setup_account_verification(client)
     headers = await setup_headers(client, account_data)
-    await setup_survey(client, headers, username, configuration)
+    res = await setup_survey(client, headers, username, configuration)
+    assert fails(res, None)
     submission = invalid_submissions[0]
     res = await setup_submission(client, username, survey_name, submission)
     assert fails(res, errors.InvalidSyntaxError)
@@ -929,18 +930,69 @@ async def test_creating_invalid_submission(
 
 
 @pytest.mark.asyncio
-async def test_creating_valid_submission_to_private_survey():
-    pass
+async def test_creating_valid_submission_to_private_survey(
+    mock_email_sending,
+    mock_token_generation,
+    client,
+    username,
+    account_data,
+    survey_name,
+    configuration,
+    submissions,
+    cleanup,
+):
+    """Test that submit process correctly fails when the survey is private."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    configuration = copy.deepcopy(configuration)
+    configuration |= {"start": None, "end": None}
+    res = await setup_survey(client, headers, username, configuration)
+    assert fails(res, None)
+    res = await setup_submission(client, username, survey_name, submissions[0])
+    assert fails(res, errors.SurveyNotFoundError)
+    configuration = await survey.read(username, survey_name)
+    x = await survey.submissions_collection(configuration).find_one()
+    assert x is None
 
 
 @pytest.mark.asyncio
-async def test_creating_valid_submission_to_survey_outside_time_bounds():
-    pass
+async def test_creating_valid_submission_to_survey_outside_time_bounds(
+    mock_email_sending,
+    mock_token_generation,
+    client,
+    username,
+    account_data,
+    survey_name,
+    configuration,
+    submissions,
+    cleanup,
+):
+    """Test that submit process correctly fails outside survey time bounds."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+    configuration = copy.deepcopy(configuration)
+    configuration |= {"start": 0, "end": 0}
+    res = await setup_survey(client, headers, username, configuration)
+    assert fails(res, None)
+    res = await setup_submission(client, username, survey_name, submissions[0])
+    assert fails(res, errors.InvalidTimingError)
+    configuration = await survey.read(username, survey_name)
+    x = await survey.submissions_collection(configuration).find_one()
+    assert x is None
 
 
 @pytest.mark.asyncio
-async def test_creating_submission_to_nonexistent_survey():
-    pass
+async def test_creating_submission_to_nonexistent_survey(
+    client,
+    username,
+    survey_name,
+    submissions,
+):
+    """Test that submit process correctly fails when the survey does not exist."""
+    res = await setup_submission(client, username, survey_name, submissions[0])
+    assert fails(res, errors.SurveyNotFoundError)
 
 
 ########################################################################################
