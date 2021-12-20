@@ -11,10 +11,11 @@ import pydantic
 
 
 class Length(int, enum.Enum):
-    A = 32
-    B = 256
-    C = 4096
-    D = 65536
+    A = 2 ** 5  # 32
+    B = 2 ** 8  # 256
+    C = 2 ** 12  # 4096
+    D = 2 ** 16  # 65536
+    E = 2 ** 63  # max value signed 64-bit integer + 1
 
 
 class Pattern(str, enum.Enum):
@@ -37,7 +38,7 @@ EmailAddress = pydantic.constr(
     max_length=Length.B,
     regex=Pattern.EMAIL_ADDRESS.value,
 )
-Timestamp = pydantic.conint(strict=True, ge=0, le=4102444800)
+Timestamp = pydantic.conint(strict=True, ge=0, lt=Length.E)
 
 
 ########################################################################################
@@ -80,7 +81,7 @@ class AccountDataUpdate(BaseModel):
 
 
 class Field(BaseModel):
-    identifier: pydantic.conint(strict=True, ge=0, le=Length.D)
+    identifier: pydantic.conint(strict=True, ge=0, lt=Length.E)
 
 
 class EmailField(Field):
@@ -132,8 +133,8 @@ class SelectionField(Field):
 class TextField(Field):
     type: typing.Literal["text"]
     description: pydantic.constr(strict=True, min_length=1)
-    min_chars: pydantic.conint(strict=True, ge=0, le=Length.C)
-    max_chars: pydantic.conint(strict=True, ge=0, le=Length.C)
+    min_chars: pydantic.conint(strict=True, ge=0, lt=Length.C + 1)
+    max_chars: pydantic.conint(strict=True, ge=0, lt=Length.C + 1)
 
     @pydantic.validator("max_chars")
     def validate_max_chars(cls, v, values):

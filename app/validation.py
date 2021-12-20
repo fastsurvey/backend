@@ -58,6 +58,10 @@ class ReadSubmissionsRequest(models.BaseModel):
     username: models.Username = docs.ARGUMENTS["username"]
     survey_name: models.SurveyName = docs.ARGUMENTS["survey_name"]
 
+    # cannot validate strictly because query parameters are always strings
+    skip: pydantic.conint(ge=0, lt=2 ** 63) = docs.ARGUMENTS["skip"]
+    limit: pydantic.conint(ge=0, lt=2 ** 63) = docs.ARGUMENTS["limit"]
+
 
 class CreateSubmissionRequest(models.BaseModel):
     username: models.Username = docs.ARGUMENTS["username"]

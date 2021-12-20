@@ -85,6 +85,16 @@ ARGUMENTS = {
             ),
         },
     ),
+    "skip": fastapi.Query(
+        0,
+        description="The index of the first submission",
+        example=0,
+    ),
+    "limit": fastapi.Query(
+        0,
+        description="The query result count limit; 0 means no limit",
+        example=0,
+    ),
 }
 
 

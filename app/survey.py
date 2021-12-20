@@ -140,8 +140,8 @@ async def aggregate(username, survey_name):
     return await aggregation.aggregate(submissions, configuration)
 
 
-async def export(username, survey_name):
+async def export(username, survey_name, skip, limit):
     """Export the submissions of a survey in a consistent format."""
     configuration = await read(username, survey_name)
     submissions = submissions_collection(configuration)
-    return await exportation.export(submissions, configuration)
+    return await exportation.export(submissions, configuration, skip, limit)

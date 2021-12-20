@@ -170,11 +170,11 @@ async def delete_survey(
 
 @app.get(**docs.SPECIFICATIONS["export_submissions"])
 @auth.authorize
-async def export_submissions(
+async def read_submissions(
     data: validation.ReadSubmissionsRequest = fastapi.Depends(),
 ):
-    """Export the submissions of a survey in a consistent format."""
-    return await survey.export(data.username, data.survey_name)
+    """Return the submissions of a survey in a consistent format."""
+    return await survey.export(data.username, data.survey_name, data.skip, data.limit)
 
 
 @app.post(**docs.SPECIFICATIONS["create_submission"])
