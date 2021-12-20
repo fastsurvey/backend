@@ -847,6 +847,47 @@ async def test_exporting_submissions_with_submissions(
 
 
 @pytest.mark.asyncio
+async def test_exporting_submissions_with_submissions_using_skip_and_limit(
+    mock_email_sending,
+    mock_token_generation,
+    client,
+    username,
+    account_data,
+    survey_name,
+    configurations,
+    submissionss,
+    cleanup,
+):
+    """Test submissions export using skip and limit query parameters."""
+    await setup_account(client, username, account_data)
+    await setup_account_verification(client)
+    headers = await setup_headers(client, account_data)
+
+    def extract_identifiers(configuration):
+        return {
+            str(field["identifier"])
+            for field in configuration["fields"]
+            if field["type"] not in ["markdown", "break"]
+        }
+
+    # initial creation and first export without update
+    res = await setup_survey(client, headers, username, configurations[0])
+    for submission in submissionss[0]:
+        await setup_submission(client, username, survey_name, submission)
+    res = await client.get(
+        url=f"/users/{username}/surveys/{survey_name}/submissions",
+        params={"skip": 2, "limit": 2},
+        headers=headers,
+    )
+    assert fails(res, None)
+    assert len(res.json()) == 2
+    keys = {"submission_time", "submission"}
+    assert all([set(x.keys() == keys for x in res.json())])
+    identifiers = extract_identifiers(configurations[0])
+    assert all([set(x["submission"].keys()) == identifiers for x in res.json()])
+
+
+@pytest.mark.asyncio
 async def test_exporting_submissions_without_submissions(
     mock_email_sending,
     mock_token_generation,

@@ -87,14 +87,6 @@ def _build_invalid_configurations(configuration):
     # Header Parameters
     ####################################
 
-    # limit parameter has invalid type
-    x = copy.deepcopy(configuration)
-    x["limit"] = True
-    invalid_configurations.append(x)
-    # limit parameter has invalid type
-    x = copy.deepcopy(configuration)
-    x["limit"] = 3.14
-    invalid_configurations.append(x)
     # start parameter has invalid type
     x = copy.deepcopy(configuration)
     x["start"] = ""
@@ -109,7 +101,7 @@ def _build_invalid_configurations(configuration):
     invalid_configurations.append(x)
     # end parameter has invalid value
     x = copy.deepcopy(configuration)
-    x["end"] = 4102444801
+    x["end"] = models.Length.E
     invalid_configurations.append(x)
     # end [sic] parameter has invalid value
     x = copy.deepcopy(configuration)
