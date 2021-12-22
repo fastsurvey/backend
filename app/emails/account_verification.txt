@@ -1,0 +1,13 @@
+Hello {username} 👋
+
+Welcome to FastSurvey!
+
+To get your account ready, please confirm that this email address belongs to you:
+
+>>> {link}
+
+If you have any problems or questions, don't hesitate to ask. Just reply to this email and we'll do everything we can to help you along.
+
+Seriously, though — welcome. We're really happy you're with us.
+
+The FastSurvey Team

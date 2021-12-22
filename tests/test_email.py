@@ -9,6 +9,7 @@ async def test_sending_an_email():
     status = await email._send(
         email_address="test+status@fastsurvey.de",
         subject="FastSurvey test email",
+        text="This is an automatically generated test email.",
         html="<p>This is an automatically generated test email.</p>",
         tag="test",
     )
