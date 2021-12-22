@@ -23,7 +23,7 @@ _TEMPLATES = _read_templates()
 _CLIENT = httpx.AsyncClient(base_url="https://api.postmarkapp.com")
 
 
-async def _send(email_address, subject, content):
+async def _send(email_address, subject, html, tag):
     """Send the given email to the given email address."""
     headers = {
         "Accept": "application/json",
@@ -34,8 +34,9 @@ async def _send(email_address, subject, content):
         "From": settings.SENDER,
         "To": email_address,
         "Subject": subject,
-        "HtmlBody": content,
+        "HtmlBody": html,
         "MessageStream": "outbound",
+        "Tag": tag,
     }
     response = await _CLIENT.post(url="/email", headers=headers, json=json)
     return response.status_code
@@ -43,12 +44,12 @@ async def _send(email_address, subject, content):
 
 async def send_account_verification(email_address, username, verification_token):
     """Send a confirmation email to verify an account email address."""
-    subject = "Welcome to FastSurvey!"
-    content = _TEMPLATES["account_verification"].format(
+    subject = "Welcome to FastSurvey! 🚀"
+    html = _TEMPLATES["account_verification"].format(
         username=username,
         link=f"{settings.CONSOLE_URL}/verify?token={verification_token}",
     )
-    return await _send(email_address, subject, content)
+    return await _send(email_address, subject, html, "account verification")
 
 
 async def send_submission_verification(
@@ -59,22 +60,22 @@ async def send_submission_verification(
     verification_token,
 ):
     """Send a confirmation email to verify a submission email address."""
-    subject = "Please verify your submission"
-    content = _TEMPLATES["submission_verification"].format(
+    subject = "Please verify your submission 📮"
+    html = _TEMPLATES["submission_verification"].format(
         title=title,
         link=(
             f"{settings.FRONTEND_URL}/{username}/{survey_name}"
             f"/verify?token={verification_token}"
         ),
     )
-    return await _send(email_address, subject, content)
+    return await _send(email_address, subject, html, "submission verification")
 
 
 async def send_magic_login(email_address, username, verification_token):
     """Send an email that allows a user to authenticate without their password."""
-    subject = "Your FastSurvey Access"
-    content = _TEMPLATES["magic_login"].format(
+    subject = "Your FastSurvey access 🔑"
+    html = _TEMPLATES["magic_login"].format(
         username=username,
         link=f"{settings.CONSOLE_URL}/magic?token={verification_token}",
     )
-    return await _send(email_address, subject, content)
+    return await _send(email_address, subject, html, "magic login")
