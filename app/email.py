@@ -73,6 +73,7 @@ async def send_submission_verification(
     for content in [text, html]:
         content.format(
             title=title,
+            email_address=email_address,
             link=(
                 f"{settings.FRONTEND_URL}/{username}/{survey_name}"
                 f"/verify?token={verification_token}"
