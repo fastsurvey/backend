@@ -168,7 +168,7 @@ async def delete_survey(
     await survey.delete(data.username, data.survey_name)
 
 
-@app.get(**docs.SPECIFICATIONS["export_submissions"])
+@app.get(**docs.SPECIFICATIONS["read_submissions"])
 @auth.authorize
 async def read_submissions(
     data: validation.ReadSubmissionsRequest = fastapi.Depends(),

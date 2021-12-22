@@ -28,12 +28,19 @@ def _add_email_field_aggregation_commands(pipeline, identifier):
     """Add pipeline commands to aggregate email field submissions."""
     pipeline[0]["$facet"]["main"][0]["$group"][f"{identifier}+count"] = {
         "$sum": {
-            "$toInt": {"$ne": [{"$type": f"$submission.{identifier}"}, "missing"]}
+            "$toInt": {
+                "$ne": [{"$type": f"$submission.{identifier}"}, "missing"],
+            },
+        },
+    }
+    pipeline[0]["$facet"]["main"][0]["$group"][f"{identifier}+verified"] = {
+        "$sum": {
+            "$toInt": "$verified",
         },
     }
     pipeline[1]["$project"][identifier] = {
         "count": {"$first": f"$main.{identifier}+count"},
-        "value": None,
+        "verified": {"$first": f"$main.{identifier}+verified"},
     }
 
 
@@ -41,10 +48,12 @@ def _add_selection_field_aggregation_commands(pipeline, identifier):
     """Add pipeline commands to aggregate selection field submissions."""
     pipeline[0]["$facet"]["main"][0]["$group"][f"{identifier}+count"] = {
         "$sum": {
-            "$toInt": {"$ne": [{"$type": f"$submission.{identifier}"}, "missing"]}
+            "$toInt": {
+                "$ne": [{"$type": f"$submission.{identifier}"}, "missing"],
+            }
         },
     }
-    pipeline[0]["$facet"][f"a{identifier}"] = [
+    pipeline[0]["$facet"][f"f{identifier}"] = [
         {
             "$unwind": {
                 "path": f"$submission.{identifier}",
@@ -70,7 +79,7 @@ def _add_selection_field_aggregation_commands(pipeline, identifier):
     ]
     pipeline[1]["$project"][identifier] = {
         "count": {"$first": f"$main.{identifier}+count"},
-        "value": {"$first": f"$a{identifier}.value"},
+        "value": {"$first": f"$f{identifier}.value"},
     }
 
 
@@ -81,7 +90,17 @@ def _add_page_break_field_aggregation_commands(pipeline, identifier):
 
 def _add_text_field_aggregation_commands(pipeline, identifier):
     """Add pipeline commands to aggregate text field submissions."""
-    _add_email_field_aggregation_commands(pipeline, identifier)
+    pipeline[0]["$facet"]["main"][0]["$group"][f"{identifier}+count"] = {
+        "$sum": {
+            "$toInt": {
+                "$ne": [{"$type": f"$submission.{identifier}"}, "missing"],
+            }
+        },
+    }
+    pipeline[1]["$project"][identifier] = {
+        "count": {"$first": f"$main.{identifier}+count"},
+        "value": None,
+    }
 
 
 def _build_aggregation_pipeline(configuration):
@@ -104,20 +123,24 @@ def _format_results(results, configuration):
     results.setdefault("count", 0)
     for field in configuration["fields"]:
         identifier = str(field["identifier"])
-        if field["type"] in ["email", "text"]:
+        if field["type"] == "email":
             results[identifier].setdefault("count", 0)
-            results[identifier].setdefault("value", None)
-        # add options that received no submissions and sort options as specified in the
-        # configuration; options that were previously selected, but have been removed
-        # from the configuration are not returned; this makes results less transparent
-        # in favor of making the results of updated surveys less confusing
+            results[identifier].setdefault("verified", 0)
         elif field["type"] == "selection":
+            # add options that received no submissions and sort options as specified
+            # in the configuration; options that were previously selected, but have
+            # been removed from the configuration are not returned; this makes results
+            # less transparent in favor of making the results of updated surveys less
+            # confusing
             results[identifier].setdefault("count", 0)
             results[identifier].setdefault("value", {})
             out = dict()
             for option in field["options"]:
                 out[option] = results[identifier]["value"].get(option, 0)
             results[identifier]["value"] = out
+        elif field["type"] == "text":
+            results[identifier].setdefault("count", 0)
+            results[identifier].setdefault("value", None)
     return results
 
 
