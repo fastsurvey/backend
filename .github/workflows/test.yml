@@ -32,7 +32,7 @@ jobs:
       env:
         ENVIRONMENT: ${{ secrets.ENVIRONMENT }}
         MONGODB_CONNECTION_STRING: ${{ secrets.MONGODB_CONNECTION_STRING }}
-        MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+        POSTMARK_SERVER_TOKEN: ${{ secrets.POSTMARK_SERVER_TOKEN }}
         COMMIT_SHA: $GITHUB_SHA
         BRANCH_NAME: ${GITHUB_REF#refs/heads/}
     - name: Push coverage report to CodeClimate
