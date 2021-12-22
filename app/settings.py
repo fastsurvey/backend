@@ -7,7 +7,7 @@ import app.utils as utils
 _VARS = [
     "ENVIRONMENT",
     "MONGODB_CONNECTION_STRING",
-    "MAILGUN_API_KEY",
+    "POSTMARK_SERVER_TOKEN",
     "COMMIT_SHA",
     "BRANCH_NAME",
 ]
@@ -25,12 +25,10 @@ FRONTEND_URL = f"https://{subdomain}fastsurvey.de"
 CONSOLE_URL = f"https://console.{subdomain}fastsurvey.de"
 # MongoDB connection string
 MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING")
-# Mailgun api key
-MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY")
-# Mailgun email endpoint
-MAILGUN_ENDPOINT = "https://api.eu.mailgun.net/v3/email.fastsurvey.de"
+# Postmark server token
+POSTMARK_SERVER_TOKEN = os.getenv("POSTMARK_SERVER_TOKEN")
 # sender email address
-SENDER = "FastSurvey <contact@fastsurvey.de>"
+SENDER = "FastSurvey <support@fastsurvey.de>"
 # git commit hash
 COMMIT_SHA = os.getenv("COMMIT_SHA")
 # git branch name

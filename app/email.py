@@ -20,23 +20,24 @@ def _read_templates():
 # HTML email templates
 _TEMPLATES = _read_templates()
 # email HTTP client
-_CLIENT = httpx.AsyncClient(
-    base_url=settings.MAILGUN_ENDPOINT,
-    auth=("api", settings.MAILGUN_API_KEY),
-)
+_CLIENT = httpx.AsyncClient(base_url="https://api.postmarkapp.com")
 
 
 async def _send(email_address, subject, content):
     """Send the given email to the given email address."""
-    data = {
-        "from": settings.SENDER,
-        "to": email_address,
-        "subject": subject,
-        "html": content,
-        "o:testmode": "true" if settings.ENVIRONMENT == "test" else "false",
-        "o:tag": [f"{settings.ENVIRONMENT} transactional"],
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "X-Postmark-Server-Token": settings.POSTMARK_SERVER_TOKEN,
     }
-    response = await _CLIENT.post("/messages", data=data)
+    json = {
+        "From": settings.SENDER,
+        "To": email_address,
+        "Subject": subject,
+        "HtmlBody": content,
+        "MessageStream": "outbound",
+    }
+    response = await _CLIENT.post(url="/email", headers=headers, json=json)
     return response.status_code
 
 
