@@ -13,10 +13,10 @@ def _read_templates():
     for name in os.listdir(os.path.join(base, "emails")):
         if name.endswith(".txt"):
             with open(os.path.join(base, "emails", name)) as file:
-                templates[name.split(".")[0]]["text"] = file.read()
+                templates.setdefault(name.split(".")[0], {})["text"] = file.read()
         if name.endswith(".html"):
             with open(os.path.join(base, "emails", name)) as file:
-                templates[name.split(".")[0]]["html"] = file.read()
+                templates.setdefault(name.split(".")[0], {})["html"] = file.read()
     return templates
 
 
@@ -67,7 +67,7 @@ async def send_submission_verification(
     verification_token,
 ):
     """Send a confirmation email to verify a submission email address."""
-    subject = "Please verify your submission 📮"
+    subject = "Please verify your submission 📝"
     key = "submission_verification"
     text, html = _TEMPLATES[key]["text"], _TEMPLATES[key]["html"]
     for content in [text, html]:

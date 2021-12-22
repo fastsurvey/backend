@@ -1,0 +1,12 @@
+Hi there 👋
+
+We received your submission for the survey: {title}
+
+The creator of the survey wants us to make sure that submitted email addresses are genuine. Please confirm that the email address {email_address} belongs to you:
+
+>>> {link}
+
+If you didn't participate in the survey above, you can safely ignore this email.
+
+Cheers,
+The FastSurvey Team
