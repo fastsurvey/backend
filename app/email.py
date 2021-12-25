@@ -20,6 +20,14 @@ def _read_templates():
     return templates
 
 
+def _fill_templates(key, **kwargs):
+    """Fill both plaintext and HTML templates with the given named parameters."""
+    return (
+        content.format(**kwargs)
+        for content in (_TEMPLATES[key]["text"], _TEMPLATES[key]["html"])
+    )
+
+
 # HTML email templates
 _TEMPLATES = _read_templates()
 # email HTTP client
@@ -50,12 +58,11 @@ async def send_account_verification(email_address, username, verification_token)
     """Send a confirmation email to verify an account email address."""
     subject = "Welcome to FastSurvey! 🚀"
     key = "account_verification"
-    text, html = _TEMPLATES[key]["text"], _TEMPLATES[key]["html"]
-    for content in [text, html]:
-        content.format(
-            username=username,
-            link=f"{settings.CONSOLE_URL}/verify?token={verification_token}",
-        )
+    text, html = _fill_templates(
+        key,
+        username=username,
+        link=f"{settings.CONSOLE_URL}/verify?token={verification_token}",
+    )
     return await _send(email_address, subject, text, html, key)
 
 
@@ -69,16 +76,15 @@ async def send_submission_verification(
     """Send a confirmation email to verify a submission email address."""
     subject = "Please verify your submission 📝"
     key = "submission_verification"
-    text, html = _TEMPLATES[key]["text"], _TEMPLATES[key]["html"]
-    for content in [text, html]:
-        content.format(
-            title=title,
-            email_address=email_address,
-            link=(
-                f"{settings.FRONTEND_URL}/{username}/{survey_name}"
-                f"/verify?token={verification_token}"
-            ),
-        )
+    text, html = _fill_templates(
+        key,
+        title=title,
+        email_address=email_address,
+        link=(
+            f"{settings.FRONTEND_URL}/{username}/{survey_name}"
+            f"/verify?token={verification_token}"
+        ),
+    )
     return await _send(email_address, subject, text, html, key)
 
 
@@ -86,10 +92,9 @@ async def send_magic_login(email_address, username, verification_token):
     """Send an email that allows a user to authenticate without their password."""
     subject = "Your FastSurvey access 🔑"
     key = "magic_login"
-    text, html = _TEMPLATES[key]["text"], _TEMPLATES[key]["html"]
-    for content in [text, html]:
-        content.format(
-            username=username,
-            link=f"{settings.CONSOLE_URL}/magic?token={verification_token}",
-        )
+    text, html = _fill_templates(
+        key,
+        username=username,
+        link=f"{settings.CONSOLE_URL}/magic?token={verification_token}",
+    )
     return await _send(email_address, subject, text, html, key)
