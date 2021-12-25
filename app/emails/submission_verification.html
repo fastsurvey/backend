@@ -1,10 +1,21 @@
-<html>
-    <body style="font-family: 'Helvetica Neue',sans-serif; font-size: 15px; line-height: 1.8; max-width: 600px; padding: 20px; margin: 0 auto;">
-        <h1 style="font-size: 22px; font-weight: bold; margin: 0 0 15px 0;">Hi there 👋</h1>
-        <p style="margin: 0 0 15px 0;">We received your submission for the survey: <strong>{title}</strong></p>
-        <p style="margin: 0 0 25px 0;">The creator of the survey wants us to make sure that submitted email addresses are genuine. Please confirm that the email address <strong>{email_address}</strong> belongs to you:</p>
-        <a href="{link}" target="_blank" style="font-weight: bold; text-decoration: none; display: table; padding: 8px 20px; margin: 0 0 25px 0; border-radius: 12px; color: #ffffff; background-color: #e11d48;">Confirm Email Address</a>
-        <p style="margin: 0 0 15px 0;">If you didn't participate in the survey above, you can safely ignore this email.</p>
-        <p style="margin: 0;">Cheers,<br>The FastSurvey Team</p>
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+    </head>
+    <body style="max-width: 600px; padding: 20px; margin: 0 auto;">
+        <h1 style="font-family: 'Helvetica Neue',sans-serif; font-size: 22px; line-height: 1.8; font-weight: bold; margin: 0 0 15px 0;">Hi there 👋</h1>
+        <p style="font-family: 'Helvetica Neue',sans-serif; font-size: 15px; line-height: 1.8; margin: 0 0 15px 0;">We received your submission for the survey: <strong>{title}</strong></p>
+        <p style="font-family: 'Helvetica Neue',sans-serif; font-size: 15px; line-height: 1.8; margin: 0 0 25px 0;">The creator of the survey wants us to make sure that submitted email addresses are genuine. Please confirm that the email address <strong>{email_address}</strong> belongs to you:</p>
+        <table cellspacing="0" cellpadding="0" style="margin: 0 0 25px 0;">
+            <tr>
+                <td align="center" width="220px" height="40px" bgcolor="#e11d48" style="display: block; border-radius: 12px; -moz-border-radius: 12px; -webkit-border-radius: 12px;">
+                    <a href="{link}" target="_blank" style="font-family: 'Helvetica Neue',sans-serif; font-size: 15px; font-weight: bold; color: #ffffff; text-decoration: none; line-height: 40px; width: 100%; display: inline-block;">Confirm Email Address</a>
+                </td>
+            </tr>
+        </table>
+        <p style="font-family: 'Helvetica Neue',sans-serif; font-size: 15px; line-height: 1.8; margin: 0 0 15px 0;">If you didn't participate in the survey above, you can safely ignore this email.</p>
+        <p style="font-family: 'Helvetica Neue',sans-serif; font-size: 15px; line-height: 1.8; margin: 0;">Cheers,<br>The FastSurvey Team</p>
     </body>
 </html>
