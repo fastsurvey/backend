@@ -95,6 +95,6 @@ async def send_magic_login(email_address, username, verification_token):
     text, html = _fill_templates(
         key,
         username=username,
-        link=f"{settings.CONSOLE_URL}/magic?token={verification_token}",
+        link=f"{settings.CONSOLE_URL}/set-password?token={verification_token}",
     )
     return await _send(email_address, subject, text, html, key)
