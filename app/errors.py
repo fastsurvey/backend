@@ -38,11 +38,6 @@ class InvalidTimingError(_CustomError):
     DETAIL = "invalid timing"
 
 
-class SubmissionsExistError(_CustomError):
-    STATUS_CODE = 400
-    DETAIL = "submissions exist"
-
-
 ########################################################################################
 # 401 Unauthorized
 ########################################################################################

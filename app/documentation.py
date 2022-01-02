@@ -221,7 +221,6 @@ SPECIFICATIONS = {
             errors.AccessForbiddenError,
             errors.SurveyNameAlreadyTakenError,
             errors.SurveyNotFoundError,
-            errors.SubmissionsExistError,
         ],
     ),
     "delete_survey": _generate_responses_documentation(
