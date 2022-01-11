@@ -180,6 +180,8 @@ SPECIFICATIONS = {
             errors.InvalidAccessTokenError,
             errors.AccessForbiddenError,
             errors.UserNotFoundError,
+            errors.UsernameAlreadyTakenError,
+            errors.EmailAddressAlreadyTakenError,
         ],
     ),
     "delete_user": _generate_responses_documentation(
